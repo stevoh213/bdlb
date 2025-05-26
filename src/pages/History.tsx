@@ -15,7 +15,7 @@ const History = () => {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const { toast } = useToast();
-  const { logout, username } = useAuth();
+  const { signOut, user } = useAuth();
 
   useEffect(() => {
     const savedSessions = localStorage.getItem('sessions');
@@ -76,7 +76,7 @@ const History = () => {
   };
 
   const handleLogout = () => {
-    logout();
+    signOut();
     toast({
       title: "Logged Out",
       description: "You have been successfully logged out",
@@ -102,7 +102,7 @@ const History = () => {
               size="icon"
               onClick={handleLogout}
               className="text-stone-600 hover:text-stone-800"
-              title={`Logout (${username})`}
+              title={`Logout (${user?.displayName})`}
             >
               <LogOut className="h-5 w-5" />
             </Button>
@@ -188,7 +188,7 @@ const History = () => {
               size="icon"
               onClick={handleLogout}
               className="text-stone-600 hover:text-stone-800"
-              title={`Logout (${username})`}
+              title={`Logout (${user?.displayName})`}
             >
               <LogOut className="h-5 w-5" />
             </Button>

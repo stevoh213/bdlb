@@ -44,7 +44,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(session?.user ?? null);
       setLoading(false);
 
-      // Create profile when user signs up
+      // Create profile when user signs up - use correct event name
       if (event === 'SIGNED_UP' && session?.user) {
         const { error } = await supabase
           .from('profiles')
