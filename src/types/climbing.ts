@@ -1,3 +1,4 @@
+
 export interface Climb {
   id: string;
   name: string;
@@ -34,11 +35,11 @@ export interface ClimbingSession {
   updated_at: string;
 }
 
-// Local session interface for the frontend (different from database ClimbingSession)
+// Local session interface for the frontend (updated to match database types)
 export interface Session {
   id: string;
   location: string;
-  climbingType: 'sport' | 'trad' | 'boulder' | 'toprope' | 'multipitch';
+  climbingType: 'sport' | 'trad' | 'boulder' | 'top rope' | 'alpine';
   notes?: string;
   startTime: Date;
   endTime?: Date;
