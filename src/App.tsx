@@ -5,7 +5,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import LoginForm from "@/components/LoginForm";
+import SupabaseLoginForm from "@/components/SupabaseLoginForm";
+import Navigation from "@/components/Navigation";
 import Index from "./pages/Index";
 import History from "./pages/History";
 import NotFound from "./pages/NotFound";
@@ -13,20 +14,32 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 const AppContent = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
-    return <LoginForm />;
+    return <SupabaseLoginForm />;
   }
 
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/history" element={<History />} />
-        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      <div className="min-h-screen bg-gray-50">
+        <Navigation />
+        <main>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/history" element={<History />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </main>
+      </div>
     </BrowserRouter>
   );
 };

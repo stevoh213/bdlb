@@ -1,26 +1,54 @@
 
 export interface Climb {
   id: string;
-  sessionId?: string;
   name: string;
   grade: string;
-  tickType: 'send' | 'attempt' | 'flash' | 'onsight';
-  height?: number;
-  timeOnWall?: number;
-  effort: number;
+  type: 'sport' | 'trad' | 'boulder' | 'toprope' | 'multipitch';
+  send_type: 'send' | 'attempt' | 'flash' | 'onsight';
+  date: string;
+  location: string;
+  attempts: number;
+  rating?: number;
   notes?: string;
-  timestamp: Date;
+  duration?: number;
+  elevation_gain?: number;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
 }
 
-export interface Session {
+export interface ClimbingSession {
   id: string;
-  startTime: Date;
-  endTime?: Date;
+  date: string;
+  duration: number;
   location: string;
-  climbingType: 'sport' | 'trad' | 'boulder' | 'toprope' | 'multipitch';
-  breaks: number;
-  totalBreakTime: number;
-  climbs: Climb[];
-  isActive: boolean;
+  location_type?: 'indoor' | 'outdoor';
+  default_climb_type?: 'sport' | 'trad' | 'boulder' | 'toprope' | 'multipitch';
   notes?: string;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Goal {
+  id: string;
+  user_id: string;
+  title: string;
+  description?: string;
+  type: string;
+  status: 'active' | 'completed' | 'paused';
+  priority: 'low' | 'medium' | 'high';
+  difficulty: 'easy' | 'moderate' | 'hard';
+  target_value?: number;
+  current_value?: number;
+  target_date?: string;
+  completed_at?: string;
+  created_at: string;
+  updated_at: string;
+  notes?: string;
+  tags?: string[];
+  unit?: string;
+  target_grade?: string;
+  target_climb_type?: string;
+  target_location?: string;
 }

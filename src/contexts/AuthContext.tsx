@@ -1,11 +1,16 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Session, User } from '@supabase/supabase-js';
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  username: string | null;
-  login: (username: string, password: string) => boolean;
-  logout: () => void;
+  user: User | null;
+  session: Session | null;
+  signUp: (email: string, password: string) => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signOut: () => Promise<void>;
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -19,41 +24,73 @@ export const useAuth = () => {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [username, setUsername] = useState<string | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is already logged in
-    const savedAuth = localStorage.getItem('isAuthenticated');
-    const savedUsername = localStorage.getItem('username');
-    
-    if (savedAuth === 'true' && savedUsername) {
-      setIsAuthenticated(true);
-      setUsername(savedUsername);
-    }
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+
+      // Create profile when user signs up
+      if (event === 'SIGNED_UP' && session?.user) {
+        const { error } = await supabase
+          .from('profiles')
+          .insert([{ id: session.user.id }]);
+        
+        if (error) {
+          console.error('Error creating profile:', error);
+        }
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const login = (inputUsername: string, inputPassword: string): boolean => {
-    // Simple hardcoded credentials - in a real app, this would check against a database
-    if (inputUsername === 'climber' && inputPassword === 'password') {
-      setIsAuthenticated(true);
-      setUsername(inputUsername);
-      localStorage.setItem('isAuthenticated', 'true');
-      localStorage.setItem('username', inputUsername);
-      return true;
-    }
-    return false;
+  const signUp = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+    return { error };
   };
 
-  const logout = () => {
-    setIsAuthenticated(false);
-    setUsername(null);
-    localStorage.removeItem('isAuthenticated');
-    localStorage.removeItem('username');
+  const signIn = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    return { error };
+  };
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, username, login, logout }}>
+    <AuthContext.Provider 
+      value={{ 
+        isAuthenticated: !!session, 
+        user, 
+        session, 
+        signUp, 
+        signIn, 
+        signOut, 
+        loading 
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
