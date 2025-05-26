@@ -8,6 +8,7 @@ import ClimbLogForm from "@/components/ClimbLogForm";
 import SessionStats from "@/components/SessionStats";
 import ClimbList from "@/components/ClimbList";
 import SessionForm from "@/components/SessionForm";
+import SessionAnalysis from "@/components/SessionAnalysis";
 import { useToast } from "@/hooks/use-toast";
 import { Session, Climb } from "@/types/climbing";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,6 +19,8 @@ const Index = () => {
   const [showSessionForm, setShowSessionForm] = useState(false);
   const [climbs, setClimbs] = useState<Climb[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [showAnalysis, setShowAnalysis] = useState(false);
+  const [sessionToAnalyze, setSessionToAnalyze] = useState<Session | null>(null);
   const { toast } = useToast();
   const { logout, username } = useAuth();
 
@@ -96,6 +99,12 @@ const Index = () => {
     setSessions(prev => [updatedSession, ...prev]);
     setCurrentSession(null);
     
+    // Show analysis option for sessions with climbs
+    if (updatedSession.climbs.length > 0) {
+      setSessionToAnalyze(updatedSession);
+      setShowAnalysis(true);
+    }
+    
     toast({
       title: "Session Ended",
       description: `Logged ${updatedSession.climbs.length} climbs`,
@@ -136,6 +145,22 @@ const Index = () => {
       description: "You have been successfully logged out",
     });
   };
+
+  if (showAnalysis && sessionToAnalyze) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-stone-100 p-4">
+        <div className="max-w-md mx-auto space-y-4">
+          <SessionAnalysis 
+            session={sessionToAnalyze}
+            onClose={() => {
+              setShowAnalysis(false);
+              setSessionToAnalyze(null);
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-stone-100 p-4">
