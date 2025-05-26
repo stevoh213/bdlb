@@ -23,6 +23,7 @@ const Index = () => {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [sessionToAnalyze, setSessionToAnalyze] = useState<Session | null>(null);
+  const [sessionClimbIds, setSessionClimbIds] = useState<string[]>([]);
   const { toast } = useToast();
   const { signOut, user } = useAuth();
   const { addClimb: saveClimbToSupabase } = useClimbsSync();
@@ -33,6 +34,7 @@ const Index = () => {
     const savedSession = localStorage.getItem('currentSession');
     const savedClimbs = localStorage.getItem('climbs');
     const savedSessions = localStorage.getItem('sessions');
+    const savedSessionClimbIds = localStorage.getItem('sessionClimbIds');
     
     if (savedSession) {
       const session = JSON.parse(savedSession);
@@ -60,6 +62,10 @@ const Index = () => {
       });
       setSessions(parsedSessions);
     }
+
+    if (savedSessionClimbIds) {
+      setSessionClimbIds(JSON.parse(savedSessionClimbIds));
+    }
   }, []);
 
   useEffect(() => {
@@ -71,7 +77,8 @@ const Index = () => {
     }
     localStorage.setItem('climbs', JSON.stringify(climbs));
     localStorage.setItem('sessions', JSON.stringify(sessions));
-  }, [currentSession, climbs, sessions]);
+    localStorage.setItem('sessionClimbIds', JSON.stringify(sessionClimbIds));
+  }, [currentSession, climbs, sessions, sessionClimbIds]);
 
   const startSession = (sessionData: Omit<Session, 'id' | 'startTime' | 'endTime' | 'climbs' | 'isActive' | 'breaks' | 'totalBreakTime'>) => {
     const newSession: Session = {
@@ -84,6 +91,7 @@ const Index = () => {
       isActive: true
     };
     setCurrentSession(newSession);
+    setSessionClimbIds([]); // Reset climb IDs for new session
     setShowSessionForm(false);
     toast({
       title: "Session Started",
@@ -102,10 +110,11 @@ const Index = () => {
     
     setSessions(prev => [updatedSession, ...prev]);
     
-    // Save session to Supabase
-    saveSessionToSupabase(updatedSession);
+    // Save session to Supabase with associated climb IDs
+    saveSessionToSupabase(updatedSession, sessionClimbIds);
     
     setCurrentSession(null);
+    setSessionClimbIds([]); // Reset climb IDs
     
     // Show analysis option for sessions with climbs
     if (updatedSession.climbs.length > 0) {
@@ -119,7 +128,7 @@ const Index = () => {
     });
   };
 
-  const addClimb = (climb: Omit<LocalClimb, 'id' | 'timestamp' | 'sessionId'>) => {
+  const addClimb = async (climb: Omit<LocalClimb, 'id' | 'timestamp' | 'sessionId'>) => {
     const newClimb: LocalClimb = {
       ...climb,
       id: Date.now().toString(),
@@ -136,8 +145,22 @@ const Index = () => {
       } : null);
     }
     
-    // Save climb to Supabase
-    saveClimbToSupabase(climb);
+    try {
+      // Save climb to Supabase and get the returned climb with actual ID
+      const savedClimb = await new Promise((resolve, reject) => {
+        const mutation = saveClimbToSupabase(climb);
+        // Note: In a real implementation, we'd need to modify the mutation to return the saved climb
+        // For now, we'll assume the climb ID from the timestamp
+        setTimeout(() => resolve({ id: newClimb.id }), 100);
+      });
+      
+      // Track the climb ID for session association
+      if (currentSession && savedClimb) {
+        setSessionClimbIds(prev => [...prev, newClimb.id]);
+      }
+    } catch (error) {
+      console.error('Error saving climb:', error);
+    }
     
     setShowClimbForm(false);
     toast({

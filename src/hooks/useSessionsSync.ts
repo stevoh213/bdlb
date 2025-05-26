@@ -41,7 +41,7 @@ export const useSessionsSync = () => {
   });
 
   const addSessionMutation = useMutation({
-    mutationFn: async (session: Session) => {
+    mutationFn: async ({ session, climbIds }: { session: Session; climbIds: string[] }) => {
       if (!user) throw new Error('User not authenticated');
 
       const sessionData = {
@@ -55,20 +55,37 @@ export const useSessionsSync = () => {
         user_id: user.id,
       };
 
-      const { data, error } = await supabase
+      // Insert the session
+      const { data: sessionResult, error: sessionError } = await supabase
         .from('climbing_sessions')
         .insert(sessionData)
         .select()
         .single();
 
-      if (error) throw error;
-      return data;
+      if (sessionError) throw sessionError;
+
+      // Create climb-session associations
+      if (climbIds.length > 0) {
+        const entries = climbIds.map(climbId => ({
+          session_id: sessionResult.id,
+          climb_id: climbId
+        }));
+
+        const { error: entriesError } = await supabase
+          .from('climb_session_entries')
+          .insert(entries);
+
+        if (entriesError) throw entriesError;
+      }
+
+      return sessionResult;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
+      queryClient.invalidateQueries({ queryKey: ['climb_session_entries'] });
       toast({
         title: "Session saved!",
-        description: "Your session has been successfully saved to the database.",
+        description: "Your session and climb associations have been successfully saved to the database.",
       });
     },
     onError: (error) => {
@@ -84,7 +101,7 @@ export const useSessionsSync = () => {
     sessions,
     isLoading,
     error,
-    addSession: addSessionMutation.mutate,
+    addSession: (session: Session, climbIds: string[] = []) => addSessionMutation.mutate({ session, climbIds }),
     isAddingSession: addSessionMutation.isPending,
   };
 };
