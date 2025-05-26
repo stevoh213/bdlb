@@ -10,6 +10,7 @@ import SessionStats from "@/components/SessionStats";
 import ClimbList from "@/components/ClimbList";
 import SessionForm from "@/components/SessionForm";
 import SessionAnalysis from "@/components/SessionAnalysis";
+import EditClimbDialog from "@/components/EditClimbDialog";
 import { useToast } from "@/hooks/use-toast";
 import { Session, LocalClimb } from "@/types/climbing";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,6 +23,7 @@ const Index = () => {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [sessionToAnalyze, setSessionToAnalyze] = useState<Session | null>(null);
+  const [editingClimb, setEditingClimb] = useState<LocalClimb | null>(null);
   const { toast } = useToast();
   const { signOut, user } = useAuth();
 
@@ -133,6 +135,36 @@ const Index = () => {
     toast({
       title: "Climb Logged",
       description: `${climb.name} - ${climb.grade}`,
+    });
+  };
+
+  const updateClimb = (climbId: string, updates: Partial<LocalClimb>) => {
+    // Update in global climbs list
+    setClimbs(prev => prev.map(climb => 
+      climb.id === climbId ? { ...climb, ...updates } : climb
+    ));
+
+    // Update in current session if the climb belongs to it
+    if (currentSession) {
+      setCurrentSession(prev => prev ? {
+        ...prev,
+        climbs: prev.climbs.map(climb => 
+          climb.id === climbId ? { ...climb, ...updates } : climb
+        )
+      } : null);
+    }
+
+    // Update in sessions history
+    setSessions(prev => prev.map(session => ({
+      ...session,
+      climbs: session.climbs.map(climb => 
+        climb.id === climbId ? { ...climb, ...updates } : climb
+      )
+    })));
+
+    toast({
+      title: "Climb Updated",
+      description: "Your climb has been successfully updated.",
     });
   };
 
@@ -283,9 +315,23 @@ const Index = () => {
               <CardTitle>Session Climbs</CardTitle>
             </CardHeader>
             <CardContent>
-              <ClimbList climbs={currentSession.climbs.slice(0, 5)} />
+              <ClimbList 
+                climbs={currentSession.climbs.slice(0, 5)} 
+                onEdit={setEditingClimb}
+                showEditButton={true}
+              />
             </CardContent>
           </Card>
+        )}
+
+        {/* Edit Climb Dialog */}
+        {editingClimb && (
+          <EditClimbDialog
+            climb={editingClimb}
+            open={!!editingClimb}
+            onOpenChange={(open) => !open && setEditingClimb(null)}
+            onSave={updateClimb}
+          />
         )}
       </div>
     </div>

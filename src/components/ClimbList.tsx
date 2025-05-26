@@ -1,13 +1,17 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Edit } from "lucide-react";
 import { LocalClimb } from "@/types/climbing";
 
 interface ClimbListProps {
   climbs: LocalClimb[];
+  onEdit?: (climb: LocalClimb) => void;
+  showEditButton?: boolean;
 }
 
-const ClimbList = ({ climbs }: ClimbListProps) => {
+const ClimbList = ({ climbs, onEdit, showEditButton = false }: ClimbListProps) => {
   const tickTypeColors = {
     send: "bg-green-100 text-green-800 border-green-200",
     attempt: "bg-orange-100 text-orange-800 border-orange-200",
@@ -38,8 +42,20 @@ const ClimbList = ({ climbs }: ClimbListProps) => {
                   </Badge>
                 </div>
               </div>
-              <div className="text-right text-sm text-stone-500">
-                {formatTime(climb.timestamp)}
+              <div className="flex items-center gap-2">
+                <div className="text-right text-sm text-stone-500">
+                  {formatTime(climb.timestamp)}
+                </div>
+                {showEditButton && onEdit && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onEdit(climb)}
+                    className="h-8 w-8 text-stone-500 hover:text-stone-700"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             </div>
             
