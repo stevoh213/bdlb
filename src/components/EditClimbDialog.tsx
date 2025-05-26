@@ -35,6 +35,10 @@ const EditClimbDialog = ({
     rating: climb.rating || undefined,
     notes: climb.notes || '',
     duration: climb.duration || undefined,
+    color: climb.color || '',
+    gym: climb.gym || '',
+    country: climb.country || '',
+    stiffness: climb.stiffness || undefined,
   });
 
   const handleSave = () => {
@@ -123,35 +127,80 @@ const EditClimbDialog = ({
             />
           </div>
 
-          <div>
-            <Label htmlFor="attempts">Attempts</Label>
-            <Input
-              id="attempts"
-              type="number"
-              value={formData.attempts}
-              onChange={(e) => setFormData(prev => ({ ...prev, attempts: Number(e.target.value) }))}
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="attempts">Attempts</Label>
+              <Input
+                id="attempts"
+                type="number"
+                value={formData.attempts}
+                onChange={(e) => setFormData(prev => ({ ...prev, attempts: Number(e.target.value) }))}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="rating">Rating (1-10)</Label>
+              <Input
+                id="rating"
+                type="number"
+                min="1"
+                max="10"
+                value={formData.rating || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, rating: e.target.value ? Number(e.target.value) : undefined }))}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="duration">Duration (minutes)</Label>
+              <Input
+                id="duration"
+                type="number"
+                value={formData.duration || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, duration: e.target.value ? Number(e.target.value) : undefined }))}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="stiffness">Stiffness (1-10)</Label>
+              <Input
+                id="stiffness"
+                type="number"
+                min="1"
+                max="10"
+                value={formData.stiffness || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, stiffness: e.target.value ? Number(e.target.value) : undefined }))}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="color">Color</Label>
+              <Input
+                id="color"
+                value={formData.color}
+                onChange={(e) => setFormData(prev => ({ ...prev, color: e.target.value }))}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="gym">Gym</Label>
+              <Input
+                id="gym"
+                value={formData.gym}
+                onChange={(e) => setFormData(prev => ({ ...prev, gym: e.target.value }))}
+              />
+            </div>
           </div>
 
           <div>
-            <Label htmlFor="rating">Rating (1-10)</Label>
+            <Label htmlFor="country">Country</Label>
             <Input
-              id="rating"
-              type="number"
-              min="1"
-              max="10"
-              value={formData.rating || ''}
-              onChange={(e) => setFormData(prev => ({ ...prev, rating: e.target.value ? Number(e.target.value) : undefined }))}
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="duration">Duration (minutes)</Label>
-            <Input
-              id="duration"
-              type="number"
-              value={formData.duration || ''}
-              onChange={(e) => setFormData(prev => ({ ...prev, duration: e.target.value ? Number(e.target.value) : undefined }))}
+              id="country"
+              value={formData.country}
+              onChange={(e) => setFormData(prev => ({ ...prev, country: e.target.value }))}
             />
           </div>
 

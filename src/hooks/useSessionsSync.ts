@@ -5,6 +5,19 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Session } from '@/types/climbing';
 
+export interface SupabaseSession {
+  id: string;
+  date: string;
+  location: string;
+  duration: number;
+  notes?: string;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+  location_type?: 'indoor' | 'outdoor';
+  default_climb_type?: 'sport' | 'trad' | 'boulder' | 'top rope' | 'alpine';
+}
+
 export const useSessionsSync = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -22,7 +35,7 @@ export const useSessionsSync = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data as SupabaseSession[];
     },
     enabled: !!user,
   });

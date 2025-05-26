@@ -21,6 +21,11 @@ export interface SupabaseClimb {
   user_id: string;
   created_at: string;
   updated_at: string;
+  skills?: string[];
+  stiffness?: number;
+  color?: string;
+  gym?: string;
+  country?: string;
 }
 
 export const useClimbsSync = () => {
@@ -155,7 +160,7 @@ export const useClimbsSync = () => {
     isLoading,
     error,
     addClimb: addClimbMutation.mutate,
-    updateClimb: updateClimbMutation.mutate,
+    updateClimb: (id: string, climb: Partial<SupabaseClimb>) => updateClimbMutation.mutate({ id, climb }),
     deleteClimb: deleteClimbMutation.mutate,
     isAddingClimb: addClimbMutation.isPending,
     isUpdatingClimb: updateClimbMutation.isPending,
