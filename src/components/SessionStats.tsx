@@ -1,6 +1,5 @@
-
 import { Badge } from "@/components/ui/badge";
-import { Session } from "@/pages/Index";
+import { Session } from "@/types/climbing";
 
 interface SessionStatsProps {
   session: Session;
