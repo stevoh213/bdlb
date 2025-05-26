@@ -1,17 +1,19 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Calendar, MapPin, Clock, TrendingUp } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Clock, TrendingUp, Download } from "lucide-react";
 import { Link } from "react-router-dom";
 import SessionStats from "@/components/SessionStats";
 import ClimbList from "@/components/ClimbList";
 import { Session } from "@/types/climbing";
+import { exportToCSV } from "@/utils/csvExport";
+import { useToast } from "@/hooks/use-toast";
 
 const History = () => {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     const savedSessions = localStorage.getItem('sessions');
@@ -52,6 +54,23 @@ const History = () => {
     boulder: "bg-orange-100 text-orange-800 border-orange-200",
     toprope: "bg-green-100 text-green-800 border-green-200",
     multipitch: "bg-red-100 text-red-800 border-red-200"
+  };
+
+  const handleExportCSV = () => {
+    if (sessions.length === 0) {
+      toast({
+        title: "No Data to Export",
+        description: "You don't have any sessions to export yet.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    exportToCSV(sessions);
+    toast({
+      title: "Export Complete",
+      description: `Exported ${sessions.length} sessions to CSV`,
+    });
   };
 
   if (selectedSession) {
@@ -132,7 +151,18 @@ const History = () => {
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>
-          <h1 className="text-2xl font-bold text-stone-800">Session History</h1>
+          <h1 className="text-2xl font-bold text-stone-800 flex-1">Session History</h1>
+          {sessions.length > 0 && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleExportCSV}
+              className="text-stone-600 border-stone-300"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Export CSV
+            </Button>
+          )}
         </div>
 
         {sessions.length === 0 ? (
