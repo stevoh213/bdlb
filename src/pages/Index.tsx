@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Play, Pause, Plus, Clock, TrendingUp, History, LogOut } from "lucide-react";
+import { Play, Pause, Plus, Clock, TrendingUp, History, LogOut, List } from "lucide-react";
 import { Link } from "react-router-dom";
 import ClimbLogForm from "@/components/ClimbLogForm";
 import SessionStats from "@/components/SessionStats";
@@ -13,6 +12,8 @@ import SessionAnalysis from "@/components/SessionAnalysis";
 import { useToast } from "@/hooks/use-toast";
 import { Session, LocalClimb } from "@/types/climbing";
 import { useAuth } from "@/contexts/AuthContext";
+import { useClimbsSync } from "@/hooks/useClimbsSync";
+import { useSessionsSync } from "@/hooks/useSessionsSync";
 
 const Index = () => {
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
@@ -24,6 +25,8 @@ const Index = () => {
   const [sessionToAnalyze, setSessionToAnalyze] = useState<Session | null>(null);
   const { toast } = useToast();
   const { signOut, user } = useAuth();
+  const { addClimb: saveClimbToSupabase } = useClimbsSync();
+  const { addSession: saveSessionToSupabase } = useSessionsSync();
 
   useEffect(() => {
     // Load saved data from localStorage
@@ -98,6 +101,10 @@ const Index = () => {
     };
     
     setSessions(prev => [updatedSession, ...prev]);
+    
+    // Save session to Supabase
+    saveSessionToSupabase(updatedSession);
+    
     setCurrentSession(null);
     
     // Show analysis option for sessions with climbs
@@ -128,6 +135,9 @@ const Index = () => {
         climbs: [...prev.climbs, newClimb]
       } : null);
     }
+    
+    // Save climb to Supabase
+    saveClimbToSupabase(climb);
     
     setShowClimbForm(false);
     toast({
@@ -184,12 +194,20 @@ const Index = () => {
               <LogOut className="h-5 w-5" />
             </Button>
           </div>
-          <Link to="/history">
-            <Button variant="outline" className="mt-2">
-              <History className="h-4 w-4 mr-2" />
-              View History
-            </Button>
-          </Link>
+          <div className="flex gap-2 justify-center">
+            <Link to="/history">
+              <Button variant="outline">
+                <History className="h-4 w-4 mr-2" />
+                History
+              </Button>
+            </Link>
+            <Link to="/climbs">
+              <Button variant="outline">
+                <List className="h-4 w-4 mr-2" />
+                All Climbs
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Session Control */}
