@@ -5,12 +5,12 @@ import { Badge } from "@/components/ui/badge";
 import { Play, Pause, Plus, Clock, TrendingUp, History, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
 import ClimbLogForm from "@/components/ClimbLogForm";
 import SessionStats from "@/components/SessionStats";
 import ClimbList from "@/components/ClimbList";
@@ -31,7 +31,7 @@ const Index = () => {
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [sessionToAnalyze, setSessionToAnalyze] = useState<Session | null>(null);
   const [editingClimb, setEditingClimb] = useState<LocalClimb | null>(null);
-  const [climbSheetOpen, setClimbSheetOpen] = useState(false);
+  const [climbDrawerOpen, setClimbDrawerOpen] = useState(false);
   const { toast } = useToast();
   const { signOut, user } = useAuth();
   const isMobile = useIsMobile();
@@ -132,7 +132,7 @@ const Index = () => {
       } : null);
     }
     setShowClimbForm(false);
-    setClimbSheetOpen(false);
+    setClimbDrawerOpen(false);
     toast({
       title: "Climb Logged",
       description: `${climb.name} - ${climb.grade}`
@@ -284,24 +284,26 @@ const Index = () => {
             </CardHeader>
             <CardContent>
               {isMobile ? (
-                <Sheet open={climbSheetOpen} onOpenChange={setClimbSheetOpen}>
-                  <SheetTrigger asChild>
+                <Drawer open={climbDrawerOpen} onOpenChange={setClimbDrawerOpen}>
+                  <DrawerTrigger asChild>
                     <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white h-12">
                       <Plus className="h-5 w-5 mr-2" />
                       Add Climb
                     </Button>
-                  </SheetTrigger>
-                  <SheetContent side="bottom" className="h-[85vh] overflow-y-auto">
-                    <SheetHeader className="pb-4">
-                      <SheetTitle>Log New Climb</SheetTitle>
-                    </SheetHeader>
-                    <ClimbLogForm 
-                      onSubmit={addClimb} 
-                      onCancel={() => setClimbSheetOpen(false)} 
-                      gradeSystem={currentSession.gradeSystem}
-                    />
-                  </SheetContent>
-                </Sheet>
+                  </DrawerTrigger>
+                  <DrawerContent className="h-[85vh]">
+                    <DrawerHeader>
+                      <DrawerTitle>Log New Climb</DrawerTitle>
+                    </DrawerHeader>
+                    <div className="px-4 pb-4 overflow-y-auto">
+                      <ClimbLogForm 
+                        onSubmit={addClimb} 
+                        onCancel={() => setClimbDrawerOpen(false)} 
+                        gradeSystem={currentSession.gradeSystem}
+                      />
+                    </div>
+                  </DrawerContent>
+                </Drawer>
               ) : (
                 showClimbForm ? (
                   <ClimbLogForm 
