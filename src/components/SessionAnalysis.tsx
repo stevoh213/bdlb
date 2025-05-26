@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Brain, Loader2, CheckCircle, AlertCircle, Target, TrendingUp, X } from 'lucide-react';
+import { Brain, Loader2, CheckCircle, AlertCircle, Target, TrendingUp, X, RefreshCcw } from 'lucide-react';
 import { Session } from '@/types/climbing';
 import { AIAnalysisService, AnalysisResult } from '@/services/aiAnalysis';
 import AISettingsForm from './AISettingsForm';
@@ -12,9 +12,10 @@ import { OPENROUTER_CONFIG } from '@/config/openrouter';
 interface SessionAnalysisProps {
   session: Session;
   onClose: () => void;
+  onAnalysisSaved?: (sessionId: string, analysis: Session['aiAnalysis']) => void;
 }
 
-const SessionAnalysis = ({ session, onClose }: SessionAnalysisProps) => {
+const SessionAnalysis = ({ session, onClose, onAnalysisSaved }: SessionAnalysisProps) => {
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -22,7 +23,19 @@ const SessionAnalysis = ({ session, onClose }: SessionAnalysisProps) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Use default API key if no saved key exists
+    // If session already has saved analysis, use it
+    if (session.aiAnalysis) {
+      setAnalysis({
+        summary: session.aiAnalysis.summary,
+        strengths: session.aiAnalysis.strengths,
+        areasForImprovement: session.aiAnalysis.areasForImprovement,
+        recommendations: session.aiAnalysis.recommendations,
+        progressInsights: session.aiAnalysis.progressInsights
+      });
+      return;
+    }
+
+    // Otherwise generate new analysis
     const savedApiKey = localStorage.getItem('openrouter_api_key') || OPENROUTER_CONFIG.defaultApiKey;
     const savedModel = localStorage.getItem('openrouter_model') || OPENROUTER_CONFIG.defaultModel;
     
@@ -42,6 +55,16 @@ const SessionAnalysis = ({ session, onClose }: SessionAnalysisProps) => {
       const analysisService = new AIAnalysisService(apiKey, model || OPENROUTER_CONFIG.defaultModel);
       const result = await analysisService.analyzeSession(session);
       setAnalysis(result);
+      
+      // Save analysis to session
+      const analysisData = {
+        ...result,
+        generatedAt: new Date()
+      };
+      
+      if (onAnalysisSaved) {
+        onAnalysisSaved(session.id, analysisData);
+      }
       
       toast({
         title: "Analysis Complete",
@@ -63,6 +86,17 @@ const SessionAnalysis = ({ session, onClose }: SessionAnalysisProps) => {
 
   const handleSettingsSave = (apiKey: string, model: string) => {
     performAnalysis(apiKey, model);
+  };
+
+  const handleRegenerate = () => {
+    const savedApiKey = localStorage.getItem('openrouter_api_key') || OPENROUTER_CONFIG.defaultApiKey;
+    const savedModel = localStorage.getItem('openrouter_model') || OPENROUTER_CONFIG.defaultModel;
+    
+    if (savedApiKey) {
+      performAnalysis(savedApiKey, savedModel);
+    } else {
+      setShowSettings(true);
+    }
   };
 
   if (showSettings) {
@@ -90,6 +124,17 @@ const SessionAnalysis = ({ session, onClose }: SessionAnalysisProps) => {
           AI Session Analysis
         </h2>
         <div className="flex items-center gap-2">
+          {analysis && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleRegenerate}
+              disabled={loading}
+            >
+              <RefreshCcw className="h-4 w-4 mr-2" />
+              Regenerate
+            </Button>
+          )}
           <Button 
             variant="outline" 
             size="sm"
@@ -133,6 +178,12 @@ const SessionAnalysis = ({ session, onClose }: SessionAnalysisProps) => {
 
       {analysis && (
         <div className="space-y-4">
+          {session.aiAnalysis && (
+            <div className="text-sm text-stone-500 text-center">
+              Generated on {session.aiAnalysis.generatedAt.toLocaleDateString()} at {session.aiAnalysis.generatedAt.toLocaleTimeString()}
+            </div>
+          )}
+          
           {/* Summary */}
           <Card className="border-stone-200 shadow-lg">
             <CardHeader className="pb-3">

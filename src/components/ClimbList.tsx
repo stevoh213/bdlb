@@ -2,16 +2,24 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Edit } from "lucide-react";
+import { Edit, Trash2 } from "lucide-react";
 import { LocalClimb } from "@/types/climbing";
 
 interface ClimbListProps {
   climbs: LocalClimb[];
   onEdit?: (climb: LocalClimb) => void;
+  onDelete?: (climb: LocalClimb) => void;
   showEditButton?: boolean;
+  showDeleteButton?: boolean;
 }
 
-const ClimbList = ({ climbs, onEdit, showEditButton = false }: ClimbListProps) => {
+const ClimbList = ({ 
+  climbs, 
+  onEdit, 
+  onDelete, 
+  showEditButton = false, 
+  showDeleteButton = false 
+}: ClimbListProps) => {
   const tickTypeColors = {
     send: "bg-green-100 text-green-800 border-green-200",
     attempt: "bg-orange-100 text-orange-800 border-orange-200",
@@ -54,6 +62,16 @@ const ClimbList = ({ climbs, onEdit, showEditButton = false }: ClimbListProps) =
                     className="h-8 w-8 text-stone-500 hover:text-stone-700"
                   >
                     <Edit className="h-4 w-4" />
+                  </Button>
+                )}
+                {showDeleteButton && onDelete && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onDelete(climb)}
+                    className="h-8 w-8 text-red-500 hover:text-red-700"
+                  >
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 )}
               </div>

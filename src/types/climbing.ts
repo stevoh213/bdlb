@@ -1,4 +1,3 @@
-
 export interface Climb {
   id: string;
   name: string;
@@ -39,7 +38,7 @@ export interface ClimbingSession {
 export interface Session {
   id: string;
   location: string;
-  climbingType: 'sport' | 'trad' | 'boulder' | 'top rope' | 'alpine';
+  climbingType: 'sport' | 'trad' | 'boulder' | 'toprope' | 'multipitch';
   notes?: string;
   startTime: Date;
   endTime?: Date;
@@ -47,6 +46,14 @@ export interface Session {
   isActive: boolean;
   breaks: number;
   totalBreakTime: number;
+  aiAnalysis?: {
+    summary: string;
+    strengths: string[];
+    areasForImprovement: string[];
+    recommendations: string[];
+    progressInsights: string;
+    generatedAt: Date;
+  };
 }
 
 // Local climb interface for the frontend

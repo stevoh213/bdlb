@@ -1,13 +1,16 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Calendar, MapPin, Clock, TrendingUp, Download, LogOut, Edit } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Clock, TrendingUp, Download, LogOut, Edit, Trash2, Brain } from "lucide-react";
 import { Link } from "react-router-dom";
 import SessionStats from "@/components/SessionStats";
 import ClimbList from "@/components/ClimbList";
 import EditClimbDialog from "@/components/EditClimbDialog";
 import EditSessionDialog from "@/components/EditSessionDialog";
+import DeleteConfirmDialog from "@/components/DeleteConfirmDialog";
+import SessionAnalysis from "@/components/SessionAnalysis";
 import { Session, LocalClimb } from "@/types/climbing";
 import { exportToCSV } from "@/utils/csvExport";
 import { useToast } from "@/hooks/use-toast";
@@ -18,6 +21,8 @@ const History = () => {
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [editingClimb, setEditingClimb] = useState<LocalClimb | null>(null);
   const [editingSession, setEditingSession] = useState<Session | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'session' | 'climb', item: Session | LocalClimb } | null>(null);
+  const [showAnalysis, setShowAnalysis] = useState(false);
   const { toast } = useToast();
   const { signOut, user } = useAuth();
 
@@ -28,6 +33,9 @@ const History = () => {
       parsedSessions.forEach((session: Session) => {
         session.startTime = new Date(session.startTime);
         if (session.endTime) session.endTime = new Date(session.endTime);
+        if (session.aiAnalysis?.generatedAt) {
+          session.aiAnalysis.generatedAt = new Date(session.aiAnalysis.generatedAt);
+        }
         session.climbs.forEach((climb: any) => {
           climb.timestamp = new Date(climb.timestamp);
         });
@@ -91,24 +99,28 @@ const History = () => {
     setEditingClimb(climb);
   };
 
-  const handleSaveClimb = (climbId: string, updates: Partial<LocalClimb>) => {
-    setSessions(prevSessions => 
-      prevSessions.map(session => ({
-        ...session,
-        climbs: session.climbs.map(climb => 
-          climb.id === climbId ? { ...climb, ...updates } : climb
-        )
-      }))
-    );
+  const handleDeleteClimb = (climb: LocalClimb) => {
+    setDeleteConfirm({ type: 'climb', item: climb });
+  };
 
-    // Update localStorage
+  const handleSaveClimb = (climbId: string, updates: Partial<LocalClimb>) => {
     const updatedSessions = sessions.map(session => ({
       ...session,
       climbs: session.climbs.map(climb => 
         climb.id === climbId ? { ...climb, ...updates } : climb
       )
     }));
+    
+    setSessions(updatedSessions);
     localStorage.setItem('sessions', JSON.stringify(updatedSessions));
+
+    // Update selectedSession if it's the one being edited
+    if (selectedSession) {
+      const updatedSelectedSession = updatedSessions.find(s => s.id === selectedSession.id);
+      if (updatedSelectedSession) {
+        setSelectedSession(updatedSelectedSession);
+      }
+    }
 
     toast({
       title: "Climb Updated",
@@ -120,17 +132,16 @@ const History = () => {
     setEditingSession(session);
   };
 
-  const handleSaveSession = (sessionId: string, updates: Partial<Session>) => {
-    setSessions(prevSessions => 
-      prevSessions.map(session => 
-        session.id === sessionId ? { ...session, ...updates } : session
-      )
-    );
+  const handleDeleteSession = (session: Session) => {
+    setDeleteConfirm({ type: 'session', item: session });
+  };
 
-    // Update localStorage
+  const handleSaveSession = (sessionId: string, updates: Partial<Session>) => {
     const updatedSessions = sessions.map(session => 
       session.id === sessionId ? { ...session, ...updates } : session
     );
+    
+    setSessions(updatedSessions);
     localStorage.setItem('sessions', JSON.stringify(updatedSessions));
 
     // Update selectedSession if it's the one being edited
@@ -143,6 +154,78 @@ const History = () => {
       description: "Your session has been successfully updated.",
     });
   };
+
+  const handleConfirmDelete = () => {
+    if (!deleteConfirm) return;
+
+    if (deleteConfirm.type === 'session') {
+      const sessionToDelete = deleteConfirm.item as Session;
+      const updatedSessions = sessions.filter(s => s.id !== sessionToDelete.id);
+      setSessions(updatedSessions);
+      localStorage.setItem('sessions', JSON.stringify(updatedSessions));
+      
+      if (selectedSession?.id === sessionToDelete.id) {
+        setSelectedSession(null);
+      }
+
+      toast({
+        title: "Session Deleted",
+        description: "The session has been permanently deleted.",
+      });
+    } else if (deleteConfirm.type === 'climb') {
+      const climbToDelete = deleteConfirm.item as LocalClimb;
+      const updatedSessions = sessions.map(session => ({
+        ...session,
+        climbs: session.climbs.filter(climb => climb.id !== climbToDelete.id)
+      }));
+      
+      setSessions(updatedSessions);
+      localStorage.setItem('sessions', JSON.stringify(updatedSessions));
+
+      // Update selectedSession if it contains the deleted climb
+      if (selectedSession) {
+        const updatedSelectedSession = updatedSessions.find(s => s.id === selectedSession.id);
+        if (updatedSelectedSession) {
+          setSelectedSession(updatedSelectedSession);
+        }
+      }
+
+      toast({
+        title: "Climb Deleted",
+        description: "The climb has been permanently deleted.",
+      });
+    }
+
+    setDeleteConfirm(null);
+  };
+
+  const handleAnalysisSaved = (sessionId: string, analysis: Session['aiAnalysis']) => {
+    const updatedSessions = sessions.map(session => 
+      session.id === sessionId ? { ...session, aiAnalysis: analysis } : session
+    );
+    
+    setSessions(updatedSessions);
+    localStorage.setItem('sessions', JSON.stringify(updatedSessions));
+
+    // Update selectedSession if it's the one being analyzed
+    if (selectedSession?.id === sessionId) {
+      setSelectedSession(prev => prev ? { ...prev, aiAnalysis: analysis } : null);
+    }
+  };
+
+  if (showAnalysis && selectedSession) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-stone-100 p-4">
+        <div className="max-w-md mx-auto">
+          <SessionAnalysis 
+            session={selectedSession}
+            onClose={() => setShowAnalysis(false)}
+            onAnalysisSaved={handleAnalysisSaved}
+          />
+        </div>
+      </div>
+    );
+  }
 
   if (selectedSession) {
     return (
@@ -194,6 +277,14 @@ const History = () => {
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDeleteSession(selectedSession)}
+                    className="h-8 w-8 text-red-500 hover:text-red-700"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
               </CardTitle>
             </CardHeader>
@@ -210,9 +301,36 @@ const History = () => {
                   </div>
                 )}
                 <SessionStats session={selectedSession} />
+                
+                <div className="flex gap-2 pt-2">
+                  <Button 
+                    onClick={() => setShowAnalysis(true)}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Brain className="h-4 w-4 mr-2" />
+                    {selectedSession.aiAnalysis ? 'View Analysis' : 'AI Analysis'}
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
+
+          {selectedSession.aiAnalysis && (
+            <Card className="border-blue-200 shadow-lg">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-blue-700">
+                  <Brain className="h-5 w-5" />
+                  AI Analysis Summary
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-stone-700 mb-2">{selectedSession.aiAnalysis.summary}</p>
+                <div className="text-xs text-stone-500">
+                  Generated on {selectedSession.aiAnalysis.generatedAt.toLocaleDateString()}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {selectedSession.climbs.length > 0 && (
             <Card className="border-stone-200 shadow-lg">
@@ -226,7 +344,9 @@ const History = () => {
                 <ClimbList 
                   climbs={selectedSession.climbs} 
                   onEdit={handleEditClimb}
+                  onDelete={handleDeleteClimb}
                   showEditButton={true}
+                  showDeleteButton={true}
                 />
               </CardContent>
             </Card>
@@ -247,6 +367,25 @@ const History = () => {
               open={true}
               onOpenChange={(open) => !open && setEditingSession(null)}
               onSave={handleSaveSession}
+            />
+          )}
+
+          {deleteConfirm && (
+            <DeleteConfirmDialog
+              open={true}
+              onOpenChange={(open) => !open && setDeleteConfirm(null)}
+              onConfirm={handleConfirmDelete}
+              title={deleteConfirm.type === 'session' ? 'Delete Session' : 'Delete Climb'}
+              description={
+                deleteConfirm.type === 'session' 
+                  ? 'Are you sure you want to delete this entire climbing session? This will also delete all climbs in this session.'
+                  : 'Are you sure you want to delete this climb?'
+              }
+              itemName={
+                deleteConfirm.type === 'session' 
+                  ? (deleteConfirm.item as Session).location
+                  : (deleteConfirm.item as LocalClimb).name
+              }
             />
           )}
         </div>
@@ -316,9 +455,16 @@ const History = () => {
                         <MapPin className="h-4 w-4 text-stone-600" />
                         <span className="font-semibold text-stone-800">{session.location}</span>
                       </div>
-                      <Badge variant="outline" className={`capitalize ${climbingTypeColors[session.climbingType]}`}>
-                        {session.climbingType}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className={`capitalize ${climbingTypeColors[session.climbingType]}`}>
+                          {session.climbingType}
+                        </Badge>
+                        {session.aiAnalysis && (
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                            AI Analyzed
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                     <div className="text-right text-sm text-stone-600">
                       <div>{formatDate(session.startTime)}</div>
@@ -337,6 +483,25 @@ const History = () => {
               </Card>
             ))}
           </div>
+        )}
+
+        {deleteConfirm && (
+          <DeleteConfirmDialog
+            open={true}
+            onOpenChange={(open) => !open && setDeleteConfirm(null)}
+            onConfirm={handleConfirmDelete}
+            title={deleteConfirm.type === 'session' ? 'Delete Session' : 'Delete Climb'}
+            description={
+              deleteConfirm.type === 'session' 
+                ? 'Are you sure you want to delete this entire climbing session? This will also delete all climbs in this session.'
+                : 'Are you sure you want to delete this climb?'
+            }
+            itemName={
+              deleteConfirm.type === 'session' 
+                ? (deleteConfirm.item as Session).location
+                : (deleteConfirm.item as LocalClimb).name
+            }
+          />
         )}
       </div>
     </div>
