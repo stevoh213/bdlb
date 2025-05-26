@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,7 @@ import { Session } from '@/types/climbing';
 import { AIAnalysisService, AnalysisResult } from '@/services/aiAnalysis';
 import AISettingsForm from './AISettingsForm';
 import { useToast } from '@/hooks/use-toast';
+import { OPENROUTER_CONFIG } from '@/config/openrouter';
 
 interface SessionAnalysisProps {
   session: Session;
@@ -22,10 +22,12 @@ const SessionAnalysis = ({ session, onClose }: SessionAnalysisProps) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if API key is already configured
-    const savedApiKey = localStorage.getItem('openrouter_api_key');
+    // Use default API key if no saved key exists
+    const savedApiKey = localStorage.getItem('openrouter_api_key') || OPENROUTER_CONFIG.defaultApiKey;
+    const savedModel = localStorage.getItem('openrouter_model') || OPENROUTER_CONFIG.defaultModel;
+    
     if (savedApiKey) {
-      performAnalysis(savedApiKey);
+      performAnalysis(savedApiKey, savedModel);
     } else {
       setShowSettings(true);
     }
@@ -37,7 +39,7 @@ const SessionAnalysis = ({ session, onClose }: SessionAnalysisProps) => {
     setShowSettings(false);
 
     try {
-      const analysisService = new AIAnalysisService(apiKey, model);
+      const analysisService = new AIAnalysisService(apiKey, model || OPENROUTER_CONFIG.defaultModel);
       const result = await analysisService.analyzeSession(session);
       setAnalysis(result);
       

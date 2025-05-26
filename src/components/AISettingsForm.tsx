@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,16 +13,16 @@ interface AISettingsFormProps {
 }
 
 const AISettingsForm = ({ onSave, onCancel }: AISettingsFormProps) => {
-  const [apiKey, setApiKey] = useState('');
+  const [apiKey, setApiKey] = useState(OPENROUTER_CONFIG.defaultApiKey);
   const [selectedModel, setSelectedModel] = useState(OPENROUTER_CONFIG.defaultModel);
   const [showApiKey, setShowApiKey] = useState(false);
 
   useEffect(() => {
-    const savedApiKey = localStorage.getItem('openrouter_api_key');
-    const savedModel = localStorage.getItem('openrouter_model');
+    const savedApiKey = localStorage.getItem('openrouter_api_key') || OPENROUTER_CONFIG.defaultApiKey;
+    const savedModel = localStorage.getItem('openrouter_model') || OPENROUTER_CONFIG.defaultModel;
     
-    if (savedApiKey) setApiKey(savedApiKey);
-    if (savedModel) setSelectedModel(savedModel);
+    setApiKey(savedApiKey);
+    setSelectedModel(savedModel);
   }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
