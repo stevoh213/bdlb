@@ -15,88 +15,102 @@ const Navigation = () => {
   };
 
   return (
-    <nav className="bg-white shadow-sm border-b">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex items-center">
-            <Link to="/" className="flex items-center space-x-2">
-              <Mountain className="h-8 w-8 text-blue-600" />
-              <span className="text-xl font-bold text-gray-900">ClimbLog</span>
-            </Link>
-          </div>
-          
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
-            <div className="flex space-x-4">
-              <Link
-                to="/"
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  location.pathname === '/' 
-                    ? 'bg-blue-100 text-blue-700' 
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                Dashboard
-              </Link>
-              <Link
-                to="/history"
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-1 ${
-                  location.pathname === '/history' 
-                    ? 'bg-blue-100 text-blue-700' 
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <History className="h-4 w-4" />
-                <span>History</span>
+    <>
+      <nav className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex items-center">
+              <Link to="/" className="flex items-center space-x-2">
+                <Mountain className="h-8 w-8 text-blue-600" />
+                <span className="text-xl font-bold text-gray-900">ClimbLog</span>
               </Link>
             </div>
             
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2 text-sm text-gray-600">
-                <User className="h-4 w-4" />
-                <span className="hidden lg:inline">{user?.email}</span>
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center space-x-8">
+              <div className="flex space-x-4">
+                <Link
+                  to="/"
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    location.pathname === '/' 
+                      ? 'bg-blue-100 text-blue-700' 
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Dashboard
+                </Link>
+                <Link
+                  to="/history"
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-1 ${
+                    location.pathname === '/history' 
+                      ? 'bg-blue-100 text-blue-700' 
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  <History className="h-4 w-4" />
+                  <span>History</span>
+                </Link>
               </div>
+              
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2 text-sm text-gray-600">
+                  <User className="h-4 w-4" />
+                  <span className="hidden lg:inline">{user?.email}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Mobile menu button */}
+            <div className="md:hidden flex items-center">
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
-                onClick={signOut}
-                className="flex items-center space-x-1"
+                onClick={toggleMobileMenu}
+                className="text-gray-500"
               >
-                <LogOut className="h-4 w-4" />
-                <span className="hidden lg:inline">Sign Out</span>
+                <Menu className="h-6 w-6" />
               </Button>
             </div>
           </div>
-
-          {/* Mobile menu button */}
-          <div className="md:hidden flex items-center">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleMobileMenu}
-              className="text-gray-500"
-            >
-              {isMobileMenuOpen ? (
-                <X className="h-6 w-6" />
-              ) : (
-                <Menu className="h-6 w-6" />
-              )}
-            </Button>
-          </div>
         </div>
-      </div>
+      </nav>
 
-      {/* Mobile menu */}
+      {/* Mobile drawer overlay */}
       {isMobileMenuOpen && (
-        <div className="md:hidden border-t border-gray-200 bg-white">
-          <div className="px-4 pt-2 pb-3 space-y-1">
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Mobile sliding drawer */}
+      <div className={`fixed top-0 right-0 h-full w-80 max-w-[85vw] bg-white shadow-lg z-50 transform transition-transform duration-300 ease-in-out md:hidden ${
+        isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
+      }`}>
+        <div className="flex items-center justify-between p-4 border-b">
+          <div className="flex items-center space-x-2">
+            <Mountain className="h-6 w-6 text-blue-600" />
+            <span className="text-lg font-bold text-gray-900">ClimbLog</span>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="text-gray-500"
+          >
+            <X className="h-6 w-6" />
+          </Button>
+        </div>
+        
+        <div className="p-4">
+          <div className="space-y-2 mb-6">
             <Link
               to="/"
               onClick={() => setIsMobileMenuOpen(false)}
-              className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+              className={`block px-3 py-3 rounded-md text-base font-medium transition-colors ${
                 location.pathname === '/' 
                   ? 'bg-blue-100 text-blue-700' 
-                  : 'text-gray-500 hover:text-gray-700'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
               }`}
             >
               Dashboard
@@ -104,40 +118,38 @@ const Navigation = () => {
             <Link
               to="/history"
               onClick={() => setIsMobileMenuOpen(false)}
-              className={`block px-3 py-2 rounded-md text-base font-medium transition-colors flex items-center space-x-2 ${
+              className={`block px-3 py-3 rounded-md text-base font-medium transition-colors flex items-center space-x-2 ${
                 location.pathname === '/history' 
                   ? 'bg-blue-100 text-blue-700' 
-                  : 'text-gray-500 hover:text-gray-700'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
               }`}
             >
-              <History className="h-4 w-4" />
+              <History className="h-5 w-5" />
               <span>History</span>
             </Link>
           </div>
           
-          <div className="pt-4 pb-3 border-t border-gray-200">
-            <div className="flex items-center px-4 mb-3">
+          <div className="pt-4 border-t border-gray-200">
+            <div className="flex items-center px-3 py-2 mb-4">
               <User className="h-5 w-5 text-gray-400 mr-3" />
               <span className="text-sm text-gray-600">{user?.email}</span>
             </div>
-            <div className="px-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  signOut();
-                  setIsMobileMenuOpen(false);
-                }}
-                className="w-full flex items-center justify-center space-x-2"
-              >
-                <LogOut className="h-4 w-4" />
-                <span>Sign Out</span>
-              </Button>
-            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                signOut();
+                setIsMobileMenuOpen(false);
+              }}
+              className="w-full flex items-center justify-center space-x-2 text-red-600 border-red-200 hover:bg-red-50"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Sign Out</span>
+            </Button>
           </div>
         </div>
-      )}
-    </nav>
+      </div>
+    </>
   );
 };
 
