@@ -35,7 +35,7 @@ export class AIAnalysisService {
         messages: [
           {
             role: 'system',
-            content: 'You are a professional climbing coach and performance analyst. Provide constructive, specific feedback based on climbing session data. Be encouraging but honest about areas for improvement.'
+            content: 'You are a professional climbing coach and performance analyst. Analyze the climbing session data and provide specific, actionable feedback. Do not use placeholder text or template formats - provide real, detailed analysis based on the actual performance data.'
           },
           {
             role: 'user',
@@ -71,75 +71,94 @@ export class AIAnalysisService {
     const onsights = session.climbs.filter(c => c.tickType === 'onsight').length;
 
     const grades = session.climbs.map(c => c.grade);
-    const efforts = session.climbs.map(c => c.effort);
+    const efforts = session.climbs.map(c => c.effort).filter(e => e !== undefined) as number[];
     const avgEffort = efforts.length > 0 ? efforts.reduce((a, b) => a + b, 0) / efforts.length : 0;
 
-    return `Analyze this climbing session and provide structured feedback:
+    return `Analyze this climbing session data and provide specific, actionable feedback. Replace all placeholder text with actual analysis:
 
-SESSION DETAILS:
+SESSION DATA:
 - Location: ${session.location}
 - Type: ${session.climbingType}
 - Duration: ${duration} minutes
 - Total climbs: ${session.climbs.length}
-
-PERFORMANCE BREAKDOWN:
 - Sends: ${sends}
-- Attempts (didn't complete): ${attempts}
+- Failed attempts: ${attempts}
 - Flashes: ${flashes}
 - Onsights: ${onsights}
-- Average effort level: ${avgEffort.toFixed(1)}/10
-- Grades attempted: ${grades.join(', ')}
+- Average effort: ${avgEffort.toFixed(1)}/10
+- Grades: ${grades.join(', ')}
 
-CLIMB DETAILS:
+INDIVIDUAL CLIMBS:
 ${session.climbs.map(climb => 
-  `- ${climb.name} (${climb.grade}): ${climb.tickType}, effort ${climb.effort}/10${climb.notes ? `, notes: ${climb.notes}` : ''}`
+  `- ${climb.name} (${climb.grade}): ${climb.tickType}${climb.effort ? `, effort ${climb.effort}/10` : ''}${climb.notes ? `, notes: ${climb.notes}` : ''}`
 ).join('\n')}
 
-Please provide analysis in this exact format:
+Provide analysis in this format, but replace ALL content with specific observations about THIS session:
 
-SUMMARY:
-[2-3 sentence overview of the session]
+**SUMMARY:**
+Write 2-3 sentences about the overall session performance
 
-STRENGTHS:
-- [specific strength 1]
-- [specific strength 2]
-- [specific strength 3]
+**STRENGTHS:**
+- List 2-3 specific things done well this session
+- Be specific about techniques, grades, or performance patterns
 
-AREAS FOR IMPROVEMENT:
-- [specific area 1]
-- [specific area 2]
+**AREAS FOR IMPROVEMENT:**
+- List 1-2 specific areas to focus on
+- Base on actual performance data from this session
 
-RECOMMENDATIONS:
-- [actionable recommendation 1]
-- [actionable recommendation 2]
-- [actionable recommendation 3]
+**RECOMMENDATIONS:**
+- Provide 2-3 actionable training suggestions
+- Make them specific to the climber's current level and performance
 
-PROGRESS INSIGHTS:
-[1-2 sentences about patterns and progress indicators]`;
+**PROGRESS INSIGHTS:**
+Write 1-2 sentences about patterns and what this session indicates about progress`;
   }
 
   private parseAnalysis(analysisText: string): AnalysisResult {
-    const sections = analysisText.split(/(?:SUMMARY:|STRENGTHS:|AREAS FOR IMPROVEMENT:|RECOMMENDATIONS:|PROGRESS INSIGHTS:)/);
+    console.log('Raw analysis text:', analysisText);
     
-    const summary = sections[1]?.trim() || 'Analysis completed successfully.';
-    const strengthsText = sections[2]?.trim() || '';
-    const areasText = sections[3]?.trim() || '';
-    const recommendationsText = sections[4]?.trim() || '';
-    const progressInsights = sections[5]?.trim() || 'Keep up the great work!';
+    // More robust parsing that handles various formats
+    const summaryMatch = analysisText.match(/\*\*SUMMARY:\*\*\s*(.*?)(?=\*\*|$)/s) || 
+                        analysisText.match(/SUMMARY:\s*(.*?)(?=STRENGTHS:|AREAS FOR|RECOMMENDATIONS:|PROGRESS INSIGHTS:|$)/s);
+    
+    const strengthsMatch = analysisText.match(/\*\*STRENGTHS:\*\*\s*(.*?)(?=\*\*|$)/s) || 
+                          analysisText.match(/STRENGTHS:\s*(.*?)(?=AREAS FOR|RECOMMENDATIONS:|PROGRESS INSIGHTS:|$)/s);
+    
+    const areasMatch = analysisText.match(/\*\*AREAS FOR IMPROVEMENT:\*\*\s*(.*?)(?=\*\*|$)/s) || 
+                      analysisText.match(/AREAS FOR IMPROVEMENT:\s*(.*?)(?=RECOMMENDATIONS:|PROGRESS INSIGHTS:|$)/s);
+    
+    const recommendationsMatch = analysisText.match(/\*\*RECOMMENDATIONS:\*\*\s*(.*?)(?=\*\*|$)/s) || 
+                                analysisText.match(/RECOMMENDATIONS:\s*(.*?)(?=PROGRESS INSIGHTS:|$)/s);
+    
+    const progressMatch = analysisText.match(/\*\*PROGRESS INSIGHTS:\*\*\s*(.*?)$/s) || 
+                         analysisText.match(/PROGRESS INSIGHTS:\s*(.*?)$/s);
+
+    const summary = summaryMatch?.[1]?.trim() || 'Session completed successfully with solid performance across different climbs.';
+    const strengthsText = strengthsMatch?.[1]?.trim() || '';
+    const areasText = areasMatch?.[1]?.trim() || '';
+    const recommendationsText = recommendationsMatch?.[1]?.trim() || '';
+    const progressInsights = progressMatch?.[1]?.trim() || 'Continue building on current strengths while addressing areas for improvement.';
 
     const parseList = (text: string): string[] => {
-      return text.split('\n')
-        .filter(line => line.trim().startsWith('-'))
-        .map(line => line.replace(/^-\s*/, '').trim())
-        .filter(line => line.length > 0);
+      if (!text) return [];
+      
+      return text.split(/\n/)
+        .map(line => line.trim())
+        .filter(line => line.length > 0)
+        .map(line => line.replace(/^[-*•]\s*/, '').trim())
+        .filter(line => line.length > 0 && !line.includes('[') && !line.includes('specific'))
+        .slice(0, 3); // Limit to 3 items
     };
 
-    return {
-      summary,
+    const result = {
+      summary: summary.replace(/^\*\*|\*\*$/g, '').trim(),
       strengths: parseList(strengthsText),
       areasForImprovement: parseList(areasText),
       recommendations: parseList(recommendationsText),
-      progressInsights
+      progressInsights: progressInsights.replace(/^\*\*|\*\*$/g, '').trim()
     };
+
+    console.log('Parsed analysis result:', result);
+    return result;
   }
 }
