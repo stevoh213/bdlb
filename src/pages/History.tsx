@@ -6,14 +6,14 @@ import { ArrowLeft, Calendar, MapPin, Clock, TrendingUp, Download, LogOut } from
 import { Link } from "react-router-dom";
 import SessionStats from "@/components/SessionStats";
 import ClimbList from "@/components/ClimbList";
-import { LocalSession } from "@/types/climbing";
+import { Session } from "@/types/climbing";
 import { exportToCSV } from "@/utils/csvExport";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
 const History = () => {
-  const [sessions, setSessions] = useState<LocalSession[]>([]);
-  const [selectedSession, setSelectedSession] = useState<LocalSession | null>(null);
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const { toast } = useToast();
   const { signOut, user } = useAuth();
 
@@ -21,7 +21,7 @@ const History = () => {
     const savedSessions = localStorage.getItem('sessions');
     if (savedSessions) {
       const parsedSessions = JSON.parse(savedSessions);
-      parsedSessions.forEach((session: LocalSession) => {
+      parsedSessions.forEach((session: Session) => {
         session.startTime = new Date(session.startTime);
         if (session.endTime) session.endTime = new Date(session.endTime);
         session.climbs.forEach((climb: any) => {
@@ -45,7 +45,7 @@ const History = () => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  const getSessionDuration = (session: LocalSession) => {
+  const getSessionDuration = (session: Session) => {
     if (!session.endTime) return 0;
     return Math.floor((session.endTime.getTime() - session.startTime.getTime()) / 1000 / 60);
   };
