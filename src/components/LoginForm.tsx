@@ -69,11 +69,6 @@ const LoginForm = () => {
               Sign In
             </Button>
           </form>
-          <div className="mt-4 p-3 bg-stone-50 rounded-md text-sm text-stone-600">
-            <p className="font-medium">Demo Credentials:</p>
-            <p>Username: <code>climber</code></p>
-            <p>Password: <code>password</code></p>
-          </div>
         </CardContent>
       </Card>
     </div>
