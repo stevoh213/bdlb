@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Play, Pause, Plus, Clock, TrendingUp, History } from "lucide-react";
+import { Play, Pause, Plus, Clock, TrendingUp, History, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import ClimbLogForm from "@/components/ClimbLogForm";
 import SessionStats from "@/components/SessionStats";
@@ -11,6 +10,7 @@ import ClimbList from "@/components/ClimbList";
 import SessionForm from "@/components/SessionForm";
 import { useToast } from "@/hooks/use-toast";
 import { Session, Climb } from "@/types/climbing";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
@@ -19,6 +19,7 @@ const Index = () => {
   const [climbs, setClimbs] = useState<Climb[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
   const { toast } = useToast();
+  const { logout, username } = useAuth();
 
   useEffect(() => {
     // Load saved data from localStorage
@@ -128,13 +129,35 @@ const Index = () => {
   const sessionDuration = currentSession ? 
     Math.floor((new Date().getTime() - currentSession.startTime.getTime()) / 1000 / 60) : 0;
 
+  const handleLogout = () => {
+    logout();
+    toast({
+      title: "Logged Out",
+      description: "You have been successfully logged out",
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-stone-100 p-4">
       <div className="max-w-md mx-auto space-y-4">
         {/* Header */}
         <div className="text-center py-4">
-          <h1 className="text-3xl font-bold text-stone-800 mb-2">ClimbLog</h1>
-          <p className="text-stone-600">Track your climbing progress</p>
+          <div className="flex items-center justify-between mb-2">
+            <div></div>
+            <div>
+              <h1 className="text-3xl font-bold text-stone-800 mb-2">ClimbLog</h1>
+              <p className="text-stone-600">Track your climbing progress</p>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleLogout}
+              className="text-stone-600 hover:text-stone-800"
+              title={`Logout (${username})`}
+            >
+              <LogOut className="h-5 w-5" />
+            </Button>
+          </div>
           <Link to="/history">
             <Button variant="outline" className="mt-2">
               <History className="h-4 w-4 mr-2" />

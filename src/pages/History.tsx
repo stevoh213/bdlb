@@ -2,18 +2,20 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Calendar, MapPin, Clock, TrendingUp, Download } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Clock, TrendingUp, Download, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import SessionStats from "@/components/SessionStats";
 import ClimbList from "@/components/ClimbList";
 import { Session } from "@/types/climbing";
 import { exportToCSV } from "@/utils/csvExport";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 const History = () => {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const { toast } = useToast();
+  const { logout, username } = useAuth();
 
   useEffect(() => {
     const savedSessions = localStorage.getItem('sessions');
@@ -73,6 +75,14 @@ const History = () => {
     });
   };
 
+  const handleLogout = () => {
+    logout();
+    toast({
+      title: "Logged Out",
+      description: "You have been successfully logged out",
+    });
+  };
+
   if (selectedSession) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-stone-100 p-4">
@@ -86,7 +96,16 @@ const History = () => {
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-2xl font-bold text-stone-800">Session Details</h1>
+            <h1 className="text-2xl font-bold text-stone-800 flex-1">Session Details</h1>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleLogout}
+              className="text-stone-600 hover:text-stone-800"
+              title={`Logout (${username})`}
+            >
+              <LogOut className="h-5 w-5" />
+            </Button>
           </div>
 
           <Card className="border-stone-200 shadow-lg">
@@ -152,17 +171,28 @@ const History = () => {
             </Button>
           </Link>
           <h1 className="text-2xl font-bold text-stone-800 flex-1">Session History</h1>
-          {sessions.length > 0 && (
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={handleExportCSV}
-              className="text-stone-600 border-stone-300"
+          <div className="flex items-center gap-2">
+            {sessions.length > 0 && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleExportCSV}
+                className="text-stone-600 border-stone-300"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export CSV
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleLogout}
+              className="text-stone-600 hover:text-stone-800"
+              title={`Logout (${username})`}
             >
-              <Download className="h-4 w-4 mr-2" />
-              Export CSV
+              <LogOut className="h-5 w-5" />
             </Button>
-          )}
+          </div>
         </div>
 
         {sessions.length === 0 ? (
