@@ -1,0 +1,98 @@
+
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Session } from "@/types/climbing";
+
+interface EditSessionDialogProps {
+  session: Session;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSave: (sessionId: string, updates: Partial<Session>) => void;
+}
+
+const EditSessionDialog = ({ session, open, onOpenChange, onSave }: EditSessionDialogProps) => {
+  const [formData, setFormData] = useState({
+    location: session.location,
+    climbingType: session.climbingType,
+    notes: session.notes || ""
+  });
+
+  const handleSave = () => {
+    const updates: Partial<Session> = {
+      location: formData.location,
+      climbingType: formData.climbingType as Session['climbingType'],
+      notes: formData.notes || undefined
+    };
+
+    onSave(session.id, updates);
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Edit Session</DialogTitle>
+        </DialogHeader>
+        
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="location">Location</Label>
+            <Input
+              id="location"
+              value={formData.location}
+              onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
+              placeholder="Climbing location"
+            />
+          </div>
+
+          <div>
+            <Label>Climbing Type</Label>
+            <Select 
+              value={formData.climbingType} 
+              onValueChange={(value) => setFormData(prev => ({ ...prev, climbingType: value as Session['climbingType'] }))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="sport">Sport</SelectItem>
+                <SelectItem value="trad">Trad</SelectItem>
+                <SelectItem value="boulder">Boulder</SelectItem>
+                <SelectItem value="toprope">Top Rope</SelectItem>
+                <SelectItem value="multipitch">Multi-pitch</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="notes">Notes</Label>
+            <Textarea
+              id="notes"
+              value={formData.notes}
+              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+              placeholder="Session notes..."
+              rows={3}
+            />
+          </div>
+
+          <div className="flex gap-2 pt-4">
+            <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
+              Cancel
+            </Button>
+            <Button onClick={handleSave} className="flex-1">
+              Save Changes
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export default EditSessionDialog;

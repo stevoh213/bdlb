@@ -2,11 +2,13 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Calendar, MapPin, Clock, TrendingUp, Download, LogOut } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Clock, TrendingUp, Download, LogOut, Edit } from "lucide-react";
 import { Link } from "react-router-dom";
 import SessionStats from "@/components/SessionStats";
 import ClimbList from "@/components/ClimbList";
-import { Session } from "@/types/climbing";
+import EditClimbDialog from "@/components/EditClimbDialog";
+import EditSessionDialog from "@/components/EditSessionDialog";
+import { Session, LocalClimb } from "@/types/climbing";
 import { exportToCSV } from "@/utils/csvExport";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,6 +16,8 @@ import { useAuth } from "@/contexts/AuthContext";
 const History = () => {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
+  const [editingClimb, setEditingClimb] = useState<LocalClimb | null>(null);
+  const [editingSession, setEditingSession] = useState<Session | null>(null);
   const { toast } = useToast();
   const { signOut, user } = useAuth();
 
@@ -83,6 +87,63 @@ const History = () => {
     });
   };
 
+  const handleEditClimb = (climb: LocalClimb) => {
+    setEditingClimb(climb);
+  };
+
+  const handleSaveClimb = (climbId: string, updates: Partial<LocalClimb>) => {
+    setSessions(prevSessions => 
+      prevSessions.map(session => ({
+        ...session,
+        climbs: session.climbs.map(climb => 
+          climb.id === climbId ? { ...climb, ...updates } : climb
+        )
+      }))
+    );
+
+    // Update localStorage
+    const updatedSessions = sessions.map(session => ({
+      ...session,
+      climbs: session.climbs.map(climb => 
+        climb.id === climbId ? { ...climb, ...updates } : climb
+      )
+    }));
+    localStorage.setItem('sessions', JSON.stringify(updatedSessions));
+
+    toast({
+      title: "Climb Updated",
+      description: "Your climb has been successfully updated.",
+    });
+  };
+
+  const handleEditSession = (session: Session) => {
+    setEditingSession(session);
+  };
+
+  const handleSaveSession = (sessionId: string, updates: Partial<Session>) => {
+    setSessions(prevSessions => 
+      prevSessions.map(session => 
+        session.id === sessionId ? { ...session, ...updates } : session
+      )
+    );
+
+    // Update localStorage
+    const updatedSessions = sessions.map(session => 
+      session.id === sessionId ? { ...session, ...updates } : session
+    );
+    localStorage.setItem('sessions', JSON.stringify(updatedSessions));
+
+    // Update selectedSession if it's the one being edited
+    if (selectedSession?.id === sessionId) {
+      setSelectedSession(prev => prev ? { ...prev, ...updates } : null);
+    }
+
+    toast({
+      title: "Session Updated",
+      description: "Your session has been successfully updated.",
+    });
+  };
+
   if (selectedSession) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-stone-100 p-4">
@@ -120,9 +181,19 @@ const History = () => {
                     {selectedSession.climbingType}
                   </Badge>
                 </div>
-                <div className="text-right text-sm text-stone-600">
-                  <div>{formatDate(selectedSession.startTime)}</div>
-                  <div>{formatTime(selectedSession.startTime)}</div>
+                <div className="flex items-center gap-2">
+                  <div className="text-right text-sm text-stone-600">
+                    <div>{formatDate(selectedSession.startTime)}</div>
+                    <div>{formatTime(selectedSession.startTime)}</div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleEditSession(selectedSession)}
+                    className="h-8 w-8 text-stone-500 hover:text-stone-700"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
                 </div>
               </CardTitle>
             </CardHeader>
@@ -152,9 +223,31 @@ const History = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <ClimbList climbs={selectedSession.climbs} />
+                <ClimbList 
+                  climbs={selectedSession.climbs} 
+                  onEdit={handleEditClimb}
+                  showEditButton={true}
+                />
               </CardContent>
             </Card>
+          )}
+
+          {editingClimb && (
+            <EditClimbDialog
+              climb={editingClimb}
+              open={true}
+              onOpenChange={(open) => !open && setEditingClimb(null)}
+              onSave={handleSaveClimb}
+            />
+          )}
+
+          {editingSession && (
+            <EditSessionDialog
+              session={editingSession}
+              open={true}
+              onOpenChange={(open) => !open && setEditingSession(null)}
+              onSave={handleSaveSession}
+            />
           )}
         </div>
       </div>
