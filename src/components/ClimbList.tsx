@@ -1,3 +1,4 @@
+
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Climb } from "@/types/climbing";
@@ -14,7 +15,9 @@ const ClimbList = ({ climbs }: ClimbListProps) => {
     onsight: "bg-purple-100 text-purple-800 border-purple-200"
   };
 
-  const formatTime = (date: Date) => {
+  const formatTime = (timestamp: Date) => {
+    // Ensure we have a proper Date object
+    const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
