@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Session } from "@/types/climbing";
+import { getGradeSystemForClimbType, gradeSystems } from "@/utils/gradeSystem";
 
 interface SessionFormProps {
   onSubmit: (session: Omit<Session, 'id' | 'startTime' | 'endTime' | 'climbs' | 'isActive' | 'breaks' | 'totalBreakTime'>) => void;
@@ -17,6 +18,8 @@ const SessionForm = ({ onSubmit, onCancel }: SessionFormProps) => {
   const [climbingType, setClimbingType] = useState<'sport' | 'trad' | 'boulder' | 'top rope' | 'alpine'>('sport');
   const [notes, setNotes] = useState("");
 
+  const gradeSystem = getGradeSystemForClimbType(climbingType);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!location) return;
@@ -24,6 +27,7 @@ const SessionForm = ({ onSubmit, onCancel }: SessionFormProps) => {
     onSubmit({
       location,
       climbingType,
+      gradeSystem,
       notes: notes || undefined
     });
 
@@ -61,6 +65,9 @@ const SessionForm = ({ onSubmit, onCancel }: SessionFormProps) => {
             <SelectItem value="alpine">Alpine</SelectItem>
           </SelectContent>
         </Select>
+        <p className="text-sm text-stone-500 mt-1">
+          Grade system: {gradeSystems[gradeSystem]?.name}
+        </p>
       </div>
 
       <div>

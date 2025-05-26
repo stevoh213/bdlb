@@ -13,6 +13,7 @@ import EditClimbDialog from "@/components/EditClimbDialog";
 import { useToast } from "@/hooks/use-toast";
 import { Session, LocalClimb } from "@/types/climbing";
 import { useAuth } from "@/contexts/AuthContext";
+
 const Index = () => {
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
   const [showClimbForm, setShowClimbForm] = useState(false);
@@ -29,6 +30,7 @@ const Index = () => {
     signOut,
     user
   } = useAuth();
+
   useEffect(() => {
     // Load saved data from localStorage
     const savedSession = localStorage.getItem('currentSession');
@@ -59,6 +61,7 @@ const Index = () => {
       setSessions(parsedSessions);
     }
   }, []);
+
   useEffect(() => {
     // Save to localStorage whenever state changes
     if (currentSession) {
@@ -69,6 +72,7 @@ const Index = () => {
     localStorage.setItem('climbs', JSON.stringify(climbs));
     localStorage.setItem('sessions', JSON.stringify(sessions));
   }, [currentSession, climbs, sessions]);
+
   const startSession = (sessionData: Omit<Session, 'id' | 'startTime' | 'endTime' | 'climbs' | 'isActive' | 'breaks' | 'totalBreakTime'>) => {
     const newSession: Session = {
       ...sessionData,
@@ -86,6 +90,7 @@ const Index = () => {
       description: `Started ${sessionData.climbingType} session at ${sessionData.location}`
     });
   };
+
   const endSession = () => {
     if (!currentSession) return;
     const updatedSession: Session = {
@@ -106,6 +111,7 @@ const Index = () => {
       description: `Logged ${updatedSession.climbs.length} climbs`
     });
   };
+
   const addClimb = (climb: Omit<LocalClimb, 'id' | 'timestamp' | 'sessionId'>) => {
     const newClimb: LocalClimb = {
       ...climb,
@@ -126,6 +132,7 @@ const Index = () => {
       description: `${climb.name} - ${climb.grade}`
     });
   };
+
   const updateClimb = (climbId: string, updates: Partial<LocalClimb>) => {
     // Update in global climbs list
     setClimbs(prev => prev.map(climb => climb.id === climbId ? {
@@ -157,7 +164,9 @@ const Index = () => {
       description: "Your climb has been successfully updated."
     });
   };
+
   const sessionDuration = currentSession ? Math.floor((new Date().getTime() - currentSession.startTime.getTime()) / 1000 / 60) : 0;
+
   const handleLogout = () => {
     signOut();
     toast({
@@ -165,6 +174,7 @@ const Index = () => {
       description: "You have been successfully logged out"
     });
   };
+
   if (showAnalysis && sessionToAnalyze) {
     return <div className="min-h-screen bg-gradient-to-br from-slate-50 to-stone-100 p-4">
         <div className="max-w-md mx-auto space-y-4">
@@ -175,6 +185,7 @@ const Index = () => {
         </div>
       </div>;
   }
+
   return <div className="min-h-screen bg-gradient-to-br from-slate-50 to-stone-100 p-4">
       <div className="max-w-md mx-auto space-y-4">
         {/* Header */}
@@ -242,7 +253,11 @@ const Index = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {showClimbForm ? <ClimbLogForm onSubmit={addClimb} onCancel={() => setShowClimbForm(false)} /> : <Button onClick={() => setShowClimbForm(true)} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white h-12">
+              {showClimbForm ? <ClimbLogForm 
+                  onSubmit={addClimb} 
+                  onCancel={() => setShowClimbForm(false)} 
+                  gradeSystem={currentSession.gradeSystem}
+                /> : <Button onClick={() => setShowClimbForm(true)} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white h-12">
                   <Plus className="h-5 w-5 mr-2" />
                   Add Climb
                 </Button>}

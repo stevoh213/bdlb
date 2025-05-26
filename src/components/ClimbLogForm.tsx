@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import SkillsSelector from "./SkillsSelector";
+import { getGradesForSystem } from "@/utils/gradeSystem";
 
 interface ClimbLogFormProps {
   onSubmit: (climb: {
@@ -17,11 +20,14 @@ interface ClimbLogFormProps {
     timeOnWall?: number;
     effort: number;
     notes?: string;
+    physicalSkills?: string[];
+    technicalSkills?: string[];
   }) => void;
   onCancel: () => void;
+  gradeSystem?: string;
 }
 
-const ClimbLogForm = ({ onSubmit, onCancel }: ClimbLogFormProps) => {
+const ClimbLogForm = ({ onSubmit, onCancel, gradeSystem = 'yds' }: ClimbLogFormProps) => {
   const [name, setName] = useState("");
   const [grade, setGrade] = useState("");
   const [tickType, setTickType] = useState<'send' | 'attempt' | 'flash' | 'onsight'>('send');
@@ -29,6 +35,8 @@ const ClimbLogForm = ({ onSubmit, onCancel }: ClimbLogFormProps) => {
   const [timeOnWall, setTimeOnWall] = useState<number | undefined>();
   const [effort, setEffort] = useState([7]);
   const [notes, setNotes] = useState("");
+  const [physicalSkills, setPhysicalSkills] = useState<string[]>([]);
+  const [technicalSkills, setTechnicalSkills] = useState<string[]>([]);
   const [showOptional, setShowOptional] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -42,7 +50,9 @@ const ClimbLogForm = ({ onSubmit, onCancel }: ClimbLogFormProps) => {
       height,
       timeOnWall,
       effort: effort[0],
-      notes: notes || undefined
+      notes: notes || undefined,
+      physicalSkills: physicalSkills.length > 0 ? physicalSkills : undefined,
+      technicalSkills: technicalSkills.length > 0 ? technicalSkills : undefined
     });
 
     // Reset form
@@ -53,6 +63,8 @@ const ClimbLogForm = ({ onSubmit, onCancel }: ClimbLogFormProps) => {
     setTimeOnWall(undefined);
     setEffort([7]);
     setNotes("");
+    setPhysicalSkills([]);
+    setTechnicalSkills([]);
     setShowOptional(false);
   };
 
@@ -63,7 +75,7 @@ const ClimbLogForm = ({ onSubmit, onCancel }: ClimbLogFormProps) => {
     onsight: "bg-purple-100 text-purple-800 border-purple-200"
   };
 
-  const commonGrades = ["5.6", "5.7", "5.8", "5.9", "5.10a", "5.10b", "5.10c", "5.10d", "5.11a", "5.11b", "5.11c", "5.11d", "5.12a", "5.12b", "5.12c", "5.12d"];
+  const availableGrades = getGradesForSystem(gradeSystem);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -88,7 +100,7 @@ const ClimbLogForm = ({ onSubmit, onCancel }: ClimbLogFormProps) => {
               <SelectValue placeholder="Select grade" />
             </SelectTrigger>
             <SelectContent className="bg-white">
-              {commonGrades.map((g) => (
+              {availableGrades.map((g) => (
                 <SelectItem key={g} value={g}>{g}</SelectItem>
               ))}
             </SelectContent>
@@ -166,6 +178,13 @@ const ClimbLogForm = ({ onSubmit, onCancel }: ClimbLogFormProps) => {
                 />
               </div>
             </div>
+
+            <SkillsSelector
+              selectedPhysicalSkills={physicalSkills}
+              selectedTechnicalSkills={technicalSkills}
+              onPhysicalSkillsChange={setPhysicalSkills}
+              onTechnicalSkillsChange={setTechnicalSkills}
+            />
 
             <div>
               <Label htmlFor="notes" className="text-stone-700">Notes</Label>

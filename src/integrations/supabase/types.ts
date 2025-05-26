@@ -48,6 +48,7 @@ export type Database = {
           date: string
           default_climb_type: Database["public"]["Enums"]["climb_type"] | null
           duration: number
+          grade_system: string | null
           id: string
           location: string
           location_type: Database["public"]["Enums"]["location_type"] | null
@@ -60,6 +61,7 @@ export type Database = {
           date: string
           default_climb_type?: Database["public"]["Enums"]["climb_type"] | null
           duration: number
+          grade_system?: string | null
           id?: string
           location: string
           location_type?: Database["public"]["Enums"]["location_type"] | null
@@ -72,6 +74,7 @@ export type Database = {
           date?: string
           default_climb_type?: Database["public"]["Enums"]["climb_type"] | null
           duration?: number
+          grade_system?: string | null
           id?: string
           location?: string
           location_type?: Database["public"]["Enums"]["location_type"] | null
@@ -96,10 +99,12 @@ export type Database = {
           location: string
           name: string
           notes: string | null
+          physical_skills: string[] | null
           rating: number | null
           send_type: Database["public"]["Enums"]["climb_send_type"]
           skills: string[] | null
           stiffness: number | null
+          technical_skills: string[] | null
           type: Database["public"]["Enums"]["climb_type"]
           updated_at: string
           user_id: string | null
@@ -118,10 +123,12 @@ export type Database = {
           location: string
           name: string
           notes?: string | null
+          physical_skills?: string[] | null
           rating?: number | null
           send_type: Database["public"]["Enums"]["climb_send_type"]
           skills?: string[] | null
           stiffness?: number | null
+          technical_skills?: string[] | null
           type: Database["public"]["Enums"]["climb_type"]
           updated_at?: string
           user_id?: string | null
@@ -140,10 +147,12 @@ export type Database = {
           location?: string
           name?: string
           notes?: string | null
+          physical_skills?: string[] | null
           rating?: number | null
           send_type?: Database["public"]["Enums"]["climb_send_type"]
           skills?: string[] | null
           stiffness?: number | null
+          technical_skills?: string[] | null
           type?: Database["public"]["Enums"]["climb_type"]
           updated_at?: string
           user_id?: string | null
@@ -439,7 +448,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_grade_system_for_climb_type: {
+        Args: { climb_type: string }
+        Returns: string
+      }
     }
     Enums: {
       climb_send_type: "send" | "attempt" | "project" | "onsight" | "flash"

@@ -1,4 +1,3 @@
-
 export interface Climb {
   id: string;
   name: string;
@@ -20,6 +19,8 @@ export interface Climb {
   country?: string;
   skills?: string[];
   stiffness?: number;
+  physical_skills?: string[];
+  technical_skills?: string[];
 }
 
 export interface ClimbingSession {
@@ -29,6 +30,7 @@ export interface ClimbingSession {
   location: string;
   location_type?: 'indoor' | 'outdoor';
   default_climb_type?: 'sport' | 'trad' | 'boulder' | 'top rope' | 'alpine';
+  grade_system?: string;
   notes?: string;
   user_id: string;
   created_at: string;
@@ -40,6 +42,7 @@ export interface Session {
   id: string;
   location: string;
   climbingType: 'sport' | 'trad' | 'boulder' | 'top rope' | 'alpine';
+  gradeSystem?: string;
   notes?: string;
   startTime: Date;
   endTime?: Date;
@@ -69,6 +72,8 @@ export interface LocalClimb {
   timeOnWall?: number;
   effort?: number;
   notes?: string;
+  physicalSkills?: string[];
+  technicalSkills?: string[];
 }
 
 export interface Goal {

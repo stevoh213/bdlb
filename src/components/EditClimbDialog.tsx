@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { LocalClimb } from "@/types/climbing";
+import SkillsSelector from "./SkillsSelector";
 
 interface EditClimbDialogProps {
   climb: LocalClimb;
@@ -23,7 +24,9 @@ const EditClimbDialog = ({ climb, open, onOpenChange, onSave }: EditClimbDialogP
     height: climb.height || "",
     timeOnWall: climb.timeOnWall || "",
     effort: climb.effort || "",
-    notes: climb.notes || ""
+    notes: climb.notes || "",
+    physicalSkills: climb.physicalSkills || [],
+    technicalSkills: climb.technicalSkills || []
   });
 
   const handleSave = () => {
@@ -34,7 +37,9 @@ const EditClimbDialog = ({ climb, open, onOpenChange, onSave }: EditClimbDialogP
       height: formData.height ? Number(formData.height) : undefined,
       timeOnWall: formData.timeOnWall ? Number(formData.timeOnWall) : undefined,
       effort: formData.effort ? Number(formData.effort) : undefined,
-      notes: formData.notes || undefined
+      notes: formData.notes || undefined,
+      physicalSkills: formData.physicalSkills.length > 0 ? formData.physicalSkills : undefined,
+      technicalSkills: formData.technicalSkills.length > 0 ? formData.technicalSkills : undefined
     };
 
     onSave(climb.id, updates);
@@ -43,7 +48,7 @@ const EditClimbDialog = ({ climb, open, onOpenChange, onSave }: EditClimbDialogP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Climb</DialogTitle>
         </DialogHeader>
@@ -121,6 +126,13 @@ const EditClimbDialog = ({ climb, open, onOpenChange, onSave }: EditClimbDialogP
               />
             </div>
           </div>
+
+          <SkillsSelector
+            selectedPhysicalSkills={formData.physicalSkills}
+            selectedTechnicalSkills={formData.technicalSkills}
+            onPhysicalSkillsChange={(skills) => setFormData(prev => ({ ...prev, physicalSkills: skills }))}
+            onTechnicalSkillsChange={(skills) => setFormData(prev => ({ ...prev, technicalSkills: skills }))}
+          />
 
           <div>
             <Label htmlFor="notes">Notes</Label>
