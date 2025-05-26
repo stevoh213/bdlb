@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,19 +11,19 @@ import ClimbList from "@/components/ClimbList";
 import SessionForm from "@/components/SessionForm";
 import SessionAnalysis from "@/components/SessionAnalysis";
 import { useToast } from "@/hooks/use-toast";
-import { Session, Climb } from "@/types/climbing";
+import { Session, LocalClimb } from "@/types/climbing";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
   const [showClimbForm, setShowClimbForm] = useState(false);
   const [showSessionForm, setShowSessionForm] = useState(false);
-  const [climbs, setClimbs] = useState<Climb[]>([]);
+  const [climbs, setClimbs] = useState<LocalClimb[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [sessionToAnalyze, setSessionToAnalyze] = useState<Session | null>(null);
   const { toast } = useToast();
-  const { logout, username } = useAuth();
+  const { signOut, user } = useAuth();
 
   useEffect(() => {
     // Load saved data from localStorage
@@ -39,7 +40,7 @@ const Index = () => {
     
     if (savedClimbs) {
       const parsedClimbs = JSON.parse(savedClimbs);
-      parsedClimbs.forEach((climb: Climb) => {
+      parsedClimbs.forEach((climb: LocalClimb) => {
         climb.timestamp = new Date(climb.timestamp);
       });
       setClimbs(parsedClimbs);
@@ -50,7 +51,7 @@ const Index = () => {
       parsedSessions.forEach((session: Session) => {
         session.startTime = new Date(session.startTime);
         if (session.endTime) session.endTime = new Date(session.endTime);
-        session.climbs.forEach((climb: Climb) => {
+        session.climbs.forEach((climb: LocalClimb) => {
           climb.timestamp = new Date(climb.timestamp);
         });
       });
@@ -111,8 +112,8 @@ const Index = () => {
     });
   };
 
-  const addClimb = (climb: Omit<Climb, 'id' | 'timestamp' | 'sessionId'>) => {
-    const newClimb: Climb = {
+  const addClimb = (climb: Omit<LocalClimb, 'id' | 'timestamp' | 'sessionId'>) => {
+    const newClimb: LocalClimb = {
       ...climb,
       id: Date.now().toString(),
       sessionId: currentSession?.id,
@@ -139,7 +140,7 @@ const Index = () => {
     Math.floor((new Date().getTime() - currentSession.startTime.getTime()) / 1000 / 60) : 0;
 
   const handleLogout = () => {
-    logout();
+    signOut();
     toast({
       title: "Logged Out",
       description: "You have been successfully logged out",
@@ -178,7 +179,7 @@ const Index = () => {
               size="icon"
               onClick={handleLogout}
               className="text-stone-600 hover:text-stone-800"
-              title={`Logout (${username})`}
+              title={`Logout (${user?.email})`}
             >
               <LogOut className="h-5 w-5" />
             </Button>

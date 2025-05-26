@@ -1,10 +1,10 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Climb } from "@/types/climbing";
+import { LocalClimb } from "@/types/climbing";
 
 interface ClimbListProps {
-  climbs: Climb[];
+  climbs: LocalClimb[];
 }
 
 const ClimbList = ({ climbs }: ClimbListProps) => {

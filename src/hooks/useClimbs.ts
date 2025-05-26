@@ -3,24 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-
-export interface Climb {
-  id: string;
-  name: string;
-  grade: string;
-  type: 'sport' | 'trad' | 'boulder' | 'toprope' | 'multipitch';
-  send_type: 'send' | 'attempt' | 'flash' | 'onsight';
-  date: string;
-  location: string;
-  attempts: number;
-  rating?: number;
-  notes?: string;
-  duration?: number;
-  elevation_gain?: number;
-  user_id: string;
-  created_at: string;
-  updated_at: string;
-}
+import { Climb } from '@/types/climbing';
 
 export const useClimbs = () => {
   const { user } = useAuth();
@@ -50,7 +33,7 @@ export const useClimbs = () => {
 
       const { data, error } = await supabase
         .from('climbs')
-        .insert([{ ...climbData, user_id: user.id }])
+        .insert({ ...climbData, user_id: user.id })
         .select()
         .single();
 
@@ -60,13 +43,13 @@ export const useClimbs = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['climbs'] });
       toast({
-        title: "Climb added!",
-        description: "Your climb has been successfully logged.",
+        title: "Climb logged!",
+        description: "Your climb has been successfully recorded.",
       });
     },
     onError: (error) => {
       toast({
-        title: "Error adding climb",
+        title: "Error logging climb",
         description: error.message,
         variant: "destructive",
       });
@@ -74,11 +57,14 @@ export const useClimbs = () => {
   });
 
   const updateClimbMutation = useMutation({
-    mutationFn: async ({ id, ...climbData }: Partial<Climb> & { id: string }) => {
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Climb> }) => {
+      if (!user) throw new Error('User not authenticated');
+
       const { data, error } = await supabase
         .from('climbs')
-        .update(climbData)
+        .update(updates)
         .eq('id', id)
+        .eq('user_id', user.id)
         .select()
         .single();
 
@@ -101,40 +87,13 @@ export const useClimbs = () => {
     },
   });
 
-  const deleteClimbMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('climbs')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['climbs'] });
-      toast({
-        title: "Climb deleted!",
-        description: "Your climb has been successfully deleted.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error deleting climb",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
   return {
     climbs,
     isLoading,
     error,
     addClimb: addClimbMutation.mutate,
     updateClimb: updateClimbMutation.mutate,
-    deleteClimb: deleteClimbMutation.mutate,
     isAddingClimb: addClimbMutation.isPending,
     isUpdatingClimb: updateClimbMutation.isPending,
-    isDeletingClimb: deleteClimbMutation.isPending,
   };
 };

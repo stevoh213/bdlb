@@ -14,7 +14,7 @@ interface SessionFormProps {
 
 const SessionForm = ({ onSubmit, onCancel }: SessionFormProps) => {
   const [location, setLocation] = useState("");
-  const [climbingType, setClimbingType] = useState<'sport' | 'trad' | 'boulder' | 'toprope' | 'multipitch'>('sport');
+  const [climbingType, setClimbingType] = useState<'sport' | 'trad' | 'boulder' | 'top rope' | 'alpine'>('sport');
   const [notes, setNotes] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -49,7 +49,7 @@ const SessionForm = ({ onSubmit, onCancel }: SessionFormProps) => {
 
       <div>
         <Label htmlFor="climbingType" className="text-stone-700 font-medium">Climbing Type *</Label>
-        <Select value={climbingType} onValueChange={(value: 'sport' | 'trad' | 'boulder' | 'toprope' | 'multipitch') => setClimbingType(value)} required>
+        <Select value={climbingType} onValueChange={(value: 'sport' | 'trad' | 'boulder' | 'top rope' | 'alpine') => setClimbingType(value)} required>
           <SelectTrigger className="h-12 text-lg border-stone-300 focus:border-amber-500">
             <SelectValue placeholder="Select climbing type" />
           </SelectTrigger>
@@ -57,8 +57,8 @@ const SessionForm = ({ onSubmit, onCancel }: SessionFormProps) => {
             <SelectItem value="sport">Sport Climbing</SelectItem>
             <SelectItem value="trad">Traditional</SelectItem>
             <SelectItem value="boulder">Bouldering</SelectItem>
-            <SelectItem value="toprope">Top Rope</SelectItem>
-            <SelectItem value="multipitch">Multi-pitch</SelectItem>
+            <SelectItem value="top rope">Top Rope</SelectItem>
+            <SelectItem value="alpine">Alpine</SelectItem>
           </SelectContent>
         </Select>
       </div>

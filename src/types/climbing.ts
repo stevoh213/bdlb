@@ -3,8 +3,8 @@ export interface Climb {
   id: string;
   name: string;
   grade: string;
-  type: 'sport' | 'trad' | 'boulder' | 'toprope' | 'multipitch';
-  send_type: 'send' | 'attempt' | 'flash' | 'onsight';
+  type: 'sport' | 'trad' | 'boulder' | 'top rope' | 'alpine';
+  send_type: 'send' | 'attempt' | 'flash' | 'onsight' | 'project';
   date: string;
   location: string;
   attempts: number;
@@ -15,6 +15,11 @@ export interface Climb {
   user_id: string;
   created_at: string;
   updated_at: string;
+  color?: string;
+  gym?: string;
+  country?: string;
+  skills?: string[];
+  stiffness?: number;
 }
 
 export interface ClimbingSession {
@@ -23,11 +28,39 @@ export interface ClimbingSession {
   duration: number;
   location: string;
   location_type?: 'indoor' | 'outdoor';
-  default_climb_type?: 'sport' | 'trad' | 'boulder' | 'toprope' | 'multipitch';
+  default_climb_type?: 'sport' | 'trad' | 'boulder' | 'top rope' | 'alpine';
   notes?: string;
   user_id: string;
   created_at: string;
   updated_at: string;
+}
+
+// Local session interface for the frontend (different from database ClimbingSession)
+export interface Session {
+  id: string;
+  location: string;
+  climbingType: 'sport' | 'trad' | 'boulder' | 'top rope' | 'alpine';
+  notes?: string;
+  startTime: Date;
+  endTime?: Date;
+  climbs: LocalClimb[];
+  isActive: boolean;
+  breaks: number;
+  totalBreakTime: number;
+}
+
+// Local climb interface for the frontend
+export interface LocalClimb {
+  id: string;
+  name: string;
+  grade: string;
+  tickType: 'send' | 'attempt' | 'flash' | 'onsight';
+  timestamp: Date;
+  sessionId?: string;
+  height?: number;
+  timeOnWall?: number;
+  effort?: number;
+  notes?: string;
 }
 
 export interface Goal {

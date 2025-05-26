@@ -10,7 +10,7 @@ export interface ClimbingSession {
   duration: number;
   location: string;
   location_type?: 'indoor' | 'outdoor';
-  default_climb_type?: 'sport' | 'trad' | 'boulder' | 'toprope' | 'multipitch';
+  default_climb_type?: 'sport' | 'trad' | 'boulder' | 'top rope' | 'alpine';
   notes?: string;
   user_id: string;
   created_at: string;
@@ -45,7 +45,7 @@ export const useClimbingSessions = () => {
 
       const { data, error } = await supabase
         .from('climbing_sessions')
-        .insert([{ ...sessionData, user_id: user.id }])
+        .insert({ ...sessionData, user_id: user.id })
         .select()
         .single();
 

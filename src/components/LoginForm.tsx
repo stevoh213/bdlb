@@ -9,24 +9,26 @@ import { useToast } from '@/hooks/use-toast';
 import { Mountain } from 'lucide-react';
 
 const LoginForm = () => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { login } = useAuth();
+  const { signIn } = useAuth();
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (login(username, password)) {
+    const { error } = await signIn(email, password);
+    
+    if (error) {
       toast({
-        title: "Welcome!",
-        description: "Successfully logged in to ClimbLog",
+        title: "Login Failed",
+        description: error.message,
+        variant: "destructive"
       });
     } else {
       toast({
-        title: "Login Failed",
-        description: "Invalid username or password",
-        variant: "destructive"
+        title: "Welcome!",
+        description: "Successfully logged in to ClimbLog",
       });
     }
   };
@@ -44,13 +46,13 @@ const LoginForm = () => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
-                id="username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Enter username"
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter email"
                 required
               />
             </div>
