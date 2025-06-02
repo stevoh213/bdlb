@@ -300,7 +300,7 @@ const Index = () => {
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {sessions.slice(0, 10).map((session) => (
                 <Link key={session.id} to="/history">
                   <Card className="border-stone-200 shadow-lg cursor-pointer hover:shadow-xl transition-shadow">
