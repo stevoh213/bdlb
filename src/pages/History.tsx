@@ -15,6 +15,7 @@ import { Session, LocalClimb } from "@/types/climbing";
 import { exportToCSV } from "@/utils/csvExport";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+
 const History = () => {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
@@ -25,13 +26,9 @@ const History = () => {
     item: Session | LocalClimb;
   } | null>(null);
   const [showAnalysis, setShowAnalysis] = useState(false);
-  const {
-    toast
-  } = useToast();
-  const {
-    signOut,
-    user
-  } = useAuth();
+  const { toast } = useToast();
+  const { signOut, user } = useAuth();
+
   useEffect(() => {
     const savedSessions = localStorage.getItem('sessions');
     if (savedSessions) {
@@ -49,6 +46,7 @@ const History = () => {
       setSessions(parsedSessions);
     }
   }, []);
+
   const formatDate = (date: Date) => {
     return date.toLocaleDateString([], {
       weekday: 'short',
@@ -57,16 +55,19 @@ const History = () => {
       year: 'numeric'
     });
   };
+
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], {
       hour: '2-digit',
       minute: '2-digit'
     });
   };
+
   const getSessionDuration = (session: Session) => {
     if (!session.endTime) return 0;
     return Math.floor((session.endTime.getTime() - session.startTime.getTime()) / 1000 / 60);
   };
+
   const climbingTypeColors = {
     sport: "bg-blue-100 text-blue-800 border-blue-200",
     trad: "bg-purple-100 text-purple-800 border-purple-200",
@@ -74,6 +75,7 @@ const History = () => {
     toprope: "bg-green-100 text-green-800 border-green-200",
     multipitch: "bg-red-100 text-red-800 border-red-200"
   };
+
   const handleExportCSV = () => {
     if (sessions.length === 0) {
       toast({
@@ -89,6 +91,7 @@ const History = () => {
       description: `Exported ${sessions.length} sessions to CSV`
     });
   };
+
   const handleLogout = () => {
     signOut();
     toast({
@@ -96,15 +99,18 @@ const History = () => {
       description: "You have been successfully logged out"
     });
   };
+
   const handleEditClimb = (climb: LocalClimb) => {
     setEditingClimb(climb);
   };
+
   const handleDeleteClimb = (climb: LocalClimb) => {
     setDeleteConfirm({
       type: 'climb',
       item: climb
     });
   };
+
   const handleSaveClimb = (climbId: string, updates: Partial<LocalClimb>) => {
     const updatedSessions = sessions.map(session => ({
       ...session,
@@ -128,15 +134,18 @@ const History = () => {
       description: "Your climb has been successfully updated."
     });
   };
+
   const handleEditSession = (session: Session) => {
     setEditingSession(session);
   };
+
   const handleDeleteSession = (session: Session) => {
     setDeleteConfirm({
       type: 'session',
       item: session
     });
   };
+
   const handleSaveSession = (sessionId: string, updates: Partial<Session>) => {
     const updatedSessions = sessions.map(session => session.id === sessionId ? {
       ...session,
@@ -157,6 +166,7 @@ const History = () => {
       description: "Your session has been successfully updated."
     });
   };
+
   const handleConfirmDelete = () => {
     if (!deleteConfirm) return;
     if (deleteConfirm.type === 'session') {
@@ -194,6 +204,7 @@ const History = () => {
     }
     setDeleteConfirm(null);
   };
+
   const handleAnalysisSaved = (sessionId: string, analysis: Session['aiAnalysis']) => {
     const updatedSessions = sessions.map(session => session.id === sessionId ? {
       ...session,
@@ -210,6 +221,7 @@ const History = () => {
       } : null);
     }
   };
+
   if (showAnalysis && selectedSession) {
     return <div className="min-h-screen bg-gradient-to-br from-slate-50 to-stone-100 p-4">
         <div className="max-w-md mx-auto">
@@ -217,6 +229,7 @@ const History = () => {
         </div>
       </div>;
   }
+
   if (selectedSession) {
     return <div className="min-h-screen bg-gradient-to-br from-slate-50 to-stone-100 p-4">
         <div className="max-w-md mx-auto space-y-4">
@@ -322,7 +335,9 @@ const History = () => {
         </div>
       </div>;
   }
-  return <div className="min-h-screen bg-gradient-to-br from-slate-50 to-stone-100 p-4">
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-stone-100 p-4">
       <div className="max-w-md mx-auto space-y-4">
         <div className="flex items-center gap-3 py-4">
           <Link to="/">
@@ -332,15 +347,22 @@ const History = () => {
           </Link>
           <h1 className="text-2xl font-bold text-stone-800 flex-1">Session History</h1>
           <div className="flex items-center gap-2">
-            {sessions.length > 0 && <Button variant="outline" size="sm" onClick={handleExportCSV} className="text-stone-600 border-stone-300">
+            {sessions.length > 0 && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleExportCSV} 
+                className="text-stone-600 border-stone-300"
+              >
                 <Download className="h-4 w-4 mr-2" />
                 Export CSV
-              </Button>}
-            
+              </Button>
+            )}
           </div>
         </div>
 
-        {sessions.length === 0 ? <Card className="border-stone-200 shadow-lg">
+        {sessions.length === 0 ? (
+          <Card className="border-stone-200 shadow-lg">
             <CardContent className="p-8 text-center">
               <Calendar className="h-12 w-12 text-stone-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-stone-700 mb-2">No Sessions Yet</h3>
@@ -351,43 +373,78 @@ const History = () => {
                 </Button>
               </Link>
             </CardContent>
-          </Card> : <div className="space-y-3">
-            {sessions.map(session => <Card key={session.id} className="border-stone-200 shadow-lg cursor-pointer hover:shadow-xl transition-shadow" onClick={() => setSelectedSession(session)}>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {sessions.map((session) => (
+              <Card 
+                key={session.id} 
+                className="border-stone-200 shadow-lg cursor-pointer hover:shadow-xl transition-shadow bg-white" 
+                onClick={() => setSelectedSession(session)}
+              >
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-3">
-                    <div className="space-y-1">
+                    <div className="space-y-2 flex-1">
                       <div className="flex items-center gap-2">
                         <MapPin className="h-4 w-4 text-stone-600" />
                         <span className="font-semibold text-stone-800">{session.location}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline" className={`capitalize ${climbingTypeColors[session.climbingType]}`}>
+                        <Badge 
+                          variant="outline" 
+                          className={`capitalize ${climbingTypeColors[session.climbingType]}`}
+                        >
                           {session.climbingType}
                         </Badge>
-                        {session.aiAnalysis && <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                        {session.aiAnalysis && (
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
                             AI Analyzed
-                          </Badge>}
+                          </Badge>
+                        )}
                       </div>
                     </div>
                     <div className="text-right text-sm text-stone-600">
                       <div>{formatDate(session.startTime)}</div>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 justify-end">
                         <Clock className="h-3 w-3" />
                         {getSessionDuration(session)}m
                       </div>
                     </div>
                   </div>
                   
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-stone-600">Climbs logged</span>
-                    <span className="font-semibold text-emerald-600">{session.climbs.length}</span>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-stone-600">Climbs logged</span>
+                      <span className="font-semibold text-emerald-600 text-lg">
+                        {session.climbs.length}
+                      </span>
+                    </div>
                   </div>
                 </CardContent>
-              </Card>)}
-          </div>}
+              </Card>
+            ))}
+          </div>
+        )}
 
-        {deleteConfirm && <DeleteConfirmDialog open={true} onOpenChange={open => !open && setDeleteConfirm(null)} onConfirm={handleConfirmDelete} title={deleteConfirm.type === 'session' ? 'Delete Session' : 'Delete Climb'} description={deleteConfirm.type === 'session' ? 'Are you sure you want to delete this entire climbing session? This will also delete all climbs in this session.' : 'Are you sure you want to delete this climb?'} itemName={deleteConfirm.type === 'session' ? (deleteConfirm.item as Session).location : (deleteConfirm.item as LocalClimb).name} />}
+        {deleteConfirm && (
+          <DeleteConfirmDialog 
+            open={true} 
+            onOpenChange={(open) => !open && setDeleteConfirm(null)} 
+            onConfirm={handleConfirmDelete} 
+            title={deleteConfirm.type === 'session' ? 'Delete Session' : 'Delete Climb'} 
+            description={deleteConfirm.type === 'session' 
+              ? 'Are you sure you want to delete this entire climbing session? This will also delete all climbs in this session.' 
+              : 'Are you sure you want to delete this climb?'
+            } 
+            itemName={deleteConfirm.type === 'session' 
+              ? (deleteConfirm.item as Session).location 
+              : (deleteConfirm.item as LocalClimb).name
+            } 
+          />
+        )}
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default History;
