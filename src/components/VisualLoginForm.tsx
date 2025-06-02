@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -69,16 +68,15 @@ const VisualLoginForm = () => {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Background Image with Full Coverage */}
+      {/* Background Image with Overscroll Coverage */}
       <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        className="fixed inset-0 bg-cover bg-center bg-no-repeat"
         style={{
           backgroundImage: `url('https://images.unsplash.com/photo-1426604966848-d7adac402bff?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=5616&q=80')`,
-          minHeight: '100vh',
-          minWidth: '100vw',
+          height: '120vh',
+          top: '-10vh',
           backgroundSize: 'cover',
-          backgroundPosition: 'center center',
-          backgroundAttachment: 'fixed'
+          backgroundPosition: 'center center'
         }}
       />
       
