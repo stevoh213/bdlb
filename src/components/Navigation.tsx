@@ -68,6 +68,15 @@ const Navigation = () => {
                   <User className="h-4 w-4" />
                   <span className="hidden lg:inline">{user?.email}</span>
                 </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={signOut}
+                  className="flex items-center space-x-1 text-gray-500 hover:text-gray-700"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Sign Out</span>
+                </Button>
               </div>
             </div>
 
