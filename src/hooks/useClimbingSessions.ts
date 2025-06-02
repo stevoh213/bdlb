@@ -1,59 +1,52 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+// import { supabase } from '@/integrations/supabase/client'; // Replaced by climbingService
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-
-export interface ClimbingSession {
-  id: string;
-  date: string;
-  duration: number;
-  location: string;
-  location_type?: 'indoor' | 'outdoor';
-  default_climb_type?: 'sport' | 'trad' | 'boulder' | 'top rope' | 'alpine';
-  notes?: string;
-  user_id: string;
-  created_at: string;
-  updated_at: string;
-}
+import * as climbingService from '@/services/climbingService'; // Import the service
+import type { NewSessionData } from '@/services/climbingService'; // Import type for addSession
+import { ClimbingSession, Session } from '@/types/climbing'; // Import Session and ClimbingSession
 
 export const useClimbingSessions = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: sessions = [], isLoading, error } = useQuery({
+  const { data: sessions = [], isLoading, error } = useQuery<Session[], Error>({
     queryKey: ['climbing_sessions', user?.id],
-    queryFn: async () => {
+    queryFn: async (): Promise<Session[]> => {
       if (!user) return [];
-      
-      const { data, error } = await supabase
-        .from('climbing_sessions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('date', { ascending: false });
-
-      if (error) throw error;
-      return data as ClimbingSession[];
+      const dbSessions: ClimbingSession[] = await climbingService.fetchSessions(user.id);
+      return dbSessions.map((cs: ClimbingSession): Session => ({
+        id: cs.id,
+        location: cs.location,
+        climbingType: cs.default_climb_type || 'sport', // Default to 'sport' or handle as error/log if undefined
+        gradeSystem: cs.gradeSystem,
+        notes: cs.notes,
+        startTime: new Date(cs.date),
+        endTime: cs.duration ? new Date(new Date(cs.date).getTime() + cs.duration * 60000) : undefined, // Assuming duration is in minutes
+        climbs: [], // Initialize with empty climbs
+        isActive: false, // Default value
+        breaks: 0, // Default value
+        totalBreakTime: 0, // Default value
+        aiAnalysis: undefined, // Default value
+      }));
     },
     enabled: !!user,
   });
 
-  const addSessionMutation = useMutation({
-    mutationFn: async (sessionData: Omit<ClimbingSession, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+  const addSessionMutation = useMutation<
+    ClimbingSession, // Still returns ClimbingSession from the service
+    Error, // Type of error
+    NewSessionData // Type of variables passed to mutationFn
+  >({
+    mutationFn: async (sessionData: NewSessionData) => {
       if (!user) throw new Error('User not authenticated');
-
-      const { data, error } = await supabase
-        .from('climbing_sessions')
-        .insert({ ...sessionData, user_id: user.id })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+      // Use the service layer function
+      return climbingService.addSession(sessionData, user.id);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['climbing_sessions'] });
+    onSuccess: (data) => { // data is the newly created session from the service
+      queryClient.invalidateQueries({ queryKey: ['climbing_sessions', user?.id] });
       toast({
         title: "Session added!",
         description: "Your climbing session has been successfully logged.",

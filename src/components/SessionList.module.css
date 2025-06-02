@@ -1,0 +1,48 @@
+.badgeBase {
+  /* Add any common badge styling if desired */
+}
+
+.sport {
+  background-color: #DBEAFE; /* bg-blue-100 */
+  color: #1E40AF; /* text-blue-800 */
+  border-color: #BFDBFE; /* border-blue-200 */
+}
+
+.trad {
+  background-color: #F3E8FF; /* bg-purple-100 */
+  color: #5B21B6; /* text-purple-800 */
+  border-color: #E9D5FF; /* border-purple-200 */
+}
+
+.boulder {
+  background-color: #FFEDD5; /* bg-orange-100 */
+  color: #9A3412; /* text-orange-800 */
+  border-color: #FED7AA; /* border-orange-200 */
+}
+
+/* Original History.tsx had 'toprope', Supabase schema might use 'top_rope' or 'top rope' */
+/* Assuming 'top_rope' for consistency with potential DB values */
+.top_rope, .toprope { 
+  background-color: #D1FAE5; /* bg-green-100 */
+  color: #065F46; /* text-green-800 */
+  border-color: #A7F3D0; /* border-green-200 */
+}
+/* For alpine, as it was in SessionForm.tsx */
+.alpine {
+  background-color: #E0F2FE; /* bg-sky-100, example */
+  color: #0369A1; /* text-sky-800, example */
+  border-color: #BAE6FD; /* border-sky-200, example */
+}
+
+/* multipitch was also in the original History.tsx colors object */
+.multipitch {
+  background-color: #FEE2E2; /* bg-red-100 */
+  color: #991B1B; /* text-red-800 */
+  border-color: #FECACA; /* border-red-200 */
+}
+
+.aiAnalyzed {
+  background-color: #EFF6FF; /* bg-blue-50 */
+  color: #1D4ED8; /* text-blue-700 */
+  border-color: #BFDBFE; /* border-blue-200 */
+}

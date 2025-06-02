@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,82 +9,58 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import SkillsSelector from "./SkillsSelector";
 import LocationSelector from "./LocationSelector";
-import { getGradesForSystem } from "@/utils/gradeSystem";
+import { useClimbForm, ClimbFormData, TickType } from "@/hooks/useClimbForm";
+import { cn } from "@/lib/utils"; // Import cn utility
+import styles from "./ClimbLogForm.module.css"; // Import CSS module
 
 interface ClimbLogFormProps {
-  onSubmit: (climb: {
-    name: string;
-    grade: string;
-    tickType: 'send' | 'attempt' | 'flash' | 'onsight';
-    attempts?: number;
-    height?: number;
-    timeOnWall?: number;
-    effort: number;
-    notes?: string;
-    physicalSkills?: string[];
-    technicalSkills?: string[];
-    location?: string;
-  }) => void;
+  onSubmit: (climb: ClimbFormData) => void;
   onCancel: () => void;
   gradeSystem?: string;
   sessionLocation?: string;
 }
 
 const ClimbLogForm = ({ onSubmit, onCancel, gradeSystem = 'yds', sessionLocation }: ClimbLogFormProps) => {
-  const [name, setName] = useState("");
-  const [grade, setGrade] = useState("");
-  const [location, setLocation] = useState(sessionLocation || "");
-  const [tickType, setTickType] = useState<'send' | 'attempt' | 'flash' | 'onsight'>('send');
-  const [attempts, setAttempts] = useState(1);
-  const [height, setHeight] = useState<number | undefined>();
-  const [timeOnWall, setTimeOnWall] = useState<number | undefined>();
-  const [effort, setEffort] = useState([7]);
-  const [notes, setNotes] = useState("");
-  const [physicalSkills, setPhysicalSkills] = useState<string[]>([]);
-  const [technicalSkills, setTechnicalSkills] = useState<string[]>([]);
-  const [showOptional, setShowOptional] = useState(false);
+  const {
+    name,
+    setName,
+    grade,
+    setGrade,
+    location,
+    setLocation,
+    tickType,
+    setTickType,
+    attempts,
+    setAttempts,
+    height,
+    setHeight,
+    timeOnWall,
+    setTimeOnWall,
+    effort,
+    setEffort,
+    notes,
+    setNotes,
+    physicalSkills,
+    setPhysicalSkills,
+    technicalSkills,
+    setTechnicalSkills,
+    showOptional,
+    setShowOptional,
+    handleSubmit,
+    // resetForm, // Not directly called here, but part of handleSubmit
+    availableGrades,
+  } = useClimbForm({
+    onSubmit,
+    sessionLocation,
+    gradeSystem,
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name || !grade) return;
-
-    onSubmit({
-      name,
-      grade,
-      location: location || undefined,
-      tickType,
-      attempts: tickType === 'attempt' ? attempts : undefined,
-      height,
-      timeOnWall,
-      effort: effort[0],
-      notes: notes || undefined,
-      physicalSkills: physicalSkills.length > 0 ? physicalSkills : undefined,
-      technicalSkills: technicalSkills.length > 0 ? technicalSkills : undefined
-    });
-
-    // Reset form
-    setName("");
-    setGrade("");
-    setLocation(sessionLocation || "");
-    setTickType('send');
-    setAttempts(1);
-    setHeight(undefined);
-    setTimeOnWall(undefined);
-    setEffort([7]);
-    setNotes("");
-    setPhysicalSkills([]);
-    setTechnicalSkills([]);
-    setShowOptional(false);
-  };
-
-  const tickTypeColors = {
-    send: "bg-green-100 text-green-800 border-green-200",
-    attempt: "bg-orange-100 text-orange-800 border-orange-200", 
-    flash: "bg-blue-100 text-blue-800 border-blue-200",
-    onsight: "bg-purple-100 text-purple-800 border-purple-200"
-  };
-
-  const availableGrades = getGradesForSystem(gradeSystem);
+  // const tickTypeColors: Record<TickType, string> = { // Removed this object
+  //   send: "bg-green-100 text-green-800 border-green-200",
+  //   attempt: "bg-orange-100 text-orange-800 border-orange-200",
+  //   flash: "bg-blue-100 text-blue-800 border-blue-200",
+  //   onsight: "bg-purple-100 text-purple-800 border-purple-200"
+  // };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -120,21 +95,18 @@ const ClimbLogForm = ({ onSubmit, onCancel, gradeSystem = 'yds', sessionLocation
         <div>
           <Label className="text-stone-700 font-medium">Tick Type *</Label>
           <div className="grid grid-cols-2 gap-2 mt-2">
-            {(['send', 'attempt', 'flash', 'onsight'] as const).map((type) => (
+            {(['send', 'attempt', 'flash', 'onsight'] as const).map((typeValue) => (
               <Badge
-                key={type}
-                variant="outline"
-                className={`h-12 flex items-center justify-center cursor-pointer transition-all capitalize ${
-                  tickType === type ? tickTypeColors[type] : "border-stone-300 text-stone-600 hover:bg-stone-50"
-                }`}
-                onClick={() => {
-                  setTickType(type);
-                  if (type !== 'attempt') {
-                    setAttempts(1);
-                  }
-                }}
+                key={typeValue}
+                variant="outline" // Keep variant if it provides other base styles from <Badge>
+                className={cn(
+                  "h-12 flex items-center justify-center cursor-pointer transition-all capitalize", // Common Tailwind classes
+                  // Apply CSS module class based on active state and type
+                  tickType === typeValue ? styles[typeValue] : styles.inactive 
+                )}
+                onClick={() => setTickType(typeValue)}
               >
-                {type}
+                {typeValue}
               </Badge>
             ))}
           </div>

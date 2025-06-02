@@ -1,65 +1,31 @@
 
-import React, { useState } from 'react';
+import React, { useState } from 'react'; // Keep useState for showLoginForm
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
+// import { useAuth } from '@/contexts/AuthContext'; // Now used by the hook
+// import { useToast } from '@/hooks/use-toast'; // Now used by the hook
+import { useAuthForm } from '@/hooks/useAuthForm'; // Import the new hook
 import { Mountain, X } from 'lucide-react';
 
 const VisualLoginForm = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [showLoginForm, setShowLoginForm] = useState(false);
-  const { signIn, signUp } = useAuth();
-  const { toast } = useToast();
+  const {
+    email,
+    password,
+    isLoading,
+    // error, // error state is available if needed for UI changes
+    handleEmailChange,
+    handlePasswordChange,
+    handleSignIn,
+    handleSignUp,
+  } = useAuthForm();
+  // const { signIn, signUp } = useAuth(); // Handled by useAuthForm
+  // const { toast } = useToast(); // Handled by useAuthForm
 
-  const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    const { error } = await signIn(email, password);
-    
-    if (error) {
-      toast({
-        title: "Error signing in",
-        description: error.message,
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Welcome back!",
-        description: "You have successfully signed in.",
-      });
-    }
-    
-    setIsLoading(false);
-  };
-
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    const { error } = await signUp(email, password);
-    
-    if (error) {
-      toast({
-        title: "Error creating account",
-        description: error.message,
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Account created!",
-        description: "Please check your email to verify your account.",
-      });
-    }
-    
-    setIsLoading(false);
-  };
+  // Removed handleSignIn and handleSignUp, they are now in useAuthForm
 
   const handleOverlayClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
@@ -148,7 +114,7 @@ const VisualLoginForm = () => {
                         id="signin-email"
                         type="email"
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={handleEmailChange} // Use handler from hook
                         placeholder="Enter your email"
                         required
                         className="h-12"
@@ -160,7 +126,7 @@ const VisualLoginForm = () => {
                         id="signin-password"
                         type="password"
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        onChange={handlePasswordChange} // Use handler from hook
                         placeholder="Enter your password"
                         required
                         className="h-12"
@@ -184,7 +150,7 @@ const VisualLoginForm = () => {
                         id="signup-email"
                         type="email"
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={handleEmailChange} // Use handler from hook
                         placeholder="Enter your email"
                         required
                         className="h-12"
@@ -196,13 +162,14 @@ const VisualLoginForm = () => {
                         id="signup-password"
                         type="password"
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        onChange={handlePasswordChange} // Use handler from hook
                         placeholder="Create a password"
                         required
                         minLength={6}
                         className="h-12"
                       />
                     </div>
+                    {/* Add Confirm Password field here if desired, using handleConfirmPasswordChange */}
                     <Button 
                       type="submit" 
                       className="w-full h-12 bg-amber-600 hover:bg-amber-700 text-white font-semibold" 
