@@ -33,9 +33,12 @@ const ClimbList = ({
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  // Reverse the climbs array to show most recent first
+  const reversedClimbs = [...climbs].reverse();
+
   return (
     <div className="space-y-3">
-      {climbs.map((climb) => (
+      {reversedClimbs.map((climb) => (
         <Card key={climb.id} className="border-stone-200 bg-white">
           <CardContent className="p-4">
             <div className="flex items-start justify-between mb-2">
