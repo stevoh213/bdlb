@@ -120,6 +120,27 @@ const Index = () => {
     });
   };
 
+  const resumeEndedSession = (sessionId: string) => {
+    const sessionToResume = sessions.find(session => session.id === sessionId);
+    if (!sessionToResume) return;
+
+    // Remove the session from sessions list
+    setSessions(prev => prev.filter(session => session.id !== sessionId));
+
+    // Create a resumed session (remove endTime and make it active)
+    const resumedSession: Session = {
+      ...sessionToResume,
+      endTime: undefined,
+      isActive: true
+    };
+
+    setCurrentSession(resumedSession);
+    toast({
+      title: "Session Resumed",
+      description: `Resumed ${sessionToResume.climbingType} session at ${sessionToResume.location}`
+    });
+  };
+
   const endSession = () => {
     if (!currentSession) return;
     const updatedSession: Session = {
@@ -362,44 +383,55 @@ const Index = () => {
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-1">
               {sessions.slice(0, 10).map((session) => (
-                <Link key={session.id} to="/history">
-                  <Card className="border-stone-200 shadow-lg cursor-pointer hover:shadow-xl transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <MapPin className="h-4 w-4 text-stone-600" />
-                            <span className="font-semibold text-stone-800">{session.location}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline" className={`capitalize ${climbingTypeColors[session.climbingType]}`}>
-                              {session.climbingType}
-                            </Badge>
-                            {session.aiAnalysis && (
-                              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                                AI Analyzed
-                              </Badge>
-                            )}
-                          </div>
+                <Card key={session.id} className="border-stone-200 shadow-lg">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="space-y-1 flex-1">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-stone-600" />
+                          <span className="font-semibold text-stone-800">{session.location}</span>
                         </div>
-                        <div className="text-right text-sm text-stone-600">
-                          <div>{formatDate(session.startTime)}</div>
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {getSessionDuration(session)}m
-                          </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className={`capitalize ${climbingTypeColors[session.climbingType]}`}>
+                            {session.climbingType}
+                          </Badge>
+                          {session.aiAnalysis && (
+                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                              AI Analyzed
+                            </Badge>
+                          )}
                         </div>
                       </div>
-                      
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-stone-600">Climbs logged</span>
+                      <div className="text-right text-sm text-stone-600">
+                        <div>{formatDate(session.startTime)}</div>
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {getSessionDuration(session)}m
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm">
+                        <span className="text-stone-600">Climbs logged: </span>
                         <span className="font-semibold text-emerald-600">{session.climbs.length}</span>
                       </div>
-                    </CardContent>
-                  </Card>
-                </Link>
+                      <Button 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          resumeEndedSession(session.id);
+                        }}
+                        size="sm"
+                        className="bg-amber-600 hover:bg-amber-700 text-white"
+                      >
+                        <Play className="h-3 w-3 mr-1" />
+                        Resume
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
           )}
