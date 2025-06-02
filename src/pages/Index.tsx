@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Play, Pause, Plus, Clock, TrendingUp, History, LogOut, MapPin, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
 import ClimbLogForm from "@/components/ClimbLogForm";
@@ -279,65 +278,70 @@ const Index = () => {
         )}
 
         {/* Recent Sessions History */}
-        <Card className="border-stone-200 shadow-lg">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <History className="h-5 w-5 text-stone-600" />
-                Recent Sessions
-              </div>
-              <Link to="/history">
-                <Button variant="ghost" size="sm" className="text-stone-600">
-                  View All
-                </Button>
-              </Link>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {sessions.length === 0 ? (
-              <div className="text-center py-6 text-stone-500">
-                <Calendar className="h-8 w-8 mx-auto mb-2 text-stone-400" />
-                <p className="text-sm">No sessions yet</p>
-              </div>
-            ) : (
-              <ScrollArea className="h-64">
-                <div className="space-y-2">
-                  {sessions.slice(0, 10).map((session) => (
-                    <Link key={session.id} to="/history">
-                      <Card className="cursor-pointer hover:shadow-md transition-shadow border-stone-100">
-                        <CardContent className="p-3">
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <MapPin className="h-3 w-3 text-stone-500" />
-                                <span className="font-medium text-stone-800 text-sm">{session.location}</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Badge variant="outline" className={`text-xs capitalize ${climbingTypeColors[session.climbingType]}`}>
-                                  {session.climbingType}
-                                </Badge>
-                                <span className="text-xs text-stone-500">
-                                  {session.climbs.length} climbs
-                                </span>
-                              </div>
-                            </div>
-                            <div className="text-right text-xs text-stone-500">
-                              <div>{formatDate(session.startTime)}</div>
-                              <div className="flex items-center gap-1">
-                                <Clock className="h-3 w-3" />
-                                {getSessionDuration(session)}m
-                              </div>
-                            </div>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between px-1">
+            <div className="flex items-center gap-2">
+              <History className="h-5 w-5 text-stone-600" />
+              <h2 className="text-lg font-semibold text-stone-800">Recent Sessions</h2>
+            </div>
+            <Link to="/history">
+              <Button variant="ghost" size="sm" className="text-stone-600">
+                View All
+              </Button>
+            </Link>
+          </div>
+
+          {sessions.length === 0 ? (
+            <Card className="border-stone-200 shadow-lg">
+              <CardContent className="p-8 text-center">
+                <Calendar className="h-12 w-12 text-stone-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-stone-700 mb-2">No Sessions Yet</h3>
+                <p className="text-stone-600 mb-4">Start your first climbing session to see it here!</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {sessions.slice(0, 10).map((session) => (
+                <Link key={session.id} to="/history">
+                  <Card className="border-stone-200 shadow-lg cursor-pointer hover:shadow-xl transition-shadow">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <MapPin className="h-4 w-4 text-stone-600" />
+                            <span className="font-semibold text-stone-800">{session.location}</span>
                           </div>
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  ))}
-                </div>
-              </ScrollArea>
-            )}
-          </CardContent>
-        </Card>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className={`capitalize ${climbingTypeColors[session.climbingType]}`}>
+                              {session.climbingType}
+                            </Badge>
+                            {session.aiAnalysis && (
+                              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                                AI Analyzed
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right text-sm text-stone-600">
+                          <div>{formatDate(session.startTime)}</div>
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {getSessionDuration(session)}m
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-stone-600">Climbs logged</span>
+                        <span className="font-semibold text-emerald-600">{session.climbs.length}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Edit Climb Dialog */}
         {editingClimb && (
