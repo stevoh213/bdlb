@@ -1,4 +1,5 @@
 
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, Download } from "lucide-react";
@@ -9,7 +10,6 @@ import EditClimbDialog from "@/components/EditClimbDialog";
 import EditSessionDialog from "@/components/EditSessionDialog";
 import DeleteConfirmDialog from "@/components/DeleteConfirmDialog";
 import SessionAnalysis from "@/components/SessionAnalysis";
-import AIAnalysisDrawer from "@/components/AIAnalysisDrawer";
 
 // Custom hook and new sub-components
 import { useSessionHistory } from "@/hooks/useSessionHistory";
@@ -232,3 +232,4 @@ const History = () => {
 };
 
 export default History;
+

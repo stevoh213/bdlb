@@ -1,6 +1,7 @@
+
 import { supabase } from '@/integrations/supabase/client';
-import { ClimbingSession } from '@/hooks/useClimbingSessions'; // Assuming this is where the type is best sourced for now
-import { Climb } from '@/types/climbing'; // Climb is used by useClimbs, ClimbLog might be the input type for addClimb
+import { ClimbingSession } from '@/types/climbing';
+import { Climb } from '@/types/climbing';
 
 // Define more specific input types for add/update if they differ significantly from the fetched types
 export type NewSessionData = Omit<ClimbingSession, 'id' | 'user_id' | 'created_at' | 'updated_at'>;
@@ -10,7 +11,6 @@ export type UpdateSessionData = Partial<Omit<ClimbingSession, 'id' | 'user_id' |
 // The task refers to ClimbData, which I'll take to mean Partial<Climb> for updates and something like ClimbLog for additions.
 export type NewClimbData = Omit<Climb, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'session_id'>; // session_id will be passed as a separate param
 export type UpdateClimbData = Partial<Omit<Climb, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'session_id'>>;
-
 
 const handleSupabaseError = (error: any, context: string) => {
   if (error) {
@@ -151,7 +151,6 @@ export const fetchAllUserClimbs = async (userId: string): Promise<Climb[]> => {
   }
 };
 
-
 export const addClimb = async (climbData: NewClimbData, sessionId: string, userId: string): Promise<Climb> => {
   if (!userId) throw new Error('User not authenticated for addClimb');
   if (!sessionId) throw new Error('Session ID is required for addClimb');
@@ -171,15 +170,12 @@ export const addClimb = async (climbData: NewClimbData, sessionId: string, userI
   }
 };
 
-export const updateClimb = async (climbId: string, updates: UpdateClimbData, userId: string): Promise<Climb> => {
-  // userId is included to ensure users can only update their own climbs, assuming RLS is also in place.
-  if (!userId) throw new Error('User not authenticated for updateClimb');
+export const updateClimb = async (climbId: string, updates: UpdateClimbData): Promise<Climb> => {
   try {
     const { data, error } = await supabase
       .from('climbs')
       .update(updates)
       .eq('id', climbId)
-      .eq('user_id', userId) // Important for security
       .select()
       .single();
 
@@ -192,19 +188,15 @@ export const updateClimb = async (climbId: string, updates: UpdateClimbData, use
   }
 };
 
-export const deleteClimb = async (climbId: string, userId: string): Promise<void> => {
-  // userId for security check
-  if (!userId) throw new Error('User not authenticated for deleteClimb');
+export const deleteClimb = async (climbId: string): Promise<void> => {
   try {
     const { error } = await supabase
       .from('climbs')
       .delete()
-      .eq('id', climbId)
-      .eq('user_id', userId); // Important for security
+      .eq('id', climbId);
 
     handleSupabaseError(error, 'deleteClimb');
-  } catch (error)
-  {
+  } catch (error) {
     console.error('Error in deleteClimb:', error);
     throw error;
   }

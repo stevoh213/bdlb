@@ -1,4 +1,5 @@
 
+
 import { useState, useMemo, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -93,16 +94,10 @@ export const useSessionHistory = () => {
   const handleCloseAnalysisDrawer = useCallback(() => setShowAnalysisDrawer(false), []);
 
   const handleSaveClimb = useCallback((climbId: string, updates: Partial<LocalClimb>) => {
-    updateClimb(climbId, updates as Partial<Climb>, {
-      onSuccess: () => {
-        toast({ title: "Climb Updated", description: "Your climb has been successfully updated." });
-        handleCloseEditClimbDialog();
-      },
-      onError: (error) => {
-         toast({ title: "Error updating climb", description: error.message, variant: "destructive" });
-      }
-    });
-  }, [updateClimb, toast]);
+    updateClimb({ id: climbId, updates: updates as Partial<Climb> });
+    toast({ title: "Climb Updated", description: "Your climb has been successfully updated." });
+    handleCloseEditClimbDialog();
+  }, [updateClimb, toast, handleCloseEditClimbDialog]);
 
   const handleSaveSession = useCallback((sessionId: string, updates: Partial<Session>) => {
     mockUpdateSession({ sessionId, updates }, {
@@ -114,7 +109,7 @@ export const useSessionHistory = () => {
          toast({ title: "Error updating session", description: error.message, variant: "destructive" });
       }
     });
-  }, [toast]);
+  }, [toast, handleCloseEditSessionDialog]);
 
   const handleConfirmDelete = useCallback(() => {
     if (!deleteConfirm) return;
@@ -143,7 +138,7 @@ export const useSessionHistory = () => {
         }
       });
     }
-  }, [deleteConfirm, toast, selectedSessionId]);
+  }, [deleteConfirm, toast, selectedSessionId, handleSelectSession, handleCloseDeleteDialog]);
 
   const handleAnalysisSaved = useCallback((sessionId: string, analysis: Session['aiAnalysis']) => {
     handleSaveSession(sessionId, { aiAnalysis: analysis });
@@ -186,3 +181,4 @@ export const useSessionHistory = () => {
     handleAnalysisSaved,
   };
 };
+

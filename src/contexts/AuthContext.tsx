@@ -1,4 +1,5 @@
 
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
@@ -45,7 +46,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(false);
 
       // Create profile when user signs up - use correct event name
-      if (event === 'SIGNED_IN' && session?.user && !session.user.email_confirmed_at) {
+      if (event === 'SIGNED_UP' && session?.user) {
         const { error } = await supabase
           .from('profiles')
           .insert([{ id: session.user.id }]);
@@ -95,3 +96,4 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     </AuthContext.Provider>
   );
 };
+

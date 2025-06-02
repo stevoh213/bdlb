@@ -1,25 +1,21 @@
+
 import { useState, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast'; // Corrected path
+import { useToast } from '@/hooks/use-toast';
 
 export interface AuthFormState {
   email: string;
   password: string;
-  // confirmPassword?: string; // For future use if confirm password field is added
 }
 
 interface UseAuthFormProps {
   initialEmail?: string;
   initialPassword?: string;
-  // onSignInSuccess?: () => void; // Optional callbacks for success/error
-  // onSignUpSuccess?: () => void;
-  // onError?: (error: any) => void;
 }
 
 export const useAuthForm = (props: UseAuthFormProps = {}) => {
   const [email, setEmail] = useState(props.initialEmail || '');
   const [password, setPassword] = useState(props.initialPassword || '');
-  // const [confirmPassword, setConfirmPassword] = useState(''); // For future use
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
@@ -34,16 +30,12 @@ export const useAuthForm = (props: UseAuthFormProps = {}) => {
     setPassword(e.target.value);
   }, []);
 
-  // const handleConfirmPasswordChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-  //   setConfirmPassword(e.target.value);
-  // }, []);
-
   const handleSignIn = useCallback(async (event?: React.FormEvent) => {
     if (event) event.preventDefault();
     setIsLoading(true);
     setError(null);
 
-    // Basic validation (can be expanded)
+    // Basic validation
     if (!email || !password) {
       const err = new Error("Email and password are required.");
       setError(err);
@@ -53,10 +45,10 @@ export const useAuthForm = (props: UseAuthFormProps = {}) => {
         variant: "destructive",
       });
       setIsLoading(false);
-      return { error: err, data: null };
+      return { error: err };
     }
 
-    const { error: signInError, data } = await signIn(email, password);
+    const { error: signInError } = await signIn(email, password);
 
     if (signInError) {
       setError(signInError);
@@ -70,14 +62,13 @@ export const useAuthForm = (props: UseAuthFormProps = {}) => {
         title: "Welcome back!",
         description: "You have successfully signed in.",
       });
-      // props.onSignInSuccess?.(); // Call optional callback
     }
 
     setIsLoading(false);
     if (signInError) {
-      return { error: signInError, data: null };
+      return { error: signInError };
     }
-    return { error: null, data };
+    return { error: null };
   }, [email, password, signIn, toast]);
 
   const handleSignUp = useCallback(async (event?: React.FormEvent) => {
@@ -85,14 +76,7 @@ export const useAuthForm = (props: UseAuthFormProps = {}) => {
     setIsLoading(true);
     setError(null);
 
-    // Basic validation (can be expanded)
-    // if (password !== confirmPassword) {
-    //   const err = new Error("Passwords do not match.");
-    //   setError(err);
-    //   toast({ title: "Validation Error", description: err.message, variant: "destructive" });
-    //   setIsLoading(false);
-    //   return { error: err, data: null };
-    // }
+    // Basic validation
     if (!email || !password) {
       const err = new Error("Email and password are required.");
       setError(err);
@@ -102,18 +86,17 @@ export const useAuthForm = (props: UseAuthFormProps = {}) => {
         variant: "destructive",
       });
       setIsLoading(false);
-      return { error: err, data: null };
+      return { error: err };
     }
      if (password.length < 6) {
       const err = new Error("Password must be at least 6 characters long.");
       setError(err);
       toast({ title: "Validation Error", description: err.message, variant: "destructive" });
       setIsLoading(false);
-      return { error: err, data: null };
+      return { error: err };
     }
 
-
-    const { error: signUpError, data } = await signUp(email, password);
+    const { error: signUpError } = await signUp(email, password);
 
     if (signUpError) {
       setError(signUpError);
@@ -127,31 +110,27 @@ export const useAuthForm = (props: UseAuthFormProps = {}) => {
         title: "Account created!",
         description: "Please check your email to verify your account.",
       });
-      // props.onSignUpSuccess?.(); // Call optional callback
     }
 
     setIsLoading(false);
     if (signUpError) {
-      return { error: signUpError, data: null };
+      return { error: signUpError };
     }
-    return { error: null, data };
-  }, [email, password, signUp, toast /*, confirmPassword */]);
+    return { error: null };
+  }, [email, password, signUp, toast]);
 
   return {
     email,
     password,
-    // confirmPassword,
     isLoading,
     error,
-    setEmail, // Exposing direct setters if needed, or use handlers
+    setEmail,
     setPassword,
-    // setConfirmPassword,
     handleEmailChange,
     handlePasswordChange,
-    // handleConfirmPasswordChange,
     handleSignIn,
     handleSignUp,
-    setIsLoading, // Expose if external factors can influence loading
-    setError,     // Expose if external factors can set error
+    setIsLoading,
+    setError,
   };
 };
