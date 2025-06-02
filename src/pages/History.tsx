@@ -2,7 +2,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, Download } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 // Components used by History.tsx directly
 import EditClimbDialog from "@/components/EditClimbDialog";
@@ -13,6 +13,7 @@ import AIAnalysisDrawer from "@/components/AIAnalysisDrawer";
 
 // Custom hook and new sub-components
 import { useSessionHistory } from "@/hooks/useSessionHistory";
+import { useSessionManagement } from "@/hooks/useSessionManagement";
 import SessionList from "@/components/SessionList";
 import SessionDetails from "@/components/SessionDetails";
 
@@ -25,6 +26,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
 const History = () => {
+  const navigate = useNavigate();
   const {
     user,
     sessions,
@@ -53,6 +55,7 @@ const History = () => {
     handleAnalysisSaved,
   } = useSessionHistory();
 
+  const { resumeEndedSession } = useSessionManagement();
   const { toast } = useToast();
   const { signOut } = useAuth();
 
@@ -103,6 +106,11 @@ const History = () => {
     });
   };
 
+  const handleResumeSession = (sessionId: string) => {
+    resumeEndedSession(sessionId);
+    navigate('/'); // Navigate back to the main page where the session can be managed
+  };
+
   // Show session analysis in full screen if showAnalysisDrawer is true and we have a selected session
   if (selectedSession && showAnalysisDrawer) {
     return (
@@ -126,7 +134,7 @@ const History = () => {
           onClose={() => handleSelectSession(null)}
           onEditSession={handleOpenEditSessionDialog}
           onDeleteSession={(session) => handleOpenDeleteDialog(session, 'session')}
-          onResumeSession={() => toast({ title: "Resume Session", description: "This feature is under review."})}
+          onResumeSession={handleResumeSession}
           onShowAnalysisDrawer={handleOpenAnalysisDrawer}
           onEditClimb={handleOpenEditClimbDialog}
           onDeleteClimb={(climb) => handleOpenDeleteDialog(climb, 'climb')}

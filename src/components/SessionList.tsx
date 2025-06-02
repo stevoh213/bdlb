@@ -1,11 +1,13 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { MapPin, Clock, ChevronDown } from "lucide-react";
 import { formatDate, getSessionDuration } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import styles from "./SessionList.module.css"; // Import the CSS module
 import { Session } from "@/types/climbing"; // Assuming global Session type
+import { useState } from "react";
 
 // Define ClimbingType more strictly if possible, or use string.
 // This should align with the values used as keys in SessionList.module.css
@@ -16,16 +18,27 @@ interface SessionListProps {
   sessions: Session[]; // Using global Session type
   selectedSessionId?: string | null; // To highlight the selected session
   onSelectSession: (sessionId: string) => void;
+  showLoadMore?: boolean; // Control whether to show load more button
 }
 
-const SessionList = ({ sessions, selectedSessionId, onSelectSession }: SessionListProps) => {
+const SessionList = ({ sessions, selectedSessionId, onSelectSession, showLoadMore = true }: SessionListProps) => {
+  const [displayCount, setDisplayCount] = useState(5);
+  
   if (sessions.length === 0) {
     return null; // Or a "No sessions" message, though History.tsx handles this globally
   }
 
+  // If showLoadMore is false, show all sessions passed in (for RecentSessions component)
+  const visibleSessions = showLoadMore ? sessions.slice(0, displayCount) : sessions;
+  const hasMoreSessions = showLoadMore && sessions.length > displayCount;
+
+  const handleLoadMore = () => {
+    setDisplayCount(prev => prev + 5);
+  };
+
   return (
     <div className="space-y-3">
-      {sessions.map((session) => {
+      {visibleSessions.map((session) => {
         // Ensure session.startTime is a Date object, or handle string conversion
         const sessionStartTime = typeof session.startTime === 'string' ? new Date(session.startTime) : session.startTime;
         
@@ -84,6 +97,19 @@ const SessionList = ({ sessions, selectedSessionId, onSelectSession }: SessionLi
           </Card>
         );
       })}
+      
+      {hasMoreSessions && showLoadMore && (
+        <div className="flex justify-center pt-4">
+          <Button
+            variant="ghost"
+            onClick={handleLoadMore}
+            className="text-stone-600 hover:text-stone-800 hover:bg-stone-100"
+          >
+            <ChevronDown className="h-4 w-4 mr-2" />
+            Load older sessions
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
