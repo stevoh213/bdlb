@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Play, Pause, Plus, Clock, TrendingUp, History, LogOut, MapPin, Calendar } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import ClimbLogForm from "@/components/ClimbLogForm";
 import SessionStats from "@/components/SessionStats";
 import ClimbList from "@/components/ClimbList";
@@ -23,6 +23,7 @@ const Index = () => {
   const [sessionTime, setSessionTime] = useState(0);
   const { toast } = useToast();
   const { signOut, user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Load saved data from localStorage
@@ -258,6 +259,10 @@ const Index = () => {
     multipitch: "bg-red-100 text-red-800 border-red-200"
   };
 
+  const handleSessionClick = (session: Session) => {
+    navigate('/history', { state: { selectedSessionId: session.id } });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-stone-100 p-4">
       <div className="max-w-md mx-auto space-y-4">
@@ -385,7 +390,7 @@ const Index = () => {
           ) : (
             <div className="space-y-1">
               {sessions.slice(0, 10).map((session) => (
-                <Card key={session.id} className="border-stone-200 shadow-lg">
+                <Card key={session.id} className="border-stone-200 shadow-lg cursor-pointer hover:shadow-xl transition-shadow" onClick={() => handleSessionClick(session)}>
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between mb-3">
                       <div className="space-y-1 flex-1">
@@ -413,22 +418,9 @@ const Index = () => {
                       </div>
                     </div>
                     
-                    <div className="flex items-center justify-between">
-                      <div className="text-sm">
-                        <span className="text-stone-600">Climbs logged: </span>
-                        <span className="font-semibold text-emerald-600">{session.climbs.length}</span>
-                      </div>
-                      <Button 
-                        onClick={(e) => {
-                          e.preventDefault();
-                          resumeEndedSession(session.id);
-                        }}
-                        size="sm"
-                        className="bg-amber-600 hover:bg-amber-700 text-white"
-                      >
-                        <Play className="h-3 w-3 mr-1" />
-                        Resume
-                      </Button>
+                    <div className="text-sm">
+                      <span className="text-stone-600">Climbs logged: </span>
+                      <span className="font-semibold text-emerald-600">{session.climbs.length}</span>
                     </div>
                   </CardContent>
                 </Card>

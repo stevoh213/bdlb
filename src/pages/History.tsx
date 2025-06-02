@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Calendar, MapPin, Clock, TrendingUp, Download, LogOut, Edit, Trash2, Brain, ChevronRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import { ArrowLeft, Calendar, MapPin, Clock, TrendingUp, Download, LogOut, Edit, Trash2, Brain, ChevronRight, Play } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import SessionStats from "@/components/SessionStats";
 import ClimbList from "@/components/ClimbList";
 import EditClimbDialog from "@/components/EditClimbDialog";
@@ -15,6 +15,7 @@ import { Session, LocalClimb } from "@/types/climbing";
 import { exportToCSV } from "@/utils/csvExport";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+
 const History = () => {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
@@ -25,13 +26,11 @@ const History = () => {
     item: Session | LocalClimb;
   } | null>(null);
   const [showAnalysis, setShowAnalysis] = useState(false);
-  const {
-    toast
-  } = useToast();
-  const {
-    signOut,
-    user
-  } = useAuth();
+  const { toast } = useToast();
+  const { signOut, user } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+
   useEffect(() => {
     const savedSessions = localStorage.getItem('sessions');
     if (savedSessions) {
@@ -47,8 +46,45 @@ const History = () => {
         });
       });
       setSessions(parsedSessions);
+
+      // Check if we should auto-select a session from navigation state
+      const { selectedSessionId } = location.state || {};
+      if (selectedSessionId) {
+        const session = parsedSessions.find((s: Session) => s.id === selectedSessionId);
+        if (session) {
+          setSelectedSession(session);
+        }
+      }
     }
-  }, []);
+  }, [location.state]);
+
+  const resumeEndedSession = (sessionId: string) => {
+    const sessionToResume = sessions.find(session => session.id === sessionId);
+    if (!sessionToResume) return;
+
+    // Remove the session from sessions list
+    const updatedSessions = sessions.filter(session => session.id !== sessionId);
+    setSessions(updatedSessions);
+    localStorage.setItem('sessions', JSON.stringify(updatedSessions));
+
+    // Create a resumed session (remove endTime and make it active)
+    const resumedSession: Session = {
+      ...sessionToResume,
+      endTime: undefined,
+      isActive: true
+    };
+
+    // Save as current session and navigate back to main page
+    localStorage.setItem('currentSession', JSON.stringify(resumedSession));
+    
+    toast({
+      title: "Session Resumed",
+      description: `Resumed ${sessionToResume.climbingType} session at ${sessionToResume.location}`
+    });
+
+    navigate('/');
+  };
+
   const formatDate = (date: Date) => {
     return date.toLocaleDateString([], {
       weekday: 'short',
@@ -57,16 +93,19 @@ const History = () => {
       year: 'numeric'
     });
   };
+
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], {
       hour: '2-digit',
       minute: '2-digit'
     });
   };
+
   const getSessionDuration = (session: Session) => {
     if (!session.endTime) return 0;
     return Math.floor((session.endTime.getTime() - session.startTime.getTime()) / 1000 / 60);
   };
+
   const climbingTypeColors = {
     sport: "bg-blue-100 text-blue-800 border-blue-200",
     trad: "bg-purple-100 text-purple-800 border-purple-200",
@@ -74,6 +113,7 @@ const History = () => {
     toprope: "bg-green-100 text-green-800 border-green-200",
     multipitch: "bg-red-100 text-red-800 border-red-200"
   };
+
   const handleExportCSV = () => {
     if (sessions.length === 0) {
       toast({
@@ -89,6 +129,7 @@ const History = () => {
       description: `Exported ${sessions.length} sessions to CSV`
     });
   };
+
   const handleLogout = () => {
     signOut();
     toast({
@@ -96,15 +137,18 @@ const History = () => {
       description: "You have been successfully logged out"
     });
   };
+
   const handleEditClimb = (climb: LocalClimb) => {
     setEditingClimb(climb);
   };
+
   const handleDeleteClimb = (climb: LocalClimb) => {
     setDeleteConfirm({
       type: 'climb',
       item: climb
     });
   };
+
   const handleSaveClimb = (climbId: string, updates: Partial<LocalClimb>) => {
     const updatedSessions = sessions.map(session => ({
       ...session,
@@ -128,15 +172,18 @@ const History = () => {
       description: "Your climb has been successfully updated."
     });
   };
+
   const handleEditSession = (session: Session) => {
     setEditingSession(session);
   };
+
   const handleDeleteSession = (session: Session) => {
     setDeleteConfirm({
       type: 'session',
       item: session
     });
   };
+
   const handleSaveSession = (sessionId: string, updates: Partial<Session>) => {
     const updatedSessions = sessions.map(session => session.id === sessionId ? {
       ...session,
@@ -157,6 +204,7 @@ const History = () => {
       description: "Your session has been successfully updated."
     });
   };
+
   const handleConfirmDelete = () => {
     if (!deleteConfirm) return;
     if (deleteConfirm.type === 'session') {
@@ -194,6 +242,7 @@ const History = () => {
     }
     setDeleteConfirm(null);
   };
+
   const handleAnalysisSaved = (sessionId: string, analysis: Session['aiAnalysis']) => {
     const updatedSessions = sessions.map(session => session.id === sessionId ? {
       ...session,
@@ -210,15 +259,24 @@ const History = () => {
       } : null);
     }
   };
+
   if (showAnalysis && selectedSession) {
-    return <div className="min-h-screen bg-gradient-to-br from-slate-50 to-stone-100 p-4">
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-stone-100 p-4">
         <div className="max-w-md mx-auto">
-          <SessionAnalysis session={selectedSession} onClose={() => setShowAnalysis(false)} onAnalysisSaved={handleAnalysisSaved} />
+          <SessionAnalysis 
+            session={selectedSession} 
+            onClose={() => setShowAnalysis(false)} 
+            onAnalysisSaved={handleAnalysisSaved} 
+          />
         </div>
-      </div>;
+      </div>
+    );
   }
+
   if (selectedSession) {
-    return <div className="min-h-screen bg-gradient-to-br from-slate-50 to-stone-100 p-4">
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-stone-100 p-4">
         <div className="max-w-md mx-auto space-y-4">
           <div className="flex items-center gap-3 py-4">
             <Button variant="ghost" size="icon" onClick={() => setSelectedSession(null)} className="text-stone-600">
@@ -262,13 +320,22 @@ const History = () => {
                   <span className="text-stone-600">Duration</span>
                   <span className="font-semibold">{getSessionDuration(selectedSession)}m</span>
                 </div>
-                {selectedSession.notes && <div className="text-sm">
+                {selectedSession.notes && (
+                  <div className="text-sm">
                     <span className="text-stone-600">Notes: </span>
                     <span className="italic">{selectedSession.notes}</span>
-                  </div>}
+                  </div>
+                )}
                 <SessionStats session={selectedSession} />
                 
                 <div className="flex gap-2 pt-2">
+                  <Button 
+                    onClick={() => resumeEndedSession(selectedSession.id)} 
+                    className="flex-1 bg-amber-600 hover:bg-amber-700 text-white"
+                  >
+                    <Play className="h-4 w-4 mr-2" />
+                    Resume Session
+                  </Button>
                   <Button onClick={() => setShowAnalysis(true)} className="flex-1 bg-blue-600 hover:bg-blue-700">
                     <Brain className="h-4 w-4 mr-2" />
                     {selectedSession.aiAnalysis ? 'View Analysis' : 'AI Analysis'}
@@ -302,7 +369,8 @@ const History = () => {
             </AIAnalysisDrawer>
           )}
 
-          {selectedSession.climbs.length > 0 && <Card className="border-stone-200 shadow-lg">
+          {selectedSession.climbs.length > 0 && (
+            <Card className="border-stone-200 shadow-lg">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2">
                   <TrendingUp className="h-5 w-5 text-emerald-600" />
@@ -310,19 +378,52 @@ const History = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <ClimbList climbs={selectedSession.climbs} onEdit={handleEditClimb} onDelete={handleDeleteClimb} showEditButton={true} showDeleteButton={true} />
+                <ClimbList 
+                  climbs={selectedSession.climbs} 
+                  onEdit={handleEditClimb} 
+                  onDelete={handleDeleteClimb} 
+                  showEditButton={true} 
+                  showDeleteButton={true} 
+                />
               </CardContent>
-            </Card>}
+            </Card>
+          )}
 
-          {editingClimb && <EditClimbDialog climb={editingClimb} open={true} onOpenChange={open => !open && setEditingClimb(null)} onSave={handleSaveClimb} />}
+          {editingClimb && (
+            <EditClimbDialog 
+              climb={editingClimb} 
+              open={true} 
+              onOpenChange={open => !open && setEditingClimb(null)} 
+              onSave={handleSaveClimb} 
+            />
+          )}
 
-          {editingSession && <EditSessionDialog session={editingSession} open={true} onOpenChange={open => !open && setEditingSession(null)} onSave={handleSaveSession} />}
+          {editingSession && (
+            <EditSessionDialog 
+              session={editingSession} 
+              open={true} 
+              onOpenChange={open => !open && setEditingSession(null)} 
+              onSave={handleSaveSession} 
+            />
+          )}
 
-          {deleteConfirm && <DeleteConfirmDialog open={true} onOpenChange={open => !open && setDeleteConfirm(null)} onConfirm={handleConfirmDelete} title={deleteConfirm.type === 'session' ? 'Delete Session' : 'Delete Climb'} description={deleteConfirm.type === 'session' ? 'Are you sure you want to delete this entire climbing session? This will also delete all climbs in this session.' : 'Are you sure you want to delete this climb?'} itemName={deleteConfirm.type === 'session' ? (deleteConfirm.item as Session).location : (deleteConfirm.item as LocalClimb).name} />}
+          {deleteConfirm && (
+            <DeleteConfirmDialog 
+              open={true} 
+              onOpenChange={open => !open && setDeleteConfirm(null)} 
+              onConfirm={handleConfirmDelete} 
+              title={deleteConfirm.type === 'session' ? 'Delete Session' : 'Delete Climb'} 
+              description={deleteConfirm.type === 'session' ? 'Are you sure you want to delete this entire climbing session? This will also delete all climbs in this session.' : 'Are you sure you want to delete this climb?'} 
+              itemName={deleteConfirm.type === 'session' ? (deleteConfirm.item as Session).location : (deleteConfirm.item as LocalClimb).name} 
+            />
+          )}
         </div>
-      </div>;
+      </div>
+    );
   }
-  return <div className="min-h-screen bg-gradient-to-br from-slate-50 to-stone-100 p-4">
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-stone-100 p-4">
       <div className="max-w-md mx-auto space-y-4">
         <div className="flex items-center gap-3 py-4">
           <Link to="/">
@@ -332,15 +433,17 @@ const History = () => {
           </Link>
           <h1 className="text-2xl font-bold text-stone-800 flex-1">Session History</h1>
           <div className="flex items-center gap-2">
-            {sessions.length > 0 && <Button variant="outline" size="sm" onClick={handleExportCSV} className="text-stone-600 border-stone-300">
+            {sessions.length > 0 && (
+              <Button variant="outline" size="sm" onClick={handleExportCSV} className="text-stone-600 border-stone-300">
                 <Download className="h-4 w-4 mr-2" />
                 Export CSV
-              </Button>}
-            
+              </Button>
+            )}
           </div>
         </div>
 
-        {sessions.length === 0 ? <Card className="border-stone-200 shadow-lg">
+        {sessions.length === 0 ? (
+          <Card className="border-stone-200 shadow-lg">
             <CardContent className="p-8 text-center">
               <Calendar className="h-12 w-12 text-stone-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-stone-700 mb-2">No Sessions Yet</h3>
@@ -351,8 +454,11 @@ const History = () => {
                 </Button>
               </Link>
             </CardContent>
-          </Card> : <div className="space-y-3">
-            {sessions.map(session => <Card key={session.id} className="border-stone-200 shadow-lg cursor-pointer hover:shadow-xl transition-shadow" onClick={() => setSelectedSession(session)}>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {sessions.map((session) => (
+              <Card key={session.id} className="border-stone-200 shadow-lg cursor-pointer hover:shadow-xl transition-shadow" onClick={() => setSelectedSession(session)}>
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-3">
                     <div className="space-y-1">
@@ -364,9 +470,11 @@ const History = () => {
                         <Badge variant="outline" className={`capitalize ${climbingTypeColors[session.climbingType]}`}>
                           {session.climbingType}
                         </Badge>
-                        {session.aiAnalysis && <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                        {session.aiAnalysis && (
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
                             AI Analyzed
-                          </Badge>}
+                          </Badge>
+                        )}
                       </div>
                     </div>
                     <div className="text-right text-sm text-stone-600">
@@ -383,11 +491,24 @@ const History = () => {
                     <span className="font-semibold text-emerald-600">{session.climbs.length}</span>
                   </div>
                 </CardContent>
-              </Card>)}
-          </div>}
+              </Card>
+            ))}
+          </div>
+        )}
 
-        {deleteConfirm && <DeleteConfirmDialog open={true} onOpenChange={open => !open && setDeleteConfirm(null)} onConfirm={handleConfirmDelete} title={deleteConfirm.type === 'session' ? 'Delete Session' : 'Delete Climb'} description={deleteConfirm.type === 'session' ? 'Are you sure you want to delete this entire climbing session? This will also delete all climbs in this session.' : 'Are you sure you want to delete this climb?'} itemName={deleteConfirm.type === 'session' ? (deleteConfirm.item as Session).location : (deleteConfirm.item as LocalClimb).name} />}
+        {deleteConfirm && (
+          <DeleteConfirmDialog 
+            open={true} 
+            onOpenChange={open => !open && setDeleteConfirm(null)} 
+            onConfirm={handleConfirmDelete} 
+            title={deleteConfirm.type === 'session' ? 'Delete Session' : 'Delete Climb'} 
+            description={deleteConfirm.type === 'session' ? 'Are you sure you want to delete this entire climbing session? This will also delete all climbs in this session.' : 'Are you sure you want to delete this climb?'} 
+            itemName={deleteConfirm.type === 'session' ? (deleteConfirm.item as Session).location : (deleteConfirm.item as LocalClimb).name} 
+          />
+        )}
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default History;
