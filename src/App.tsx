@@ -5,7 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import SupabaseLoginForm from "@/components/SupabaseLoginForm";
+import VisualLoginForm from "@/components/VisualLoginForm";
 import Navigation from "@/components/Navigation";
 import Index from "./pages/Index";
 import History from "./pages/History";
@@ -25,7 +25,7 @@ const AppContent = () => {
   }
 
   if (!isAuthenticated) {
-    return <SupabaseLoginForm />;
+    return <VisualLoginForm />;
   }
 
   return (
