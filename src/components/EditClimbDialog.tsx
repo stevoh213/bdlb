@@ -21,6 +21,7 @@ const EditClimbDialog = ({ climb, open, onOpenChange, onSave }: EditClimbDialogP
     name: climb.name,
     grade: climb.grade,
     tickType: climb.tickType,
+    attempts: climb.attempts || 1,
     height: climb.height || "",
     timeOnWall: climb.timeOnWall || "",
     effort: climb.effort || "",
@@ -34,6 +35,7 @@ const EditClimbDialog = ({ climb, open, onOpenChange, onSave }: EditClimbDialogP
       name: formData.name,
       grade: formData.grade,
       tickType: formData.tickType as LocalClimb['tickType'],
+      attempts: formData.tickType === 'attempt' ? formData.attempts : undefined,
       height: formData.height ? Number(formData.height) : undefined,
       timeOnWall: formData.timeOnWall ? Number(formData.timeOnWall) : undefined,
       effort: formData.effort ? Number(formData.effort) : undefined,
@@ -78,7 +80,11 @@ const EditClimbDialog = ({ climb, open, onOpenChange, onSave }: EditClimbDialogP
             <Label>Tick Type</Label>
             <Select 
               value={formData.tickType} 
-              onValueChange={(value) => setFormData(prev => ({ ...prev, tickType: value as LocalClimb['tickType'] }))}
+              onValueChange={(value) => setFormData(prev => ({ 
+                ...prev, 
+                tickType: value as LocalClimb['tickType'],
+                attempts: value !== 'attempt' ? 1 : prev.attempts
+              }))}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -91,6 +97,27 @@ const EditClimbDialog = ({ climb, open, onOpenChange, onSave }: EditClimbDialogP
               </SelectContent>
             </Select>
           </div>
+
+          {formData.tickType === 'attempt' && (
+            <div>
+              <Label htmlFor="attempts">Number of Attempts</Label>
+              <Select 
+                value={formData.attempts.toString()} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, attempts: Number(value) }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[1, 2, 3, 4, 5].map((num) => (
+                    <SelectItem key={num} value={num.toString()}>
+                      {num} attempt{num !== 1 ? 's' : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="grid grid-cols-3 gap-2">
             <div>

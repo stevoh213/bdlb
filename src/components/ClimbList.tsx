@@ -50,6 +50,7 @@ const ClimbList = ({
                   </Badge>
                   <Badge variant="outline" className={`capitalize ${tickTypeColors[climb.tickType]}`}>
                     {climb.tickType}
+                    {climb.tickType === 'attempt' && climb.attempts && climb.attempts > 1 && ` (${climb.attempts})`}
                   </Badge>
                 </div>
               </div>
