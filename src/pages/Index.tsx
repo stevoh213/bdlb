@@ -20,6 +20,7 @@ const Index = () => {
   const [climbs, setClimbs] = useState<LocalClimb[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [editingClimb, setEditingClimb] = useState<LocalClimb | null>(null);
+  const [sessionTime, setSessionTime] = useState(0);
   const { toast } = useToast();
   const { signOut, user } = useAuth();
 
@@ -54,6 +55,18 @@ const Index = () => {
     }
   }, []);
 
+  // Real-time timer for active session
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (currentSession && currentSession.isActive) {
+      interval = setInterval(() => {
+        const elapsed = Math.floor((new Date().getTime() - currentSession.startTime.getTime()) / 1000);
+        setSessionTime(elapsed);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [currentSession]);
+
   useEffect(() => {
     // Save to localStorage whenever state changes
     if (currentSession) {
@@ -80,6 +93,30 @@ const Index = () => {
     toast({
       title: "Session Started",
       description: `Started ${sessionData.climbingType} session at ${sessionData.location}`
+    });
+  };
+
+  const pauseSession = () => {
+    if (!currentSession) return;
+    setCurrentSession(prev => prev ? {
+      ...prev,
+      isActive: false
+    } : null);
+    toast({
+      title: "Session Paused",
+      description: "Session has been paused"
+    });
+  };
+
+  const resumeSession = () => {
+    if (!currentSession) return;
+    setCurrentSession(prev => prev ? {
+      ...prev,
+      isActive: true
+    } : null);
+    toast({
+      title: "Session Resumed",
+      description: "Session has been resumed"
     });
   };
 
@@ -152,6 +189,17 @@ const Index = () => {
     });
   };
 
+  const formatTime = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = seconds % 60;
+    
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+    }
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
   const sessionDuration = currentSession ? Math.floor((new Date().getTime() - currentSession.startTime.getTime()) / 1000 / 60) : 0;
 
   const handleLogout = () => {
@@ -169,7 +217,7 @@ const Index = () => {
     });
   };
 
-  const formatTime = (date: Date) => {
+  const formatTimeForHistory = (date: Date) => {
     return date.toLocaleTimeString([], {
       hour: '2-digit',
       minute: '2-digit'
@@ -205,23 +253,37 @@ const Index = () => {
               <div className="space-y-3">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Badge variant="outline" className="border-green-500 text-green-700">
-                      <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
-                      Active
-                    </Badge>
-                    <span className="text-lg font-semibold text-stone-700">
-                      {sessionDuration}m
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className={currentSession.isActive ? "border-green-500 text-green-700" : "border-orange-500 text-orange-700"}>
+                        <div className={`w-2 h-2 rounded-full mr-2 ${currentSession.isActive ? 'bg-green-500 animate-pulse' : 'bg-orange-500'}`}></div>
+                        {currentSession.isActive ? 'Active' : 'Paused'}
+                      </Badge>
+                      <span className="text-lg font-mono font-semibold text-stone-700">
+                        {formatTime(sessionTime)}
+                      </span>
+                    </div>
                   </div>
                   <div className="text-sm text-stone-600">
                     <div className="capitalize">{currentSession.climbingType} at {currentSession.location}</div>
                   </div>
                 </div>
                 <SessionStats session={currentSession} />
-                <Button onClick={endSession} variant="outline" className="w-full border-red-200 text-red-700 hover:bg-red-50">
-                  <Pause className="h-4 w-4 mr-2" />
-                  End Session
-                </Button>
+                <div className="flex gap-2">
+                  {currentSession.isActive ? (
+                    <Button onClick={pauseSession} variant="outline" className="flex-1 border-orange-200 text-orange-700 hover:bg-orange-50">
+                      <Pause className="h-4 w-4 mr-2" />
+                      Pause
+                    </Button>
+                  ) : (
+                    <Button onClick={resumeSession} className="flex-1 bg-green-600 hover:bg-green-700 text-white">
+                      <Play className="h-4 w-4 mr-2" />
+                      Resume
+                    </Button>
+                  )}
+                  <Button onClick={endSession} variant="outline" className="flex-1 border-red-200 text-red-700 hover:bg-red-50">
+                    End Session
+                  </Button>
+                </div>
               </div>
             ) : (
               <div className="space-y-3">
