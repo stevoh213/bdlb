@@ -17,6 +17,7 @@ interface ClimbLogFormProps {
     name: string;
     grade: string;
     tickType: 'send' | 'attempt' | 'flash' | 'onsight';
+    attempts?: number;
     height?: number;
     timeOnWall?: number;
     effort: number;
@@ -35,6 +36,7 @@ const ClimbLogForm = ({ onSubmit, onCancel, gradeSystem = 'yds', sessionLocation
   const [grade, setGrade] = useState("");
   const [location, setLocation] = useState(sessionLocation || "");
   const [tickType, setTickType] = useState<'send' | 'attempt' | 'flash' | 'onsight'>('send');
+  const [attempts, setAttempts] = useState(1);
   const [height, setHeight] = useState<number | undefined>();
   const [timeOnWall, setTimeOnWall] = useState<number | undefined>();
   const [effort, setEffort] = useState([7]);
@@ -52,6 +54,7 @@ const ClimbLogForm = ({ onSubmit, onCancel, gradeSystem = 'yds', sessionLocation
       grade,
       location: location || undefined,
       tickType,
+      attempts: tickType === 'attempt' ? attempts : undefined,
       height,
       timeOnWall,
       effort: effort[0],
@@ -65,6 +68,7 @@ const ClimbLogForm = ({ onSubmit, onCancel, gradeSystem = 'yds', sessionLocation
     setGrade("");
     setLocation(sessionLocation || "");
     setTickType('send');
+    setAttempts(1);
     setHeight(undefined);
     setTimeOnWall(undefined);
     setEffort([7]);
@@ -123,13 +127,35 @@ const ClimbLogForm = ({ onSubmit, onCancel, gradeSystem = 'yds', sessionLocation
                 className={`h-12 flex items-center justify-center cursor-pointer transition-all capitalize ${
                   tickType === type ? tickTypeColors[type] : "border-stone-300 text-stone-600 hover:bg-stone-50"
                 }`}
-                onClick={() => setTickType(type)}
+                onClick={() => {
+                  setTickType(type);
+                  if (type !== 'attempt') {
+                    setAttempts(1);
+                  }
+                }}
               >
                 {type}
               </Badge>
             ))}
           </div>
         </div>
+
+        {/* Attempts field - only show for attempt tick type */}
+        {tickType === 'attempt' && (
+          <div>
+            <Label htmlFor="attempts" className="text-stone-700 font-medium">Number of Attempts *</Label>
+            <Select value={attempts.toString()} onValueChange={(value) => setAttempts(Number(value))} required>
+              <SelectTrigger className="h-12 text-lg border-stone-300 focus:border-emerald-500">
+                <SelectValue placeholder="Select attempts" />
+              </SelectTrigger>
+              <SelectContent className="bg-white">
+                {[1, 2, 3, 4, 5].map((num) => (
+                  <SelectItem key={num} value={num.toString()}>{num} attempt{num !== 1 ? 's' : ''}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
 
       {/* Optional Fields Toggle */}

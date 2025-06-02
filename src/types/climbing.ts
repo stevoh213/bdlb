@@ -66,6 +66,7 @@ export interface LocalClimb {
   name: string;
   grade: string;
   tickType: 'send' | 'attempt' | 'flash' | 'onsight';
+  attempts?: number;
   timestamp: Date;
   sessionId?: string;
   height?: number;
