@@ -5,46 +5,38 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import * as climbingService from '@/services/climbingService'; // Import the service
 import type { NewSessionData } from '@/services/climbingService'; // Import type for addSession
-
-// This interface might be better placed in a dedicated types file (e.g., src/types/climbing.ts)
-// if it's used by the service layer as well, to avoid circular dependencies or misplacements.
-// For now, keeping it here as the service imports it from here.
-export interface ClimbingSession {
-  id: string;
-  date: string;
-  duration: number; // Assuming duration is stored in a consistent unit, e.g., minutes or seconds
-  location: string;
-  location_type?: 'indoor' | 'outdoor';
-  // default_climb_type is not standard, perhaps 'climbing_type' or similar from SessionForm?
-  // For now, keeping as is from original file.
-  default_climb_type?: 'sport' | 'trad' | 'boulder' | 'top rope' | 'alpine';
-  notes?: string;
-  user_id: string;
-  created_at: string;
-  updated_at: string;
-  // Fields from SessionForm that might be part of a session object:
-  gradeSystem?: string; // From SessionForm
-  // Consider if 'climbs', 'isActive', 'breaks', 'totalBreakTime' from Session type in SessionForm.tsx are relevant here.
-}
-
+import { ClimbingSession, Session } from '@/types/climbing'; // Import Session and ClimbingSession
 
 export const useClimbingSessions = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: sessions = [], isLoading, error } = useQuery<ClimbingSession[], Error>({
+  const { data: sessions = [], isLoading, error } = useQuery<Session[], Error>({
     queryKey: ['climbing_sessions', user?.id],
-    queryFn: async () => {
+    queryFn: async (): Promise<Session[]> => {
       if (!user) return [];
-      // Use the service layer function
-      return climbingService.fetchSessions(user.id);
+      const dbSessions: ClimbingSession[] = await climbingService.fetchSessions(user.id);
+      return dbSessions.map((cs: ClimbingSession): Session => ({
+        id: cs.id,
+        location: cs.location,
+        climbingType: cs.default_climb_type || 'sport', // Default to 'sport' or handle as error/log if undefined
+        gradeSystem: cs.gradeSystem,
+        notes: cs.notes,
+        startTime: new Date(cs.date),
+        endTime: cs.duration ? new Date(new Date(cs.date).getTime() + cs.duration * 60000) : undefined, // Assuming duration is in minutes
+        climbs: [], // Initialize with empty climbs
+        isActive: false, // Default value
+        breaks: 0, // Default value
+        totalBreakTime: 0, // Default value
+        aiAnalysis: undefined, // Default value
+      }));
     },
     enabled: !!user,
   });
 
   const addSessionMutation = useMutation<
-    ClimbingSession, // Type of data returned by mutationFn
+    ClimbingSession, // Still returns ClimbingSession from the service
     Error, // Type of error
     NewSessionData // Type of variables passed to mutationFn
   >({

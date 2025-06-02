@@ -1,13 +1,13 @@
 import { useState, useCallback, useMemo } from "react";
 import { Session } from "@/types/climbing"; // Assuming Session type is relevant
-import { getGradeSystemForClimbType, GradeSystemName } from "@/utils/gradeSystem";
+import { getGradeSystemForClimbType, GradeSystem } from "@/utils/gradeSystem";
 
 export type ClimbingType = 'sport' | 'trad' | 'boulder' | 'top rope' | 'alpine';
 
 export interface SessionFormData {
   location: string;
   climbingType: ClimbingType;
-  gradeSystem: GradeSystemName; // This will be derived
+  gradeSystem: string; // Changed from GradeSystemName
   notes?: string;
   // Add other fields from Session that are part of the form if any
   // e.g. date, duration, summary, participants - based on original task description

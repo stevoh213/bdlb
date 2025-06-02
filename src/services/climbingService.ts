@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { ClimbingSession } from '@/hooks/useClimbingSessions'; // Assuming this is where the type is best sourced for now
-import { Climb, ClimbLog } from '@/types/climbing'; // Climb is used by useClimbs, ClimbLog might be the input type for addClimb
+import { Climb } from '@/types/climbing'; // Climb is used by useClimbs, ClimbLog might be the input type for addClimb
 
 // Define more specific input types for add/update if they differ significantly from the fetched types
 export type NewSessionData = Omit<ClimbingSession, 'id' | 'user_id' | 'created_at' | 'updated_at'>;
