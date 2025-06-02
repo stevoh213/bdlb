@@ -10,6 +10,7 @@ import EditClimbDialog from "@/components/EditClimbDialog";
 import EditSessionDialog from "@/components/EditSessionDialog";
 import DeleteConfirmDialog from "@/components/DeleteConfirmDialog";
 import SessionAnalysis from "@/components/SessionAnalysis";
+import AIAnalysisDrawer from "@/components/AIAnalysisDrawer";
 import { Session, LocalClimb } from "@/types/climbing";
 import { exportToCSV } from "@/utils/csvExport";
 import { useToast } from "@/hooks/use-toast";
@@ -277,20 +278,27 @@ const History = () => {
             </CardContent>
           </Card>
 
-          {selectedSession.aiAnalysis && <Card className="border-blue-200 shadow-lg">
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-blue-700">
-                  <Brain className="h-5 w-5" />
-                  AI Analysis Summary
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-stone-700 mb-2">{selectedSession.aiAnalysis.summary}</p>
-                <div className="text-xs text-stone-500">
-                  Generated on {selectedSession.aiAnalysis.generatedAt.toLocaleDateString()}
-                </div>
-              </CardContent>
-            </Card>}
+          {selectedSession.aiAnalysis && (
+            <AIAnalysisDrawer session={selectedSession}>
+              <Card className="border-blue-200 shadow-lg cursor-pointer hover:shadow-xl transition-shadow">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-blue-700">
+                    <Brain className="h-5 w-5" />
+                    AI Analysis Summary
+                    <Badge variant="outline" className="ml-auto bg-blue-50 text-blue-700 border-blue-200 text-xs">
+                      Click to expand
+                    </Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-stone-700 mb-2 line-clamp-2">{selectedSession.aiAnalysis.summary}</p>
+                  <div className="text-xs text-stone-500">
+                    Generated on {selectedSession.aiAnalysis.generatedAt.toLocaleDateString()}
+                  </div>
+                </CardContent>
+              </Card>
+            </AIAnalysisDrawer>
+          )}
 
           {selectedSession.climbs.length > 0 && <Card className="border-stone-200 shadow-lg">
               <CardHeader className="pb-3">
