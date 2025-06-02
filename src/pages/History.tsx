@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Calendar, MapPin, Clock, TrendingUp, Download, LogOut, Edit, Trash2, Brain } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Clock, TrendingUp, Download, LogOut, Edit, Trash2, Brain, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import SessionStats from "@/components/SessionStats";
 import ClimbList from "@/components/ClimbList";
@@ -285,15 +285,17 @@ const History = () => {
                   <CardTitle className="flex items-center gap-2 text-blue-700">
                     <Brain className="h-5 w-5" />
                     AI Analysis Summary
-                    <Badge variant="outline" className="ml-auto bg-blue-50 text-blue-700 border-blue-200 text-xs">
-                      Click to expand
-                    </Badge>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-stone-700 mb-2 line-clamp-2">{selectedSession.aiAnalysis.summary}</p>
-                  <div className="text-xs text-stone-500">
-                    Generated on {selectedSession.aiAnalysis.generatedAt.toLocaleDateString()}
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="text-stone-700 mb-2 line-clamp-2">{selectedSession.aiAnalysis.summary}</p>
+                      <div className="text-xs text-stone-500">
+                        Generated on {selectedSession.aiAnalysis.generatedAt.toLocaleDateString()}
+                      </div>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-blue-600 flex-shrink-0 ml-2" />
                   </div>
                 </CardContent>
               </Card>

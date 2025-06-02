@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Brain, X, CheckCircle, AlertCircle, TrendingUp, Target } from 'lucide-react';
+import { Brain, X, CheckCircle, AlertCircle, TrendingUp, Target, ChevronRight } from 'lucide-react';
 import { Session } from '@/types/climbing';
 import AnalysisCard from './AnalysisCard';
 
