@@ -1,5 +1,4 @@
 
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -16,21 +15,25 @@ export const useClimbingSessions = () => {
     queryKey: ['climbing_sessions', user?.id],
     queryFn: async (): Promise<Session[]> => {
       if (!user) return [];
-      const dbSessions: ClimbingSession[] = await climbingService.fetchSessions(user.id);
-      return dbSessions.map((cs: ClimbingSession): Session => ({
-        id: cs.id,
-        location: cs.location,
-        climbingType: cs.default_climb_type || 'sport',
-        gradeSystem: cs.grade_system,
-        notes: cs.notes,
-        startTime: new Date(cs.date),
-        endTime: cs.duration ? new Date(new Date(cs.date).getTime() + cs.duration * 60000) : undefined,
-        climbs: [],
-        isActive: false,
-        breaks: 0,
-        totalBreakTime: 0,
-        aiAnalysis: undefined,
-      }));
+      try {
+        const dbSessions: ClimbingSession[] = await climbingService.fetchSessions(user.id);
+        return dbSessions.map((cs: ClimbingSession): Session => ({
+          id: cs.id,
+          location: cs.location,
+          climbingType: cs.default_climb_type || 'sport', // Default to 'sport' or handle as error/log if undefined
+          gradeSystem: cs.gradeSystem,
+          notes: cs.notes,
+          startTime: new Date(cs.date),
+          endTime: cs.duration ? new Date(new Date(cs.date).getTime() + cs.duration * 60000) : undefined, // Assuming duration is in minutes
+          climbs: [], // Initialize with empty climbs
+          isActive: false, // Default value
+          breaks: 0, // Default value
+          totalBreakTime: 0, // Default value
+          aiAnalysis: undefined, // Default value
+        }));
+      } catch (err) {
+        throw err;
+      }
     },
     enabled: !!user,
   });
@@ -65,7 +68,7 @@ export const useClimbingSessions = () => {
     isLoading,
     error,
     addSession: addSessionMutation.mutate,
+    addSessionAsync: addSessionMutation.mutateAsync,
     isAddingSession: addSessionMutation.isPending,
   };
 };
-

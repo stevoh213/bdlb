@@ -2,19 +2,25 @@
 import { useState, useEffect } from "react";
 import { Session, LocalClimb } from "@/types/climbing";
 import { useToast } from "@/hooks/use-toast";
+import { useClimbingSessions } from "@/hooks/useClimbingSessions";
+import { useClimbs } from "@/hooks/useClimbs";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const useSessionManagement = () => {
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
   const [climbs, setClimbs] = useState<LocalClimb[]>([]);
-  const [sessions, setSessions] = useState<Session[]>([]);
   const [sessionTime, setSessionTime] = useState(0);
   const { toast } = useToast();
+  const { user } = useAuth();
+  
+  // Use database hooks
+  const { sessions: dbSessions, addSessionAsync: addDbSession } = useClimbingSessions();
+  const { addClimbAsync: addDbClimb } = useClimbs();
 
   useEffect(() => {
-    // Load saved data from localStorage
+    // Only load current active session from localStorage
     const savedSession = localStorage.getItem('currentSession');
     const savedClimbs = localStorage.getItem('climbs');
-    const savedSessions = localStorage.getItem('sessions');
     
     if (savedSession) {
       const session = JSON.parse(savedSession);
@@ -31,17 +37,8 @@ export const useSessionManagement = () => {
       setClimbs(parsedClimbs);
     }
     
-    if (savedSessions) {
-      const parsedSessions = JSON.parse(savedSessions);
-      parsedSessions.forEach((session: Session) => {
-        session.startTime = new Date(session.startTime);
-        if (session.endTime) session.endTime = new Date(session.endTime);
-        session.climbs.forEach((climb: LocalClimb) => {
-          climb.timestamp = new Date(climb.timestamp);
-        });
-      });
-      setSessions(parsedSessions);
-    }
+    // Clear old localStorage sessions data
+    localStorage.removeItem('sessions');
   }, []);
 
   // Real-time timer for active session
@@ -64,8 +61,7 @@ export const useSessionManagement = () => {
       localStorage.removeItem('currentSession');
     }
     localStorage.setItem('climbs', JSON.stringify(climbs));
-    localStorage.setItem('sessions', JSON.stringify(sessions));
-  }, [currentSession, climbs, sessions]);
+  }, [currentSession, climbs]);
 
   const startSession = (sessionData: Omit<Session, 'id' | 'startTime' | 'endTime' | 'climbs' | 'isActive' | 'breaks' | 'totalBreakTime'>) => {
     const newSession: Session = {
@@ -103,10 +99,9 @@ export const useSessionManagement = () => {
   };
 
   const resumeEndedSession = (sessionId: string) => {
-    const sessionToResume = sessions.find(session => session.id === sessionId);
+    const sessionToResume = dbSessions?.find(session => session.id === sessionId);
     if (!sessionToResume) return;
 
-    setSessions(prev => prev.filter(session => session.id !== sessionId));
     const resumedSession: Session = {
       ...sessionToResume,
       endTime: undefined,
@@ -114,6 +109,8 @@ export const useSessionManagement = () => {
     };
 
     setCurrentSession(resumedSession);
+    localStorage.setItem('currentSession', JSON.stringify(resumedSession));
+    
     toast({
       title: "Session Resumed",
       description: `Resumed ${sessionToResume.climbingType} session at ${sessionToResume.location}`
@@ -121,18 +118,64 @@ export const useSessionManagement = () => {
   };
 
   const endSession = () => {
-    if (!currentSession) return;
-    const updatedSession: Session = {
-      ...currentSession,
-      endTime: new Date(),
-      isActive: false
+    if (!currentSession || !user) return;
+    
+    const endTime = new Date();
+    const duration = Math.floor((endTime.getTime() - currentSession.startTime.getTime()) / 60000); // minutes
+    
+    // Save session to database asynchronously
+    const saveSessionAsync = async () => {
+      try {
+        // Save session to database
+        const dbSession = await addDbSession({
+          date: currentSession.startTime.toISOString(),
+          duration,
+          location: currentSession.location,
+          location_type: currentSession.location?.toLowerCase().includes('gym') ? 'indoor' : 'outdoor',
+          default_climb_type: currentSession.climbingType,
+          gradeSystem: currentSession.gradeSystem,
+          notes: currentSession.notes
+        });
+        
+        // Save climbs to database
+        if (dbSession && climbs.length > 0) {
+          for (const climb of climbs) {
+            await addDbClimb({
+              sessionId: dbSession.id,
+              name: climb.name,
+              grade: climb.grade,
+              type: currentSession.climbingType,
+              send_type: climb.tickType === 'send' ? 'send' : climb.tickType === 'flash' ? 'flash' : climb.tickType === 'onsight' ? 'onsight' : 'attempt',
+              date: climb.timestamp.toISOString(),
+              location: currentSession.location,
+              attempts: climb.attempts || 1,
+              notes: climb.notes
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Failed to save session:', error);
+        toast({
+          title: "Error",
+          description: "Failed to save session to database. Data saved locally.",
+          variant: "destructive"
+        });
+      }
     };
-    setSessions(prev => [updatedSession, ...prev]);
+    
+    // Execute async save
+    saveSessionAsync();
+    
+    // Clear local state immediately for better UX
     setCurrentSession(null);
-
+    setClimbs([]);
+    setSessionTime(0);
+    localStorage.removeItem('currentSession');
+    localStorage.removeItem('climbs');
+    
     toast({
       title: "Session Ended",
-      description: `Logged ${updatedSession.climbs.length} climbs`
+      description: `Logged ${climbs.length} climbs in ${duration} minutes`
     });
   };
 
@@ -166,10 +209,11 @@ export const useSessionManagement = () => {
       } : null);
     }
 
-    setSessions(prev => prev.map(session => ({
-      ...session,
-      climbs: session.climbs.map(climb => climb.id === climbId ? { ...climb, ...updates } : climb)
-    })));
+    // Update local climbs
+    const updatedClimbs = climbs.map(climb => 
+      climb.id === climbId ? { ...climb, ...updates } : climb
+    );
+    localStorage.setItem('climbs', JSON.stringify(updatedClimbs));
     
     toast({
       title: "Climb Updated",
@@ -180,7 +224,7 @@ export const useSessionManagement = () => {
   return {
     currentSession,
     climbs,
-    sessions,
+    sessions: dbSessions || [], // Use database sessions
     sessionTime,
     startSession,
     pauseSession,

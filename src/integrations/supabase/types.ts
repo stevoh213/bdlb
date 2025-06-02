@@ -13,9 +13,9 @@ export type Database = {
         Row: {
           created_at: string
           date: string
-          default_climb_type: string | null
-          duration: number | null
-          grade_system: string | null
+          default_climb_type: Database["public"]["Enums"]["climb_type"] | null
+          duration: number
+          gradeSystem: string | null
           id: string
           location: string
           location_type: string | null
@@ -25,10 +25,10 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          date?: string
-          default_climb_type?: string | null
-          duration?: number | null
-          grade_system?: string | null
+          date: string
+          default_climb_type?: Database["public"]["Enums"]["climb_type"] | null
+          duration: number
+          gradeSystem?: string | null
           id?: string
           location: string
           location_type?: string | null
@@ -39,9 +39,9 @@ export type Database = {
         Update: {
           created_at?: string
           date?: string
-          default_climb_type?: string | null
-          duration?: number | null
-          grade_system?: string | null
+          default_climb_type?: Database["public"]["Enums"]["climb_type"] | null
+          duration?: number
+          gradeSystem?: string | null
           id?: string
           location?: string
           location_type?: string | null
@@ -69,7 +69,7 @@ export type Database = {
           physical_skills: string[] | null
           rating: number | null
           send_type: string
-          session_id: string
+          session_id: string | null
           skills: string[] | null
           stiffness: number | null
           technical_skills: string[] | null
@@ -94,7 +94,7 @@ export type Database = {
           physical_skills?: string[] | null
           rating?: number | null
           send_type: string
-          session_id: string
+          session_id?: string | null
           skills?: string[] | null
           stiffness?: number | null
           technical_skills?: string[] | null
@@ -119,7 +119,7 @@ export type Database = {
           physical_skills?: string[] | null
           rating?: number | null
           send_type?: string
-          session_id?: string
+          session_id?: string | null
           skills?: string[] | null
           stiffness?: number | null
           technical_skills?: string[] | null
@@ -136,75 +136,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      goals: {
-        Row: {
-          completed_at: string | null
-          created_at: string
-          current_value: number | null
-          description: string | null
-          difficulty: string | null
-          id: string
-          notes: string | null
-          priority: string | null
-          status: string
-          tags: string[] | null
-          target_climb_type: string | null
-          target_date: string | null
-          target_grade: string | null
-          target_location: string | null
-          target_value: number | null
-          title: string
-          type: string
-          unit: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          completed_at?: string | null
-          created_at?: string
-          current_value?: number | null
-          description?: string | null
-          difficulty?: string | null
-          id?: string
-          notes?: string | null
-          priority?: string | null
-          status?: string
-          tags?: string[] | null
-          target_climb_type?: string | null
-          target_date?: string | null
-          target_grade?: string | null
-          target_location?: string | null
-          target_value?: number | null
-          title: string
-          type: string
-          unit?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          completed_at?: string | null
-          created_at?: string
-          current_value?: number | null
-          description?: string | null
-          difficulty?: string | null
-          id?: string
-          notes?: string | null
-          priority?: string | null
-          status?: string
-          tags?: string[] | null
-          target_climb_type?: string | null
-          target_date?: string | null
-          target_grade?: string | null
-          target_location?: string | null
-          target_value?: number | null
-          title?: string
-          type?: string
-          unit?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
       }
       profiles: {
         Row: {
@@ -238,10 +169,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_grade_system_for_climb_type: {
+        Args: { climb_type: string }
+        Returns: string
+      }
     }
     Enums: {
-      [_ in never]: never
+      climb_send_type: "send" | "attempt" | "project" | "onsight" | "flash"
+      climb_type: "boulder" | "sport" | "trad" | "top rope" | "alpine"
+      location_type: "indoor" | "outdoor"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -356,6 +292,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      climb_send_type: ["send", "attempt", "project", "onsight", "flash"],
+      climb_type: ["boulder", "sport", "trad", "top rope", "alpine"],
+      location_type: ["indoor", "outdoor"],
+    },
   },
 } as const

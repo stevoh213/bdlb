@@ -31,7 +31,7 @@ export interface ClimbingSession {
   location: string;
   location_type?: 'indoor' | 'outdoor';
   default_climb_type?: 'sport' | 'trad' | 'boulder' | 'top rope' | 'alpine';
-  grade_system?: string;
+  gradeSystem?: string;
   notes?: string;
   user_id: string;
   created_at: string;
