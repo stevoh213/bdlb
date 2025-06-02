@@ -1,3 +1,4 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Clock } from "lucide-react";
@@ -28,8 +29,10 @@ const SessionList = ({ sessions, selectedSessionId, onSelectSession }: SessionLi
         // Ensure session.startTime is a Date object, or handle string conversion
         const sessionStartTime = typeof session.startTime === 'string' ? new Date(session.startTime) : session.startTime;
         
-        // Determine the style key for climbing type, handling potential variations
-        const climbingTypeStyleKey = session.climbingType.replace(/\s+/g, '_').toLowerCase() as ClimbingTypeStyleKey;
+        // Determine the style key for climbing type, handling potential variations and undefined values
+        const climbingTypeStyleKey = session.climbingType 
+          ? session.climbingType.replace(/\s+/g, '_').toLowerCase() as ClimbingTypeStyleKey
+          : 'boulder'; // Default fallback if climbingType is undefined
 
         return (
           <Card 
@@ -55,7 +58,7 @@ const SessionList = ({ sessions, selectedSessionId, onSelectSession }: SessionLi
                         styles[climbingTypeStyleKey] || styles.boulder // Fallback to a default style
                       )}
                     >
-                      {session.climbingType}
+                      {session.climbingType || 'Unknown'}
                     </Badge>
                     {session.aiAnalysis && (
                       <Badge variant="outline" className={styles.aiAnalyzed}>
