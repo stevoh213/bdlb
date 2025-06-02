@@ -9,6 +9,7 @@ import { Slider } from "@/components/ui/slider";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import SkillsSelector from "./SkillsSelector";
+import LocationSelector from "./LocationSelector";
 import { getGradesForSystem } from "@/utils/gradeSystem";
 
 interface ClimbLogFormProps {
@@ -22,14 +23,17 @@ interface ClimbLogFormProps {
     notes?: string;
     physicalSkills?: string[];
     technicalSkills?: string[];
+    location?: string;
   }) => void;
   onCancel: () => void;
   gradeSystem?: string;
+  sessionLocation?: string;
 }
 
-const ClimbLogForm = ({ onSubmit, onCancel, gradeSystem = 'yds' }: ClimbLogFormProps) => {
+const ClimbLogForm = ({ onSubmit, onCancel, gradeSystem = 'yds', sessionLocation }: ClimbLogFormProps) => {
   const [name, setName] = useState("");
   const [grade, setGrade] = useState("");
+  const [location, setLocation] = useState(sessionLocation || "");
   const [tickType, setTickType] = useState<'send' | 'attempt' | 'flash' | 'onsight'>('send');
   const [height, setHeight] = useState<number | undefined>();
   const [timeOnWall, setTimeOnWall] = useState<number | undefined>();
@@ -46,6 +50,7 @@ const ClimbLogForm = ({ onSubmit, onCancel, gradeSystem = 'yds' }: ClimbLogFormP
     onSubmit({
       name,
       grade,
+      location: location || undefined,
       tickType,
       height,
       timeOnWall,
@@ -58,6 +63,7 @@ const ClimbLogForm = ({ onSubmit, onCancel, gradeSystem = 'yds' }: ClimbLogFormP
     // Reset form
     setName("");
     setGrade("");
+    setLocation(sessionLocation || "");
     setTickType('send');
     setHeight(undefined);
     setTimeOnWall(undefined);
@@ -140,6 +146,13 @@ const ClimbLogForm = ({ onSubmit, onCancel, gradeSystem = 'yds' }: ClimbLogFormP
       {showOptional && (
         <Card className="border-stone-200 bg-stone-50">
           <CardContent className="p-4 space-y-4">
+            <LocationSelector
+              value={location}
+              onChange={setLocation}
+              placeholder={sessionLocation ? `Using session location: ${sessionLocation}` : "Enter specific location (optional)"}
+              className="mb-4"
+            />
+
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="height" className="text-stone-700">Height (ft)</Label>

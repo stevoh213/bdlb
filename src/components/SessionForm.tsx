@@ -1,12 +1,12 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Session } from "@/types/climbing";
 import { getGradeSystemForClimbType, gradeSystems } from "@/utils/gradeSystem";
+import LocationSelector from "./LocationSelector";
 
 interface SessionFormProps {
   onSubmit: (session: Omit<Session, 'id' | 'startTime' | 'endTime' | 'climbs' | 'isActive' | 'breaks' | 'totalBreakTime'>) => void;
@@ -39,17 +39,11 @@ const SessionForm = ({ onSubmit, onCancel }: SessionFormProps) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label htmlFor="location" className="text-stone-700 font-medium">Location *</Label>
-        <Input
-          id="location"
-          value={location}
-          onChange={(e) => setLocation(e.target.value)}
-          placeholder="e.g. Red Rocks, Joshua Tree"
-          className="h-12 text-lg border-stone-300 focus:border-amber-500"
-          required
-        />
-      </div>
+      <LocationSelector
+        value={location}
+        onChange={setLocation}
+        placeholder="e.g. Red Rocks, Joshua Tree"
+      />
 
       <div>
         <Label htmlFor="climbingType" className="text-stone-700 font-medium">Climbing Type *</Label>

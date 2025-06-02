@@ -239,6 +239,7 @@ const Index = () => {
                   onSubmit={addClimb} 
                   onCancel={() => setShowClimbForm(false)} 
                   gradeSystem={currentSession.gradeSystem}
+                  sessionLocation={currentSession.location}
                 /> : <Button onClick={() => setShowClimbForm(true)} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white h-12">
                   <Plus className="h-5 w-5 mr-2" />
                   Add Climb
