@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,12 +6,13 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Trash2, Plus, Edit } from "lucide-react";
-import { gradeSystems } from "@/utils/gradeSystem";
+import { gradeSystems, getGradeSystemsForType } from "@/utils/gradeSystem";
 import { physicalSkills as defaultPhysicalSkills, technicalSkills as defaultTechnicalSkills } from "@/utils/skills";
 import { toast } from "@/hooks/use-toast";
 
 const Settings = () => {
-  const [preferredGradeSystem, setPreferredGradeSystem] = useState<string>('yds');
+  const [preferredRouteGradeSystem, setPreferredRouteGradeSystem] = useState<string>('yds');
+  const [preferredBoulderGradeSystem, setPreferredBoulderGradeSystem] = useState<string>('v_scale');
   const [savedLocations, setSavedLocations] = useState<string[]>([]);
   const [physicalSkills, setPhysicalSkills] = useState<string[]>(defaultPhysicalSkills);
   const [technicalSkills, setTechnicalSkills] = useState<string[]>(defaultTechnicalSkills);
@@ -25,11 +25,29 @@ const Settings = () => {
   const [editingPhysicalSkill, setEditingPhysicalSkill] = useState<{ index: number; value: string } | null>(null);
   const [editingTechnicalSkill, setEditingTechnicalSkill] = useState<{ index: number; value: string } | null>(null);
 
+  const routeGradeSystems = getGradeSystemsForType('route');
+  const boulderGradeSystems = getGradeSystemsForType('boulder');
+
   // Load settings from localStorage on mount
   useEffect(() => {
-    const savedGradeSystem = localStorage.getItem('preferredGradeSystem');
-    if (savedGradeSystem) {
-      setPreferredGradeSystem(savedGradeSystem);
+    const savedRouteGradeSystem = localStorage.getItem('preferredRouteGradeSystem');
+    if (savedRouteGradeSystem) {
+      setPreferredRouteGradeSystem(savedRouteGradeSystem);
+    }
+
+    const savedBoulderGradeSystem = localStorage.getItem('preferredBoulderGradeSystem');
+    if (savedBoulderGradeSystem) {
+      setPreferredBoulderGradeSystem(savedBoulderGradeSystem);
+    }
+
+    // Keep legacy support for old preferredGradeSystem setting
+    const legacyGradeSystem = localStorage.getItem('preferredGradeSystem');
+    if (legacyGradeSystem && !savedRouteGradeSystem && !savedBoulderGradeSystem) {
+      if (legacyGradeSystem === 'v_scale') {
+        setPreferredBoulderGradeSystem(legacyGradeSystem);
+      } else {
+        setPreferredRouteGradeSystem(legacyGradeSystem);
+      }
     }
 
     const locations = localStorage.getItem('climbingLocations');
@@ -48,13 +66,25 @@ const Settings = () => {
     }
   }, []);
 
-  // Save grade system preference
-  const handleGradeSystemChange = (value: string) => {
-    setPreferredGradeSystem(value);
+  // Save route grade system preference
+  const handleRouteGradeSystemChange = (value: string) => {
+    setPreferredRouteGradeSystem(value);
+    localStorage.setItem('preferredRouteGradeSystem', value);
+    // Keep legacy support
     localStorage.setItem('preferredGradeSystem', value);
     toast({
-      title: "Grade system updated",
-      description: `Default grade system set to ${gradeSystems[value]?.name}`,
+      title: "Route grade system updated",
+      description: `Default route grade system set to ${routeGradeSystems[value]?.name}`,
+    });
+  };
+
+  // Save boulder grade system preference
+  const handleBoulderGradeSystemChange = (value: string) => {
+    setPreferredBoulderGradeSystem(value);
+    localStorage.setItem('preferredBoulderGradeSystem', value);
+    toast({
+      title: "Boulder grade system updated",
+      description: `Default boulder grade system set to ${boulderGradeSystems[value]?.name}`,
     });
   };
 
@@ -173,20 +203,20 @@ const Settings = () => {
     <div className="container mx-auto px-4 py-8 space-y-6">
       <h1 className="text-3xl font-bold text-stone-800">Settings</h1>
       
-      {/* Grade System Preference */}
+      {/* Grade System Preferences */}
       <Card className="border-stone-200">
         <CardHeader>
-          <CardTitle className="text-stone-800">Default Grade System</CardTitle>
+          <CardTitle className="text-stone-800">Default Grade Systems</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-6">
           <div className="space-y-3">
-            <Label htmlFor="gradeSystem">Preferred Grade System</Label>
-            <Select value={preferredGradeSystem} onValueChange={handleGradeSystemChange}>
+            <Label htmlFor="routeGradeSystem">Route Grade System</Label>
+            <Select value={preferredRouteGradeSystem} onValueChange={handleRouteGradeSystemChange}>
               <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {Object.entries(gradeSystems).map(([key, system]) => (
+                {Object.entries(routeGradeSystems).map(([key, system]) => (
                   <SelectItem key={key} value={key}>
                     {system.name}
                   </SelectItem>
@@ -194,7 +224,26 @@ const Settings = () => {
               </SelectContent>
             </Select>
             <p className="text-sm text-stone-600">
-              This will be the default grade system used when creating new climbing sessions.
+              This will be the default grade system used for sport, trad, top rope, and alpine climbs.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <Label htmlFor="boulderGradeSystem">Boulder Grade System</Label>
+            <Select value={preferredBoulderGradeSystem} onValueChange={handleBoulderGradeSystemChange}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(boulderGradeSystems).map(([key, system]) => (
+                  <SelectItem key={key} value={key}>
+                    {system.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-sm text-stone-600">
+              This will be the default grade system used for boulder problems.
             </p>
           </div>
         </CardContent>
