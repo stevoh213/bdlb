@@ -1,9 +1,9 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { physicalSkills, technicalSkills } from "@/utils/skills";
+import { physicalSkills as defaultPhysicalSkills, technicalSkills as defaultTechnicalSkills } from "@/utils/skills";
 
 interface SkillsSelectorProps {
   selectedPhysicalSkills: string[];
@@ -18,6 +18,22 @@ const SkillsSelector = ({
   onPhysicalSkillsChange, 
   onTechnicalSkillsChange 
 }: SkillsSelectorProps) => {
+  const [physicalSkills, setPhysicalSkills] = useState<string[]>(defaultPhysicalSkills);
+  const [technicalSkills, setTechnicalSkills] = useState<string[]>(defaultTechnicalSkills);
+
+  // Load custom skills from localStorage
+  useEffect(() => {
+    const customPhysicalSkills = localStorage.getItem('customPhysicalSkills');
+    if (customPhysicalSkills) {
+      setPhysicalSkills(JSON.parse(customPhysicalSkills));
+    }
+
+    const customTechnicalSkills = localStorage.getItem('customTechnicalSkills');
+    if (customTechnicalSkills) {
+      setTechnicalSkills(JSON.parse(customTechnicalSkills));
+    }
+  }, []);
+
   const togglePhysicalSkill = (skill: string) => {
     const newSkills = selectedPhysicalSkills.includes(skill)
       ? selectedPhysicalSkills.filter(s => s !== skill)

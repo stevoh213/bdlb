@@ -9,6 +9,7 @@ import VisualLoginForm from "@/components/VisualLoginForm";
 import Navigation from "@/components/Navigation";
 import Index from "./pages/Index";
 import History from "./pages/History";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const AppContent = () => {
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/history" element={<History />} />
+            <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
