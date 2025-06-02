@@ -12,6 +12,7 @@ export interface Climb {
   duration?: number;
   elevation_gain?: number;
   user_id: string;
+  session_id: string;
   created_at: string;
   updated_at: string;
   color?: string;

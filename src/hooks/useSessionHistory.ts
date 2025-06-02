@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { useClimbingSessions, ClimbingSession } from '@/hooks/useClimbingSessions'; // Assuming ClimbingSession is exported
+import { useClimbingSessions } from '@/hooks/useClimbingSessions'; // ClimbingSession is no longer exported from here
 import { useClimbs } from '@/hooks/useClimbs'; // This fetches all user climbs
 import { Climb, LocalClimb, Session } from '@/types/climbing'; // Using Session and LocalClimb from global types
 // import { parseSessionDates } from '@/lib/utils'; // May not be needed if data from hooks is already parsed
@@ -23,13 +23,13 @@ export const useSessionHistory = () => {
   // TODO: Need updateSession and deleteSession from useClimbingSessions
   // For now, I'll mock them or assume they will be added to useClimbingSessions hook.
   // These would call the respective service functions.
-  const { mutate: mockUpdateSession } = { mutate: (vars: { sessionId: string, updates: Partial<Session>}) => console.log('mockUpdateSession', vars) };
-  const { mutate: mockDeleteSession } = { mutate: (sessionId: string) => console.log('mockDeleteSession', sessionId) };
+  const { mutate: mockUpdateSession } = { mutate: (vars: { sessionId: string, updates: Partial<Session>}, options?: { onSuccess?: () => void, onError?: (error: Error) => void }) => { console.log('mockUpdateSession', vars); if(options && options.onSuccess) options.onSuccess(); } };
+  const { mutate: mockDeleteSession } = { mutate: (sessionId: string, options?: { onSuccess?: () => void, onError?: (error: Error) => void }) => { console.log('mockDeleteSession', sessionId); if(options && options.onSuccess) options.onSuccess(); } };
 
 
   const { climbs: allUserClimbs, isLoading: isLoadingClimbs, addClimb, updateClimb, /* deleteClimbMutation */ } = useClimbs();
   // TODO: Need deleteClimb from useClimbs hook.
-  const { mutate: mockDeleteClimb } = { mutate: (climbId: string) => console.log('mockDeleteClimb', climbId) };
+  const { mutate: mockDeleteClimb } = { mutate: (climbId: string, options?: { onSuccess?: () => void, onError?: (error: Error) => void }) => { console.log('mockDeleteClimb', climbId); if(options && options.onSuccess) options.onSuccess(); } };
 
 
   // UI State
@@ -57,9 +57,25 @@ export const useSessionHistory = () => {
     return sessions.find(s => s.id === selectedSessionId) || null;
   }, [sessions, selectedSessionId]);
 
-  const climbsForSelectedSession = useMemo(() => {
+  const climbsForSelectedSession = useMemo((): LocalClimb[] => {
     if (!selectedSession) return [];
-    return allUserClimbs.filter(climb => climb.session_id === selectedSession.id);
+    const filteredClimbs: Climb[] = allUserClimbs.filter(climb => climb.session_id === selectedSession.id);
+    return filteredClimbs.map((climb: Climb): LocalClimb => ({
+      id: climb.id,
+      name: climb.name,
+      grade: climb.grade,
+      tickType: climb.send_type === 'project' ? 'attempt' : climb.send_type,
+      attempts: climb.attempts,
+      timestamp: new Date(climb.date),
+      sessionId: climb.session_id,
+      notes: climb.notes,
+      // Fields not in Climb will be undefined: height, timeOnWall, effort, physicalSkills, technicalSkills
+      height: undefined, 
+      timeOnWall: undefined,
+      effort: undefined,
+      physicalSkills: undefined,
+      technicalSkills: undefined,
+    }));
   }, [allUserClimbs, selectedSession]);
 
 

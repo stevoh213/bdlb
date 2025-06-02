@@ -74,7 +74,10 @@ export const useAuthForm = (props: UseAuthFormProps = {}) => {
     }
 
     setIsLoading(false);
-    return { error: signInError, data };
+    if (signInError) {
+      return { error: signInError, data: null };
+    }
+    return { error: null, data };
   }, [email, password, signIn, toast]);
 
   const handleSignUp = useCallback(async (event?: React.FormEvent) => {
@@ -128,7 +131,10 @@ export const useAuthForm = (props: UseAuthFormProps = {}) => {
     }
 
     setIsLoading(false);
-    return { error: signUpError, data };
+    if (signUpError) {
+      return { error: signUpError, data: null };
+    }
+    return { error: null, data };
   }, [email, password, signUp, toast /*, confirmPassword */]);
 
   return {
