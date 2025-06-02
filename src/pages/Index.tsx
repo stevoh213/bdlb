@@ -44,8 +44,8 @@ const Index = () => {
           onEditClimb={setEditingClimb}
         />
 
-        {/* Recent Sessions History */}
-        <RecentSessions sessions={sessions} />
+        {/* Recent Sessions History - Only show when no active session */}
+        {!currentSession && <RecentSessions sessions={sessions} />}
 
         {/* Edit Climb Dialog */}
         {editingClimb && (

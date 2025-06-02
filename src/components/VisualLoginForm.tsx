@@ -1,31 +1,36 @@
 
-import React, { useState } from 'react'; // Keep useState for showLoginForm
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-// import { useAuth } from '@/contexts/AuthContext'; // Now used by the hook
-// import { useToast } from '@/hooks/use-toast'; // Now used by the hook
-import { useAuthForm } from '@/hooks/useAuthForm'; // Import the new hook
-import { Mountain, X } from 'lucide-react';
+import { useAuthForm } from '@/hooks/useAuthForm';
+import { Mountain, X, MapPin } from 'lucide-react';
+import { climbingLocations, getLocationByIndex, type ClimbingLocation } from '@/data/climbingLocations';
 
 const VisualLoginForm = () => {
   const [showLoginForm, setShowLoginForm] = useState(false);
+  const [locationOffset, setLocationOffset] = useState(0);
   const {
     email,
     password,
     isLoading,
-    // error, // error state is available if needed for UI changes
     handleEmailChange,
     handlePasswordChange,
     handleSignIn,
     handleSignUp,
   } = useAuthForm();
-  // const { signIn, signUp } = useAuth(); // Handled by useAuthForm
-  // const { toast } = useToast(); // Handled by useAuthForm
 
-  // Removed handleSignIn and handleSignUp, they are now in useAuthForm
+  // Get a location based on the current day + manual offset
+  const currentLocation: ClimbingLocation = useMemo(() => {
+    const daysSinceEpoch = Math.floor(Date.now() / (1000 * 60 * 60 * 24));
+    return getLocationByIndex(daysSinceEpoch + locationOffset);
+  }, [locationOffset])
+
+  const handleLocationClick = () => {
+    setLocationOffset(prev => prev + 1);
+  }
 
   const handleOverlayClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
@@ -37,9 +42,9 @@ const VisualLoginForm = () => {
     <div className="min-h-screen relative overflow-hidden">
       {/* Background Image with Extended Coverage */}
       <div 
-        className="absolute bg-cover bg-center bg-no-repeat"
+        className="absolute bg-cover bg-center bg-no-repeat transition-opacity duration-1000"
         style={{
-          backgroundImage: `url('https://images.unsplash.com/photo-1426604966848-d7adac402bff?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=5616&q=80')`,
+          backgroundImage: `url('${currentLocation.imagePath}')`,
           top: '-50vh',
           left: '-10vw',
           right: '-10vw',
@@ -54,6 +59,18 @@ const VisualLoginForm = () => {
       
       {/* Main Content */}
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-center text-white px-4">
+        {/* Location Info */}
+        <button
+          onClick={handleLocationClick}
+          className="absolute top-8 left-8 bg-black/40 backdrop-blur-sm rounded-lg px-4 py-2 flex items-center gap-2 hover:bg-black/50 transition-colors cursor-pointer"
+        >
+          <MapPin className="h-4 w-4" />
+          <div className="text-left">
+            <p className="text-sm font-semibold">{currentLocation.name}</p>
+            <p className="text-xs text-white/80">{currentLocation.location}</p>
+          </div>
+        </button>
+
         {/* Branding */}
         <div className="text-center mb-16">
           <div className="flex items-center justify-center gap-3 mb-4">
