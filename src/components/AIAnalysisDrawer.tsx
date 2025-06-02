@@ -9,11 +9,17 @@ import AnalysisCard from './AnalysisCard';
 
 interface AIAnalysisDrawerProps {
   session: Session;
-  children: React.ReactNode;
+  children?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  onAnalysisSaved?: (analysis: Session['aiAnalysis']) => void;
 }
 
-const AIAnalysisDrawer = ({ session, children }: AIAnalysisDrawerProps) => {
-  const [open, setOpen] = useState(false);
+const AIAnalysisDrawer = ({ session, children, open, onOpenChange, onAnalysisSaved }: AIAnalysisDrawerProps) => {
+  const [internalOpen, setInternalOpen] = useState(false);
+
+  const isOpen = open !== undefined ? open : internalOpen;
+  const setOpen = onOpenChange || setInternalOpen;
 
   if (!session.aiAnalysis) {
     return null;
@@ -22,10 +28,12 @@ const AIAnalysisDrawer = ({ session, children }: AIAnalysisDrawerProps) => {
   const { aiAnalysis } = session;
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        {children}
-      </SheetTrigger>
+    <Sheet open={isOpen} onOpenChange={setOpen}>
+      {children && (
+        <SheetTrigger asChild>
+          {children}
+        </SheetTrigger>
+      )}
       <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
         <SheetHeader className="pb-6">
           <SheetTitle className="flex items-center gap-2 text-blue-700">
