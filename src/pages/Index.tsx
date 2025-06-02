@@ -1,9 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Play, Pause, Plus, Clock, TrendingUp, History, LogOut } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Play, Pause, Plus, Clock, TrendingUp, History, LogOut, MapPin, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
 import ClimbLogForm from "@/components/ClimbLogForm";
 import SessionStats from "@/components/SessionStats";
@@ -21,13 +21,8 @@ const Index = () => {
   const [climbs, setClimbs] = useState<LocalClimb[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [editingClimb, setEditingClimb] = useState<LocalClimb | null>(null);
-  const {
-    toast
-  } = useToast();
-  const {
-    signOut,
-    user
-  } = useAuth();
+  const { toast } = useToast();
+  const { signOut, user } = useAuth();
 
   useEffect(() => {
     // Load saved data from localStorage
@@ -168,26 +163,36 @@ const Index = () => {
     });
   };
 
-  return <div className="min-h-screen bg-gradient-to-br from-slate-50 to-stone-100 p-4">
-      <div className="max-w-md mx-auto space-y-4">
-        {/* Header */}
-        <div className="text-center py-4">
-          <div className="flex items-center justify-between mb-2">
-            <div></div>
-            <div>
-              <h1 className="text-3xl font-bold text-stone-800 mb-2">ClimbLog</h1>
-              <p className="text-stone-600">Track your climbing progress</p>
-            </div>
-            
-          </div>
-          <Link to="/history">
-            <Button variant="outline" className="mt-2">
-              <History className="h-4 w-4 mr-2" />
-              View History
-            </Button>
-          </Link>
-        </div>
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString([], {
+      month: 'short',
+      day: 'numeric'
+    });
+  };
 
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getSessionDuration = (session: Session) => {
+    if (!session.endTime) return 0;
+    return Math.floor((session.endTime.getTime() - session.startTime.getTime()) / 1000 / 60);
+  };
+
+  const climbingTypeColors = {
+    sport: "bg-blue-100 text-blue-800 border-blue-200",
+    trad: "bg-purple-100 text-purple-800 border-purple-200",
+    boulder: "bg-orange-100 text-orange-800 border-orange-200",
+    toprope: "bg-green-100 text-green-800 border-green-200",
+    multipitch: "bg-red-100 text-red-800 border-red-200"
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-stone-100 p-4">
+      <div className="max-w-md mx-auto space-y-4">
         {/* Session Control */}
         <Card className="border-stone-200 shadow-lg">
           <CardHeader className="pb-3">
@@ -197,7 +202,8 @@ const Index = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {currentSession ? <div className="space-y-3">
+            {currentSession ? (
+              <div className="space-y-3">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Badge variant="outline" className="border-green-500 text-green-700">
@@ -217,17 +223,25 @@ const Index = () => {
                   <Pause className="h-4 w-4 mr-2" />
                   End Session
                 </Button>
-              </div> : <div className="space-y-3">
-                {showSessionForm ? <SessionForm onSubmit={startSession} onCancel={() => setShowSessionForm(false)} /> : <Button onClick={() => setShowSessionForm(true)} className="w-full bg-amber-600 hover:bg-amber-700 text-white">
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {showSessionForm ? (
+                  <SessionForm onSubmit={startSession} onCancel={() => setShowSessionForm(false)} />
+                ) : (
+                  <Button onClick={() => setShowSessionForm(true)} className="w-full bg-amber-600 hover:bg-amber-700 text-white">
                     <Play className="h-4 w-4 mr-2" />
                     Start Session
-                  </Button>}
-              </div>}
+                  </Button>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
 
         {/* Quick Add Climb */}
-        {currentSession && <Card className="border-stone-200 shadow-lg">
+        {currentSession && (
+          <Card className="border-stone-200 shadow-lg">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-emerald-600" />
@@ -235,31 +249,108 @@ const Index = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {showClimbForm ? <ClimbLogForm 
+              {showClimbForm ? (
+                <ClimbLogForm 
                   onSubmit={addClimb} 
                   onCancel={() => setShowClimbForm(false)} 
                   gradeSystem={currentSession.gradeSystem}
                   sessionLocation={currentSession.location}
-                /> : <Button onClick={() => setShowClimbForm(true)} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white h-12">
+                />
+              ) : (
+                <Button onClick={() => setShowClimbForm(true)} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white h-12">
                   <Plus className="h-5 w-5 mr-2" />
                   Add Climb
-                </Button>}
+                </Button>
+              )}
             </CardContent>
-          </Card>}
+          </Card>
+        )}
 
-        {/* Recent Climbs */}
-        {currentSession && currentSession.climbs.length > 0 && <Card className="border-stone-200 shadow-lg">
+        {/* Recent Climbs in Current Session */}
+        {currentSession && currentSession.climbs.length > 0 && (
+          <Card className="border-stone-200 shadow-lg">
             <CardHeader className="pb-3">
               <CardTitle>Session Climbs</CardTitle>
             </CardHeader>
             <CardContent>
               <ClimbList climbs={currentSession.climbs.slice(0, 5)} onEdit={setEditingClimb} showEditButton={true} />
             </CardContent>
-          </Card>}
+          </Card>
+        )}
+
+        {/* Recent Sessions History */}
+        <Card className="border-stone-200 shadow-lg">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <History className="h-5 w-5 text-stone-600" />
+                Recent Sessions
+              </div>
+              <Link to="/history">
+                <Button variant="ghost" size="sm" className="text-stone-600">
+                  View All
+                </Button>
+              </Link>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {sessions.length === 0 ? (
+              <div className="text-center py-6 text-stone-500">
+                <Calendar className="h-8 w-8 mx-auto mb-2 text-stone-400" />
+                <p className="text-sm">No sessions yet</p>
+              </div>
+            ) : (
+              <ScrollArea className="h-64">
+                <div className="space-y-2">
+                  {sessions.slice(0, 10).map((session) => (
+                    <Link key={session.id} to="/history">
+                      <Card className="cursor-pointer hover:shadow-md transition-shadow border-stone-100">
+                        <CardContent className="p-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <MapPin className="h-3 w-3 text-stone-500" />
+                                <span className="font-medium text-stone-800 text-sm">{session.location}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline" className={`text-xs capitalize ${climbingTypeColors[session.climbingType]}`}>
+                                  {session.climbingType}
+                                </Badge>
+                                <span className="text-xs text-stone-500">
+                                  {session.climbs.length} climbs
+                                </span>
+                              </div>
+                            </div>
+                            <div className="text-right text-xs text-stone-500">
+                              <div>{formatDate(session.startTime)}</div>
+                              <div className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {getSessionDuration(session)}m
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  ))}
+                </div>
+              </ScrollArea>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Edit Climb Dialog */}
-        {editingClimb && <EditClimbDialog climb={editingClimb} open={!!editingClimb} onOpenChange={open => !open && setEditingClimb(null)} onSave={updateClimb} />}
+        {editingClimb && (
+          <EditClimbDialog 
+            climb={editingClimb} 
+            open={!!editingClimb} 
+            onOpenChange={open => !open && setEditingClimb(null)} 
+            onSave={updateClimb} 
+          />
+        )}
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default Index;
