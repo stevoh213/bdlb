@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +15,14 @@ const VisualLoginForm = () => {
   const [showLoginForm, setShowLoginForm] = useState(false);
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
+
+  // Set body background to prevent green overscroll
+  useEffect(() => {
+    document.body.style.backgroundColor = '#1a5f1a';
+    return () => {
+      document.body.style.backgroundColor = '';
+    };
+  }, []);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,18 +75,31 @@ const VisualLoginForm = () => {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      {/* Background Image with Extended Coverage */}
+    <div className="min-h-screen relative">
+      {/* Background Image with Complete Coverage */}
       <div 
-        className="absolute bg-cover bg-center bg-no-repeat"
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
           backgroundImage: `url('https://images.unsplash.com/photo-1426604966848-d7adac402bff?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=5616&q=80')`,
-          top: '-50vh',
-          left: '-10vw',
-          right: '-10vw',
-          bottom: '-50vh',
+          minHeight: '100vh',
           backgroundSize: 'cover',
-          backgroundPosition: 'center center'
+          backgroundPosition: 'center center',
+          backgroundAttachment: 'scroll'
+        }}
+      />
+      
+      {/* Extended Background for Overscroll */}
+      <div 
+        className="fixed bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: `url('https://images.unsplash.com/photo-1426604966848-d7adac402bff?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=5616&q=80')`,
+          top: '-100vh',
+          left: 0,
+          right: 0,
+          bottom: '-100vh',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center center',
+          zIndex: -1
         }}
       />
       
