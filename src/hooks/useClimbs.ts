@@ -1,47 +1,58 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+// import { supabase } from '@/integrations/supabase/client'; // Replaced by climbingService
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Climb } from '@/types/climbing';
+import * as climbingService from '@/services/climbingService'; // Import the service
+import type { NewClimbData, UpdateClimbData } from '@/services/climbingService'; // Import types
 
-export const useClimbs = () => {
+// Props for addClimb - requires sessionId
+interface AddClimbVariables extends NewClimbData {
+  sessionId: string; 
+}
+
+// Props for updateClimb - requires climbId and the updates
+interface UpdateClimbVariables {
+  id: string;
+  updates: UpdateClimbData;
+}
+
+
+export const useClimbs = (/* Optional sessionId for fetching climbs for a specific session */) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: climbs = [], isLoading, error } = useQuery({
-    queryKey: ['climbs', user?.id],
+  // This query fetches ALL climbs for the user. 
+  // If fetching climbs for a specific session is needed, a different queryKey and queryFn would be used,
+  // potentially passing sessionId as a parameter to useClimbs.
+  const { data: climbs = [], isLoading, error } = useQuery<Climb[], Error>({
+    queryKey: ['climbs', user?.id], // Global climbs for the user
     queryFn: async () => {
       if (!user) return [];
-      
-      const { data, error } = await supabase
-        .from('climbs')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('date', { ascending: false });
-
-      if (error) throw error;
-      return data as Climb[];
+      // Uses fetchAllUserClimbs to maintain original behavior
+      return climbingService.fetchAllUserClimbs(user.id);
     },
     enabled: !!user,
   });
 
-  const addClimbMutation = useMutation({
-    mutationFn: async (climbData: Omit<Climb, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+  const addClimbMutation = useMutation<
+    Climb,
+    Error,
+    AddClimbVariables 
+  >({
+    mutationFn: async ({ sessionId, ...climbData }: AddClimbVariables) => {
       if (!user) throw new Error('User not authenticated');
-
-      const { data, error } = await supabase
-        .from('climbs')
-        .insert({ ...climbData, user_id: user.id })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+      if (!sessionId) throw new Error('Session ID is required to add a climb.');
+      // Use the service layer function
+      return climbingService.addClimb(climbData, sessionId, user.id);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['climbs'] });
+    onSuccess: (data) => { // data is the newly added climb
+      // Invalidate all user climbs. If climbs were per-session, this would be more specific.
+      queryClient.invalidateQueries({ queryKey: ['climbs', user?.id] });
+      // If you also have queries for specific sessions, invalidate them too:
+      // queryClient.invalidateQueries({ queryKey: ['climbs_for_session', data.session_id] });
       toast({
         title: "Climb logged!",
         description: "Your climb has been successfully recorded.",
@@ -56,23 +67,20 @@ export const useClimbs = () => {
     },
   });
 
-  const updateClimbMutation = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Climb> }) => {
+  const updateClimbMutation = useMutation<
+    Climb,
+    Error,
+    UpdateClimbVariables
+  >({
+    mutationFn: async ({ id, updates }: UpdateClimbVariables) => {
       if (!user) throw new Error('User not authenticated');
-
-      const { data, error } = await supabase
-        .from('climbs')
-        .update(updates)
-        .eq('id', id)
-        .eq('user_id', user.id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+      // Use the service layer function
+      return climbingService.updateClimb(id, updates, user.id);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['climbs'] });
+    onSuccess: (data) => { // data is the updated climb
+      queryClient.invalidateQueries({ queryKey: ['climbs', user?.id] });
+      // If you also have queries for specific sessions, invalidate them too:
+      // queryClient.invalidateQueries({ queryKey: ['climbs_for_session', data.session_id] });
       toast({
         title: "Climb updated!",
         description: "Your climb has been successfully updated.",
