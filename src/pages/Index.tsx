@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,6 @@ import ClimbLogForm from "@/components/ClimbLogForm";
 import SessionStats from "@/components/SessionStats";
 import ClimbList from "@/components/ClimbList";
 import SessionForm from "@/components/SessionForm";
-import SessionAnalysis from "@/components/SessionAnalysis";
 import EditClimbDialog from "@/components/EditClimbDialog";
 import { useToast } from "@/hooks/use-toast";
 import { Session, LocalClimb } from "@/types/climbing";
@@ -20,8 +20,6 @@ const Index = () => {
   const [showSessionForm, setShowSessionForm] = useState(false);
   const [climbs, setClimbs] = useState<LocalClimb[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
-  const [showAnalysis, setShowAnalysis] = useState(false);
-  const [sessionToAnalyze, setSessionToAnalyze] = useState<Session | null>(null);
   const [editingClimb, setEditingClimb] = useState<LocalClimb | null>(null);
   const {
     toast
@@ -101,11 +99,6 @@ const Index = () => {
     setSessions(prev => [updatedSession, ...prev]);
     setCurrentSession(null);
 
-    // Show analysis option for sessions with climbs
-    if (updatedSession.climbs.length > 0) {
-      setSessionToAnalyze(updatedSession);
-      setShowAnalysis(true);
-    }
     toast({
       title: "Session Ended",
       description: `Logged ${updatedSession.climbs.length} climbs`
@@ -174,17 +167,6 @@ const Index = () => {
       description: "You have been successfully logged out"
     });
   };
-
-  if (showAnalysis && sessionToAnalyze) {
-    return <div className="min-h-screen bg-gradient-to-br from-slate-50 to-stone-100 p-4">
-        <div className="max-w-md mx-auto space-y-4">
-          <SessionAnalysis session={sessionToAnalyze} onClose={() => {
-          setShowAnalysis(false);
-          setSessionToAnalyze(null);
-        }} />
-        </div>
-      </div>;
-  }
 
   return <div className="min-h-screen bg-gradient-to-br from-slate-50 to-stone-100 p-4">
       <div className="max-w-md mx-auto space-y-4">

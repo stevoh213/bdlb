@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,9 +14,10 @@ interface SessionAnalysisProps {
   session: Session;
   onClose: () => void;
   onAnalysisSaved?: (sessionId: string, analysis: Session['aiAnalysis']) => void;
+  autoStart?: boolean;
 }
 
-const SessionAnalysis = ({ session, onClose, onAnalysisSaved }: SessionAnalysisProps) => {
+const SessionAnalysis = ({ session, onClose, onAnalysisSaved, autoStart = false }: SessionAnalysisProps) => {
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -35,16 +37,18 @@ const SessionAnalysis = ({ session, onClose, onAnalysisSaved }: SessionAnalysisP
       return;
     }
 
-    // Otherwise generate new analysis
-    const savedApiKey = localStorage.getItem('openrouter_api_key') || OPENROUTER_CONFIG.defaultApiKey;
-    const savedModel = localStorage.getItem('openrouter_model') || OPENROUTER_CONFIG.defaultModel;
-    
-    if (savedApiKey) {
-      performAnalysis(savedApiKey, savedModel);
-    } else {
-      setShowSettings(true);
+    // Only auto-start if explicitly requested and API key is available
+    if (autoStart) {
+      const savedApiKey = localStorage.getItem('openrouter_api_key') || OPENROUTER_CONFIG.defaultApiKey;
+      const savedModel = localStorage.getItem('openrouter_model') || OPENROUTER_CONFIG.defaultModel;
+      
+      if (savedApiKey) {
+        performAnalysis(savedApiKey, savedModel);
+      } else {
+        setShowSettings(true);
+      }
     }
-  }, []);
+  }, [autoStart]);
 
   const performAnalysis = async (apiKey: string, model?: string) => {
     setLoading(true);
@@ -86,6 +90,17 @@ const SessionAnalysis = ({ session, onClose, onAnalysisSaved }: SessionAnalysisP
 
   const handleSettingsSave = (apiKey: string, model: string) => {
     performAnalysis(apiKey, model);
+  };
+
+  const handleStartAnalysis = () => {
+    const savedApiKey = localStorage.getItem('openrouter_api_key') || OPENROUTER_CONFIG.defaultApiKey;
+    const savedModel = localStorage.getItem('openrouter_model') || OPENROUTER_CONFIG.defaultModel;
+    
+    if (savedApiKey) {
+      performAnalysis(savedApiKey, savedModel);
+    } else {
+      setShowSettings(true);
+    }
   };
 
   const handleRegenerate = () => {
@@ -147,6 +162,23 @@ const SessionAnalysis = ({ session, onClose, onAnalysisSaved }: SessionAnalysisP
           </Button>
         </div>
       </div>
+
+      {!analysis && !loading && !error && (
+        <Card className="border-stone-200 shadow-lg">
+          <CardContent className="p-8 text-center">
+            <Brain className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-stone-700 mb-2">Generate AI Analysis</h3>
+            <p className="text-stone-600 mb-4">Get personalized insights about your climbing performance</p>
+            <Button 
+              onClick={handleStartAnalysis}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <Brain className="h-4 w-4 mr-2" />
+              Start Analysis
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {loading && (
         <Card className="border-stone-200 shadow-lg">
