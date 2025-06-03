@@ -11,6 +11,7 @@ import Index from "./pages/Index";
 import History from "./pages/History";
 import Settings from "./pages/Settings";
 import Metrics from "./pages/Metrics";
+import ImportPage from "./pages/ImportPage"; // Added ImportPage
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ const AppContent = () => {
             <Route path="/history" element={<History />} />
             <Route path="/metrics" element={<Metrics />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/import" element={<ImportPage />} /> {/* Added import route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
