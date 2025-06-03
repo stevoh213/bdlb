@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { Mountain, History, LogOut, User, Menu, X, Settings, BarChart3 } from 'lucide-react';
+import { Mountain, History, LogOut, User, Menu, X, Settings, BarChart3, Beaker } from 'lucide-react';
 
 const Navigation = () => {
   const { signOut, user } = useAuth();
@@ -60,6 +59,17 @@ const Navigation = () => {
                 >
                   <BarChart3 className="h-4 w-4" />
                   <span>Metrics</span>
+                </Link>
+                <Link
+                  to="/beta-features"
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-1 ${
+                    location.pathname === '/beta-features' 
+                      ? 'bg-blue-100 text-blue-700' 
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  <Beaker className="h-4 w-4" />
+                  <span>Beta</span>
                 </Link>
                 <Link
                   to="/settings"
@@ -169,6 +179,18 @@ const Navigation = () => {
             >
               <BarChart3 className="h-5 w-5" />
               <span>Metrics</span>
+            </Link>
+            <Link
+              to="/beta-features"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`block px-3 py-3 rounded-md text-base font-medium transition-colors flex items-center space-x-2 ${
+                location.pathname === '/beta-features' 
+                  ? 'bg-blue-100 text-blue-700' 
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <Beaker className="h-5 w-5" />
+              <span>Beta Features</span>
             </Link>
             <Link
               to="/settings"

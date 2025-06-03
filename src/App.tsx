@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,6 +11,9 @@ import History from "./pages/History";
 import Settings from "./pages/Settings";
 import Metrics from "./pages/Metrics";
 import NotFound from "./pages/NotFound";
+import BetaFeaturesPage from "./pages/BetaFeaturesPage";
+import VoiceLogsPage from "./pages/VoiceLogsPage";
+import VoiceLogReviewPage from "./pages/VoiceLogReviewPage";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +42,9 @@ const AppContent = () => {
             <Route path="/history" element={<History />} />
             <Route path="/metrics" element={<Metrics />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/beta-features" element={<BetaFeaturesPage />} />
+            <Route path="/voice-logs" element={<VoiceLogsPage />} />
+            <Route path="/voice-logs/review/:previewId" element={<VoiceLogReviewPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>

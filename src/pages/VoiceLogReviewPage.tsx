@@ -9,7 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Loader2, Trash2, PlusCircle } from 'lucide-react';
+import { Loader2, Trash2, PlusCircle, ArrowLeft, Save, Play, Pause, Check, X } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 // Mock for Supabase access token
 const getSupabaseAccessToken = async (): Promise<string | null> => {
@@ -71,6 +72,13 @@ const GRADES = { // Simplified example grades
   // Add more for other types if needed
 };
 
+interface TranscriptionSegment {
+  id: string;
+  text: string;
+  timestamp: string;
+  isEdited: boolean;
+}
+
 const VoiceLogReviewPage: React.FC = () => {
   const { previewId } = useParams<{ previewId: string }>();
   const navigate = useNavigate();
@@ -78,6 +86,27 @@ const VoiceLogReviewPage: React.FC = () => {
   const [originalPreviewData, setOriginalPreviewData] = useState<FetchedVoiceLogPreview | null>(null);
   const [sessionDetails, setSessionDetails] = useState<ConfirmedSessionDetails | null>(null);
   const [climbs, setClimbs] = useState<ConfirmedClimb[]>([]);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [transcription, setTranscription] = useState<TranscriptionSegment[]>([
+    {
+      id: '1',
+      text: "Started climbing at 2 PM, did some warm-up boulders",
+      timestamp: "00:00",
+      isEdited: false
+    },
+    {
+      id: '2',
+      text: "Projected V5 in the corner, got to the last move",
+      timestamp: "00:15",
+      isEdited: false
+    },
+    {
+      id: '3',
+      text: "Switched to V4s, completed 3 problems",
+      timestamp: "00:45",
+      isEdited: false
+    }
+  ]);
 
   const [isLoading, setIsLoading] = useState<boolean>(false); // General loading for page actions
   const [isFetching, setIsFetching] = useState<boolean>(true); // Specific for initial data fetch
@@ -251,6 +280,21 @@ const VoiceLogReviewPage: React.FC = () => {
     }
   };
 
+  const togglePlayback = () => {
+    setIsPlaying(!isPlaying);
+    // Implement audio playback logic here
+  };
+
+  const handleSegmentEdit = (id: string, newText: string) => {
+    setTranscription(prev =>
+      prev.map(segment =>
+        segment.id === id
+          ? { ...segment, text: newText, isEdited: true }
+          : segment
+      )
+    );
+  };
+
   // Render logic
   if (isFetching) {
     return <div className="container mx-auto p-4 text-center"><Loader2 className="mr-2 h-8 w-8 animate-spin inline-block" /> Loading preview data...</div>;
@@ -267,128 +311,91 @@ const VoiceLogReviewPage: React.FC = () => {
 
 
   return (
-    <div className="container mx-auto p-4 md:p-8">
-      <header className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight">Review Voice Log</h1>
-        <p className="text-muted-foreground">
-          Editing data extracted for: <span className="font-semibold">{originalPreviewData.original_audio_filename}</span>
-        </p>
-        <p className="text-sm text-muted-foreground">
-            Current Status: <Badge variant={originalPreviewData.status === 'processing_failed' ? 'destructive' : 'outline'}>{originalPreviewData.status.toUpperCase()}</Badge>
-        </p>
-         {originalPreviewData.status === 'processing_failed' && originalPreviewData.error_message && (
-            <Alert variant="destructive" className="mt-2">
-                <AlertTitle>Original Extraction Error</AlertTitle>
-                <AlertDescription>{originalPreviewData.error_message}</AlertDescription>
-            </Alert>
-        )}
-      </header>
+    <div className="container mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto">
+        <div className="flex items-center gap-4 mb-8">
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/voice-logs')}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Voice Logs
+          </Button>
+          <h1 className="text-4xl font-bold">Review Voice Log</h1>
+        </div>
 
-      {/* General Error Display for page actions */}
-      {error && (
-        <Alert variant="destructive" className="mb-4">
-          <AlertTitle>Action Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      <div className="space-y-8">
-        {/* Session Details Form */}
-        <Card>
-          <CardHeader><CardTitle>Session Details</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="location">Location</Label>
-              <Input id="location" value={sessionDetails.location} onChange={e => handleSessionChange('location', e.target.value)} disabled={isLoading} />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="date">Date (YYYY-MM-DD)</Label>
-                <Input id="date" type="date" value={sessionDetails.date} onChange={e => handleSessionChange('date', e.target.value)} disabled={isLoading} />
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Audio Playback</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-4">
+              <Button
+                onClick={togglePlayback}
+                className="flex items-center gap-2"
+              >
+                {isPlaying ? (
+                  <>
+                    <Pause className="h-4 w-4" />
+                    Pause
+                  </>
+                ) : (
+                  <>
+                    <Play className="h-4 w-4" />
+                    Play
+                  </>
+                )}
+              </Button>
+              <div className="flex-1 h-2 bg-gray-200 rounded-full">
+                <div className="h-full bg-blue-600 rounded-full" style={{ width: '30%' }} />
               </div>
-              <div>
-                <Label htmlFor="climbingType">Climbing Type</Label>
-                <Select value={sessionDetails.climbingType} onValueChange={val => handleSessionChange('climbingType', val)} disabled={isLoading}>
-                  <SelectTrigger><SelectValue placeholder="Select type..." /></SelectTrigger>
-                  <SelectContent>{CLIMBING_TYPES.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div>
-              <Label htmlFor="session_notes">Session Notes</Label>
-              <Textarea id="session_notes" value={sessionDetails.session_notes || ''} onChange={e => handleSessionChange('session_notes', e.target.value)} disabled={isLoading} rows={3}/>
+              <span className="text-sm text-muted-foreground">00:45 / 02:30</span>
             </div>
           </CardContent>
         </Card>
 
-        {/* Climbs Forms */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Climbs</CardTitle>
-            <Button variant="outline" size="sm" onClick={handleAddClimb} disabled={isLoading}><PlusCircle className="mr-2 h-4 w-4"/>Add Climb</Button>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {climbs.map((climb, index) => (
-              <Card key={climb.id} className="p-4 relative">
-                 <Button variant="ghost" size="icon" className="absolute top-2 right-2 text-muted-foreground hover:text-destructive" onClick={() => handleRemoveClimb(climb.id)} disabled={isLoading}>
-                    <Trash2 className="h-4 w-4" />
-                </Button>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
-                  <div>
-                    <Label htmlFor={`climbName-${climb.id}`}>Climb Name</Label>
-                    <Input id={`climbName-${climb.id}`} value={climb.name} onChange={e => handleClimbChange(climb.id, 'name', e.target.value)} disabled={isLoading} />
+        <div className="space-y-4">
+          {transcription.map((segment) => (
+            <Card key={segment.id} className="hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex gap-4">
+                  <div className="w-16 flex-shrink-0">
+                    <span className="text-sm text-muted-foreground">{segment.timestamp}</span>
                   </div>
-                  <div>
-                    <Label htmlFor={`climbGrade-${climb.id}`}>Grade</Label>
-                     <Select value={climb.grade} onValueChange={val => handleClimbChange(climb.id, 'grade', val)} disabled={isLoading}>
-                        <SelectTrigger><SelectValue placeholder="Select grade..." /></SelectTrigger>
-                        <SelectContent>{availableGrades.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor={`climbTick-${climb.id}`}>Tick Type</Label>
-                    <Select value={climb.tick_type} onValueChange={val => handleClimbChange(climb.id, 'tick_type', val)} disabled={isLoading}>
-                        <SelectTrigger><SelectValue placeholder="Select tick..." /></SelectTrigger>
-                        <SelectContent>{TICK_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
-                  {climb.tick_type === 'attempt' && (
-                    <div>
-                      <Label htmlFor={`climbAttempts-${climb.id}`}>Attempts</Label>
-                      <Input id={`climbAttempts-${climb.id}`} type="number" value={climb.attempts || 1} onChange={e => handleClimbChange(climb.id, 'attempts', parseInt(e.target.value,10) || 1)} disabled={isLoading} min={1}/>
+                  <Textarea
+                    value={segment.text}
+                    onChange={(e) => handleSegmentEdit(segment.id, e.target.value)}
+                    className="flex-1 min-h-[60px]"
+                  />
+                  {segment.isEdited && (
+                    <div className="flex-shrink-0 flex items-center">
+                      <span className="text-xs text-blue-600">Edited</span>
                     </div>
                   )}
-                   <div className="md:col-span-2">
-                      <Label htmlFor={`climbSkills-${climb.id}`}>Skills (comma-separated)</Label>
-                      <Input id={`climbSkills-${climb.id}`} value={(climb.skills || []).join(', ')} onChange={e => handleClimbChange(climb.id, 'skills', e.target.value.split(',').map(s=>s.trim()).filter(s=>s))} disabled={isLoading} placeholder="e.g. sloper, crimp, dynamic move"/>
-                  </div>
-                  <div className="md:col-span-2">
-                    <Label htmlFor={`climbNotes-${climb.id}`}>Climb Notes</Label>
-                    <Textarea id={`climbNotes-${climb.id}`} value={climb.climb_notes || ''} onChange={e => handleClimbChange(climb.id, 'climb_notes', e.target.value)} disabled={isLoading} rows={2}/>
-                  </div>
                 </div>
-              </Card>
-            ))}
-            {climbs.length === 0 && <p className="text-muted-foreground text-center">No climbs recorded for this session yet. Add one above!</p>}
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
-        {/* Action Buttons */}
-        {(originalPreviewData.status === 'pending_review' || originalPreviewData.status === 'processing_failed') && (
-          <div className="flex justify-end space-x-4 mt-8">
-            <Button variant="outline" onClick={handleDiscard} disabled={isLoading}>
-              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Discard Preview
-            </Button>
-            <Button onClick={handleConfirm} disabled={isLoading}>
-              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Confirm and Save Log
-            </Button>
-          </div>
-        )}
-         {originalPreviewData.status !== 'pending_review' && originalPreviewData.status !== 'processing_failed' && (
-             <p className="text-center text-muted-foreground">This log has status "{originalPreviewData.status.toUpperCase()}" and cannot be modified further here.</p>
-         )}
+        <div className="flex justify-end gap-4 mt-8">
+          <Button
+            variant="outline"
+            onClick={() => navigate('/voice-logs')}
+            className="flex items-center gap-2"
+          >
+            <X className="h-4 w-4" />
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConfirm}
+            className="flex items-center gap-2"
+          >
+            <Save className="h-4 w-4" />
+            Save Changes
+          </Button>
+        </div>
       </div>
     </div>
   );
