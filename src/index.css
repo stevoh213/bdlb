@@ -1,5 +1,4 @@
 
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -117,11 +116,3 @@
 .animate-slide-in-from-bottom {
   animation: slide-in-from-bottom 0.3s ease-out;
 }
-
-/* Border beam animation */
-@keyframes border-beam {
-  100% {
-    offset-distance: 100%;
-  }
-}
-
