@@ -79,13 +79,18 @@ export const climbingLocations: ClimbingLocation[] = [
   }
 ];
 
+// Filtered locations for login screen backgrounds (excluding red-rock, boulder-canyon, mount-lemmon, indian-creek)
+export const loginBackgroundLocations = climbingLocations.filter(
+  location => !['red-rock', 'boulder-canyon', 'mount-lemmon', 'indian-creek'].includes(location.id)
+);
+
 export function getRandomLocation(): ClimbingLocation {
   const randomIndex = Math.floor(Math.random() * climbingLocations.length);
   return climbingLocations[randomIndex];
 }
 
 export function getLocationByIndex(index: number): ClimbingLocation {
-  return climbingLocations[index % climbingLocations.length];
+  return loginBackgroundLocations[index % loginBackgroundLocations.length];
 }
 
 export function getNextLocation(currentId: string): ClimbingLocation {

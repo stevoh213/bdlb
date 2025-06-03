@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -42,14 +43,10 @@ const VisualLoginForm = () => {
     <div className="min-h-screen relative overflow-hidden">
       {/* Background Image with Extended Coverage */}
       <div 
-        className="absolute bg-cover bg-center bg-no-repeat transition-opacity duration-1000"
+        className="absolute inset-0 bg-center bg-no-repeat transition-opacity duration-1000"
         style={{
           backgroundImage: `url('${currentLocation.imagePath}')`,
-          top: '-50vh',
-          left: '-10vw',
-          right: '-10vw',
-          bottom: '-50vh',
-          backgroundSize: 'cover',
+          backgroundSize: 'auto 100vh',
           backgroundPosition: 'center center'
         }}
       />
@@ -81,12 +78,12 @@ const VisualLoginForm = () => {
         </div>
         
         {/* Login Button */}
-        <Button 
+        <InteractiveHoverButton 
           onClick={() => setShowLoginForm(true)}
-          className="bg-white text-black hover:bg-white/90 px-12 py-4 text-lg font-semibold rounded-full shadow-lg transition-all duration-300 hover:scale-105"
+          className="bg-white text-black hover:bg-white/90 px-12 py-4 text-lg font-semibold shadow-lg"
         >
           Log in
-        </Button>
+        </InteractiveHoverButton>
       </div>
 
       {/* Login Form Overlay */}
