@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import History from "./pages/History";
 import Settings from "./pages/Settings";
 import Metrics from "./pages/Metrics";
+import ImportPage from "./pages/ImportPage";
 import NotFound from "./pages/NotFound";
 import BetaFeaturesPage from "./pages/BetaFeaturesPage";
 import VoiceLogsPage from "./pages/VoiceLogsPage";
@@ -42,6 +43,7 @@ const AppContent = () => {
             <Route path="/history" element={<History />} />
             <Route path="/metrics" element={<Metrics />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/import" element={<ImportPage />} />
             <Route path="/beta-features" element={<BetaFeaturesPage />} />
             <Route path="/voice-logs" element={<VoiceLogsPage />} />
             <Route path="/voice-logs/review/:previewId" element={<VoiceLogReviewPage />} />

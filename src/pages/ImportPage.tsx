@@ -1,0 +1,52 @@
+import React from 'react';
+import ImportCsvForm from '@/components/ImportCsvForm';
+import BulkManualEntryForm from '@/components/BulkManualEntryForm';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { Link } from "react-router-dom";
+
+const ImportPage: React.FC = () => {
+  return (
+    <div className="container mx-auto p-4 md:p-8">
+      <div className="flex items-center gap-3 mb-6">
+        <Link to="/history">
+          <Button variant="ghost" size="icon" className="text-stone-600">
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+        </Link>
+        <h1 className="text-3xl font-bold text-gray-800">Import Climbs</h1>
+      </div>
+      <p className="text-gray-600 mb-8 text-center">
+        Choose your preferred method to import your climbing data.
+      </p>
+
+      <Tabs defaultValue="fileImport" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 md:w-1/2 mx-auto mb-6">
+          <TabsTrigger value="fileImport">File Import (CSV/JSON)</TabsTrigger>
+          <TabsTrigger value="manualEntry">Manual Bulk Entry</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="fileImport">
+          <div className="max-w-4xl mx-auto">
+             <p className="text-center text-sm text-gray-500 mb-4">
+                Upload a CSV or JSON file. Use templates for common formats or map fields manually.
+            </p>
+            <ImportCsvForm />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="manualEntry">
+          <div className="max-w-6xl mx-auto"> {/* Allow wider for table */}
+             <p className="text-center text-sm text-gray-500 mb-4">
+                Enter multiple climbs directly into a table.
+            </p>
+            <BulkManualEntryForm />
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+export default ImportPage;
