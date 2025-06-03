@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { BorderBeam } from '@/components/ui/border-beam';
 import { useAuthForm } from '@/hooks/useAuthForm';
 import { Mountain, X, MapPin } from 'lucide-react';
 import { climbingLocations, getLocationByIndex, type ClimbingLocation } from '@/data/climbingLocations';
@@ -89,115 +90,124 @@ const VisualLoginForm = () => {
         </Button>
       </div>
 
-      {/* Login Form Overlay */}
+      {/* Full Modal Overlay */}
       {showLoginForm && (
         <div 
-          className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center transition-all duration-300"
+          className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4 transition-all duration-300"
           onClick={handleOverlayClick}
         >
-          <div className="w-full max-w-md bg-white rounded-t-3xl p-6 pb-8 animate-slide-in-from-bottom shadow-2xl">
-            {/* Close Button */}
-            <div className="flex justify-end mb-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setShowLoginForm(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <X className="h-5 w-5" />
-              </Button>
-            </div>
-
-            <CardHeader className="text-center pb-4">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <Mountain className="h-8 w-8 text-amber-600" />
-                <CardTitle className="text-2xl font-bold text-stone-800">BDLB</CardTitle>
+          <div className="relative w-full max-w-md">
+            <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-2xl animate-scale-in">
+              <BorderBeam 
+                size={300} 
+                duration={12} 
+                colorFrom="#ff6b35" 
+                colorTo="#f7931e" 
+                className="rounded-lg"
+              />
+              
+              {/* Close Button */}
+              <div className="absolute -top-2 -right-2 z-10">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowLoginForm(false)}
+                  className="h-8 w-8 bg-white shadow-md hover:bg-gray-100 text-gray-700 rounded-full"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
-              <p className="text-stone-600">Welcome back</p>
-            </CardHeader>
 
-            <CardContent>
-              <Tabs defaultValue="signin" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-6">
-                  <TabsTrigger value="signin">Sign In</TabsTrigger>
-                  <TabsTrigger value="signup">Sign Up</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="signin">
-                  <form onSubmit={handleSignIn} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="signin-email">Email</Label>
-                      <Input
-                        id="signin-email"
-                        type="email"
-                        value={email}
-                        onChange={handleEmailChange} // Use handler from hook
-                        placeholder="Enter your email"
-                        required
-                        className="h-12"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="signin-password">Password</Label>
-                      <Input
-                        id="signin-password"
-                        type="password"
-                        value={password}
-                        onChange={handlePasswordChange} // Use handler from hook
-                        placeholder="Enter your password"
-                        required
-                        className="h-12"
-                      />
-                    </div>
-                    <Button 
-                      type="submit" 
-                      className="w-full h-12 bg-amber-600 hover:bg-amber-700 text-white font-semibold" 
-                      disabled={isLoading}
-                    >
-                      {isLoading ? 'Signing in...' : 'Sign In'}
-                    </Button>
-                  </form>
-                </TabsContent>
-                
-                <TabsContent value="signup">
-                  <form onSubmit={handleSignUp} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-email">Email</Label>
-                      <Input
-                        id="signup-email"
-                        type="email"
-                        value={email}
-                        onChange={handleEmailChange} // Use handler from hook
-                        placeholder="Enter your email"
-                        required
-                        className="h-12"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-password">Password</Label>
-                      <Input
-                        id="signup-password"
-                        type="password"
-                        value={password}
-                        onChange={handlePasswordChange} // Use handler from hook
-                        placeholder="Create a password"
-                        required
-                        minLength={6}
-                        className="h-12"
-                      />
-                    </div>
-                    {/* Add Confirm Password field here if desired, using handleConfirmPasswordChange */}
-                    <Button 
-                      type="submit" 
-                      className="w-full h-12 bg-amber-600 hover:bg-amber-700 text-white font-semibold" 
-                      disabled={isLoading}
-                    >
-                      {isLoading ? 'Creating account...' : 'Sign Up'}
-                    </Button>
-                  </form>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
+              <CardHeader className="text-center pb-4">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <Mountain className="h-8 w-8 text-amber-600" />
+                  <CardTitle className="text-2xl font-bold text-stone-800">BDLB</CardTitle>
+                </div>
+                <p className="text-stone-600">Welcome back</p>
+              </CardHeader>
+
+              <CardContent>
+                <Tabs defaultValue="signin" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 mb-6">
+                    <TabsTrigger value="signin">Sign In</TabsTrigger>
+                    <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="signin">
+                    <form onSubmit={handleSignIn} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="signin-email">Email</Label>
+                        <Input
+                          id="signin-email"
+                          type="email"
+                          value={email}
+                          onChange={handleEmailChange}
+                          placeholder="Enter your email"
+                          required
+                          className="h-12"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="signin-password">Password</Label>
+                        <Input
+                          id="signin-password"
+                          type="password"
+                          value={password}
+                          onChange={handlePasswordChange}
+                          placeholder="Enter your password"
+                          required
+                          className="h-12"
+                        />
+                      </div>
+                      <Button 
+                        type="submit" 
+                        className="w-full h-12 bg-amber-600 hover:bg-amber-700 text-white font-semibold" 
+                        disabled={isLoading}
+                      >
+                        {isLoading ? 'Signing in...' : 'Sign In'}
+                      </Button>
+                    </form>
+                  </TabsContent>
+                  
+                  <TabsContent value="signup">
+                    <form onSubmit={handleSignUp} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="signup-email">Email</Label>
+                        <Input
+                          id="signup-email"
+                          type="email"
+                          value={email}
+                          onChange={handleEmailChange}
+                          placeholder="Enter your email"
+                          required
+                          className="h-12"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="signup-password">Password</Label>
+                        <Input
+                          id="signup-password"
+                          type="password"
+                          value={password}
+                          onChange={handlePasswordChange}
+                          placeholder="Create a password"
+                          required
+                          minLength={6}
+                          className="h-12"
+                        />
+                      </div>
+                      <Button 
+                        type="submit" 
+                        className="w-full h-12 bg-amber-600 hover:bg-amber-700 text-white font-semibold" 
+                        disabled={isLoading}
+                      >
+                        {isLoading ? 'Creating account...' : 'Sign Up'}
+                      </Button>
+                    </form>
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
           </div>
         </div>
       )}
