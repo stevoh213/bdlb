@@ -20,24 +20,20 @@ export const useSessionHistory = () => {
   const location = useLocation();
 
   // Data fetching hooks
-  const { sessions: rawSessions, isLoading: isLoadingSessions, addSession } = useClimbingSessions();
-  const { climbs: allUserClimbs, isLoading: isLoadingClimbs, addClimb, updateClimb } = useClimbs();
-
-  // Mock mutations for now - these should be replaced with real implementations
-  const mockUpdateSession = (vars: { sessionId: string, updates: Partial<Session>}, options?: { onSuccess?: () => void, onError?: (error: Error) => void }) => {
-    console.log('mockUpdateSession', vars);
-    if(options && options.onSuccess) options.onSuccess();
-  };
-  
-  const mockDeleteSession = (sessionId: string, options?: { onSuccess?: () => void, onError?: (error: Error) => void }) => {
-    console.log('mockDeleteSession', sessionId);
-    if(options && options.onSuccess) options.onSuccess();
-  };
-
-  const mockDeleteClimb = (climbId: string, options?: { onSuccess?: () => void, onError?: (error: Error) => void }) => {
-    console.log('mockDeleteClimb', climbId);
-    if(options && options.onSuccess) options.onSuccess();
-  };
+  const { 
+    sessions: rawSessions, 
+    isLoading: isLoadingSessions, 
+    addSession,
+    updateSession,
+    deleteSession 
+  } = useClimbingSessions();
+  const { 
+    climbs: allUserClimbs, 
+    isLoading: isLoadingClimbs, 
+    addClimb, 
+    updateClimb,
+    deleteClimb 
+  } = useClimbs();
 
   // UI State
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
@@ -100,45 +96,31 @@ export const useSessionHistory = () => {
   }, [updateClimb, toast, handleCloseEditClimbDialog]);
 
   const handleSaveSession = useCallback((sessionId: string, updates: Partial<Session>) => {
-    mockUpdateSession({ sessionId, updates }, {
-      onSuccess: () => {
-        toast({ title: "Session Updated", description: "Your session has been successfully updated." });
-        handleCloseEditSessionDialog();
-      },
-      onError: (error: Error) => {
-         toast({ title: "Error updating session", description: error.message, variant: "destructive" });
+    updateSession({ 
+      sessionId, 
+      updates: {
+        location: updates.location,
+        notes: updates.notes,
+        // Map other Session fields to UpdateSessionData as needed
       }
     });
-  }, [toast, handleCloseEditSessionDialog]);
+    handleCloseEditSessionDialog();
+  }, [updateSession, handleCloseEditSessionDialog]);
 
   const handleConfirmDelete = useCallback(() => {
     if (!deleteConfirm) return;
 
     if (deleteConfirm.type === 'session') {
-      mockDeleteSession(deleteConfirm.item.id, {
-        onSuccess: () => {
-          toast({ title: "Session Deleted", description: "The session has been permanently deleted." });
-          if (selectedSessionId === deleteConfirm.item.id) {
-            handleSelectSession(null);
-          }
-          handleCloseDeleteDialog();
-        },
-        onError: (error: Error) => {
-          toast({ title: "Error deleting session", description: error.message, variant: "destructive" });
-        }
-      });
+      deleteSession(deleteConfirm.item.id);
+      if (selectedSessionId === deleteConfirm.item.id) {
+        handleSelectSession(null);
+      }
+      handleCloseDeleteDialog();
     } else if (deleteConfirm.type === 'climb') {
-      mockDeleteClimb(deleteConfirm.item.id, {
-         onSuccess: () => {
-          toast({ title: "Climb Deleted", description: "The climb has been permanently deleted." });
-          handleCloseDeleteDialog();
-        },
-        onError: (error: Error) => {
-          toast({ title: "Error deleting climb", description: error.message, variant: "destructive" });
-        }
-      });
+      deleteClimb(deleteConfirm.item.id);
+      handleCloseDeleteDialog();
     }
-  }, [deleteConfirm, toast, selectedSessionId, handleSelectSession, handleCloseDeleteDialog]);
+  }, [deleteConfirm, deleteSession, deleteClimb, selectedSessionId, handleSelectSession, handleCloseDeleteDialog]);
 
   const handleAnalysisSaved = useCallback((sessionId: string, analysis: Session['aiAnalysis']) => {
     handleSaveSession(sessionId, { aiAnalysis: analysis });

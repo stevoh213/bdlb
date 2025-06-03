@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import * as climbingService from '@/services/climbingService';
-import type { NewSessionData } from '@/services/climbingService';
+import type { NewSessionData, UpdateSessionData } from '@/services/climbingService';
 import { ClimbingSession, Session } from '@/types/climbing';
 
 export const useClimbingSessions = () => {
@@ -15,25 +15,21 @@ export const useClimbingSessions = () => {
     queryKey: ['climbing_sessions', user?.id],
     queryFn: async (): Promise<Session[]> => {
       if (!user) return [];
-      try {
-        const dbSessions: ClimbingSession[] = await climbingService.fetchSessions(user.id);
-        return dbSessions.map((cs: ClimbingSession): Session => ({
-          id: cs.id,
-          location: cs.location,
-          climbingType: cs.default_climb_type || 'sport', // Default to 'sport' or handle as error/log if undefined
-          gradeSystem: cs.gradeSystem,
-          notes: cs.notes,
-          startTime: new Date(cs.date),
-          endTime: cs.duration ? new Date(new Date(cs.date).getTime() + cs.duration * 60000) : undefined, // Assuming duration is in minutes
-          climbs: [], // Initialize with empty climbs
-          isActive: false, // Default value
-          breaks: 0, // Default value
-          totalBreakTime: 0, // Default value
-          aiAnalysis: undefined, // Default value
-        }));
-      } catch (err) {
-        throw err;
-      }
+      const dbSessions: ClimbingSession[] = await climbingService.fetchSessions(user.id);
+      return dbSessions.map((cs: ClimbingSession): Session => ({
+        id: cs.id,
+        location: cs.location,
+        climbingType: cs.default_climb_type || 'sport', // Default to 'sport' or handle as error/log if undefined
+        gradeSystem: cs.gradeSystem,
+        notes: cs.notes,
+        startTime: new Date(cs.date),
+        endTime: cs.duration ? new Date(new Date(cs.date).getTime() + cs.duration * 60000) : undefined, // Assuming duration is in minutes
+        climbs: [], // Initialize with empty climbs
+        isActive: false, // Default value
+        breaks: 0, // Default value
+        totalBreakTime: 0, // Default value
+        aiAnalysis: undefined, // Default value
+      }));
     },
     enabled: !!user,
   });
@@ -63,6 +59,55 @@ export const useClimbingSessions = () => {
     },
   });
 
+  const updateSessionMutation = useMutation<
+    ClimbingSession,
+    Error,
+    { sessionId: string; updates: UpdateSessionData }
+  >({
+    mutationFn: async ({ sessionId, updates }) => {
+      return climbingService.updateSession(sessionId, updates);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['climbing_sessions', user?.id] });
+      toast({
+        title: "Session updated!",
+        description: "Your climbing session has been successfully updated.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error updating session",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteSessionMutation = useMutation<
+    void,
+    Error,
+    string
+  >({
+    mutationFn: async (sessionId: string) => {
+      await climbingService.deleteSession(sessionId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['climbing_sessions', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['climbs', user?.id] });
+      toast({
+        title: "Session deleted!",
+        description: "Your climbing session and all associated climbs have been permanently deleted.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error deleting session",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
     sessions,
     isLoading,
@@ -70,5 +115,11 @@ export const useClimbingSessions = () => {
     addSession: addSessionMutation.mutate,
     addSessionAsync: addSessionMutation.mutateAsync,
     isAddingSession: addSessionMutation.isPending,
+    updateSession: updateSessionMutation.mutate,
+    updateSessionAsync: updateSessionMutation.mutateAsync,
+    isUpdatingSession: updateSessionMutation.isPending,
+    deleteSession: deleteSessionMutation.mutate,
+    deleteSessionAsync: deleteSessionMutation.mutateAsync,
+    isDeletingSession: deleteSessionMutation.isPending,
   };
 };

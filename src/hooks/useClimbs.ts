@@ -83,6 +83,31 @@ export const useClimbs = () => {
     },
   });
 
+  const deleteClimbMutation = useMutation<
+    void,
+    Error,
+    string
+  >({
+    mutationFn: async (climbId: string) => {
+      if (!user) throw new Error('User not authenticated');
+      return climbingService.deleteClimb(climbId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['climbs', user?.id] });
+      toast({
+        title: "Climb deleted!",
+        description: "Your climb has been permanently deleted.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error deleting climb",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
     climbs,
     isLoading,
@@ -90,8 +115,11 @@ export const useClimbs = () => {
     addClimb: addClimbMutation.mutate,
     addClimbAsync: addClimbMutation.mutateAsync,
     updateClimb: updateClimbMutation.mutate,
+    deleteClimb: deleteClimbMutation.mutate,
+    deleteClimbAsync: deleteClimbMutation.mutateAsync,
     isAddingClimb: addClimbMutation.isPending,
     isUpdatingClimb: updateClimbMutation.isPending,
+    isDeletingClimb: deleteClimbMutation.isPending,
   };
 };
 
