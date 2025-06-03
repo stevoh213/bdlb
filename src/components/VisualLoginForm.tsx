@@ -43,10 +43,10 @@ const VisualLoginForm = () => {
     <div className="min-h-screen relative overflow-hidden">
       {/* Background Image with Extended Coverage */}
       <div 
-        className="absolute inset-0 bg-center bg-no-repeat transition-opacity duration-1000"
+        className="absolute inset-0 transition-opacity duration-1000"
         style={{
           backgroundImage: `url('${currentLocation.imagePath}')`,
-          backgroundSize: 'auto 100vh',
+          backgroundSize: 'cover',
           backgroundPosition: 'center center'
         }}
       />
