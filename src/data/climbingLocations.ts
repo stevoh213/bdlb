@@ -90,6 +90,10 @@ export function getRandomLocation(): ClimbingLocation {
 }
 
 export function getLocationByIndex(index: number): ClimbingLocation {
+  return climbingLocations[index % climbingLocations.length];
+}
+
+export function getLoginBackgroundByIndex(index: number): ClimbingLocation {
   return loginBackgroundLocations[index % loginBackgroundLocations.length];
 }
 

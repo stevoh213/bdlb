@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuthForm } from '@/hooks/useAuthForm';
 import { Mountain, X, MapPin } from 'lucide-react';
-import { climbingLocations, getLocationByIndex, type ClimbingLocation } from '@/data/climbingLocations';
+import { climbingLocations, getLoginBackgroundByIndex, type ClimbingLocation } from '@/data/climbingLocations';
 
 const VisualLoginForm = () => {
   const [showLoginForm, setShowLoginForm] = useState(false);
@@ -26,7 +26,7 @@ const VisualLoginForm = () => {
   // Get a location based on the current day + manual offset
   const currentLocation: ClimbingLocation = useMemo(() => {
     const daysSinceEpoch = Math.floor(Date.now() / (1000 * 60 * 60 * 24));
-    return getLocationByIndex(daysSinceEpoch + locationOffset);
+    return getLoginBackgroundByIndex(daysSinceEpoch + locationOffset);
   }, [locationOffset])
 
   const handleLocationClick = () => {
