@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -55,11 +54,12 @@ const VisualLoginForm = () => {
       <div className="absolute inset-0 bg-black/30" />
       
       {/* Main Content */}
-      <div className="relative z-10 min-h-screen flex flex-col items-center justify-center text-white px-4">
+      <div className="relative z-10 min-h-screen flex flex-col items-center justify-center text-white px-4 pt-[env(safe-area-inset-top)]">
         {/* Location Info */}
         <button
           onClick={handleLocationClick}
-          className="absolute top-8 left-8 bg-black/40 backdrop-blur-sm rounded-lg px-4 py-2 flex items-center gap-2 hover:bg-black/50 transition-colors cursor-pointer"
+          className="absolute left-8 bg-black/40 backdrop-blur-sm rounded-lg px-4 py-2 flex items-center gap-2 hover:bg-black/50 transition-colors cursor-pointer"
+          style={{ top: 'calc(env(safe-area-inset-top) + 2rem)' }}
         >
           <MapPin className="h-4 w-4" />
           <div className="text-left">

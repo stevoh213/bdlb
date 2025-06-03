@@ -10,6 +10,349 @@ import { normalizeGrade, GradeSystem } from '../lib/gradeConversion'; // Added f
 import Papa from 'papaparse';
 
 /**
+ * Intelligently transform and clean climb record data
+ */
+function intelligentlyTransformRecord(record: CsvClimb): CsvClimb {
+  const transformed = { ...record };
+  
+  // Clean and parse grade
+  if (transformed.grade && typeof transformed.grade === 'string') {
+    // Remove URLs, parentheses content, and extra whitespace
+    transformed.grade = transformed.grade
+      .replace(/\s*\([^)]*\)/g, '') // Remove anything in parentheses
+      .replace(/https?:\/\/[^\s]+/g, '') // Remove URLs
+      .trim();
+    
+    // Clean common grade variations
+    transformed.grade = transformed.grade
+      .replace(/^grade:?\s*/i, '') // Remove "Grade:" prefix
+      .replace(/\s+/g, ' '); // Normalize whitespace
+  }
+  
+  // Transform climb type with fuzzy matching
+  if (transformed.type && typeof transformed.type === 'string') {
+    const typeStr = transformed.type.toLowerCase().trim();
+    const typeMap: Record<string, ClimbTypeSpec> = {
+      // Direct matches
+      'sport': ClimbTypeSpec.SPORT,
+      'trad': ClimbTypeSpec.TRAD,
+      'boulder': ClimbTypeSpec.BOULDER,
+      'bouldering': ClimbTypeSpec.BOULDER,
+      'top rope': ClimbTypeSpec.TOP_ROPE,
+      'toprope': ClimbTypeSpec.TOP_ROPE,
+      'top-rope': ClimbTypeSpec.TOP_ROPE,
+      'tr': ClimbTypeSpec.TOP_ROPE,
+      'alpine': ClimbTypeSpec.ALPINE,
+      // Common variations
+      'lead': ClimbTypeSpec.SPORT, // Default lead to sport
+      'sport lead': ClimbTypeSpec.SPORT,
+      'trad lead': ClimbTypeSpec.TRAD,
+      'sport climbing': ClimbTypeSpec.SPORT,
+      'traditional': ClimbTypeSpec.TRAD,
+      'traditional climbing': ClimbTypeSpec.TRAD,
+      'bloc': ClimbTypeSpec.BOULDER, // French for boulder
+      'blocs': ClimbTypeSpec.BOULDER,
+      'highball': ClimbTypeSpec.BOULDER,
+      'problem': ClimbTypeSpec.BOULDER,
+      'mountaineering': ClimbTypeSpec.ALPINE,
+      'multi-pitch': ClimbTypeSpec.TRAD, // Often trad
+      'multipitch': ClimbTypeSpec.TRAD,
+    };
+    
+    transformed.type = typeMap[typeStr] || transformed.type as ClimbTypeSpec;
+  }
+  
+  // Transform send type with extensive mapping
+  if (transformed.send_type && typeof transformed.send_type === 'string') {
+    const sendStr = transformed.send_type.toLowerCase().trim();
+    const sendMap: Record<string, SendTypeSpec> = {
+      // Standard types
+      'send': SendTypeSpec.SEND,
+      'sent': SendTypeSpec.SEND,
+      'attempt': SendTypeSpec.ATTEMPT,
+      'attempted': SendTypeSpec.ATTEMPT,
+      'flash': SendTypeSpec.FLASH,
+      'flashed': SendTypeSpec.FLASH,
+      'onsight': SendTypeSpec.ONSIGHT,
+      'on-sight': SendTypeSpec.ONSIGHT,
+      'on sight': SendTypeSpec.ONSIGHT,
+      'onsighted': SendTypeSpec.ONSIGHT,
+      'project': SendTypeSpec.PROJECT,
+      'projecting': SendTypeSpec.PROJECT,
+      'working': SendTypeSpec.PROJECT,
+      // Common variations
+      'redpoint': SendTypeSpec.SEND,
+      'red point': SendTypeSpec.SEND,
+      'pinkpoint': SendTypeSpec.SEND,
+      'pink point': SendTypeSpec.SEND,
+      'clean': SendTypeSpec.SEND,
+      'complete': SendTypeSpec.SEND,
+      'completed': SendTypeSpec.SEND,
+      'success': SendTypeSpec.SEND,
+      'successful': SendTypeSpec.SEND,
+      'tick': SendTypeSpec.SEND,
+      'ticked': SendTypeSpec.SEND,
+      'led': SendTypeSpec.SEND,
+      'lead': SendTypeSpec.SEND,
+      'top rope': SendTypeSpec.SEND,
+      'toprope': SendTypeSpec.SEND,
+      'tr': SendTypeSpec.SEND,
+      // Attempts/Falls
+      'fell': SendTypeSpec.ATTEMPT,
+      'fall': SendTypeSpec.ATTEMPT,
+      'hung': SendTypeSpec.ATTEMPT,
+      'hang': SendTypeSpec.ATTEMPT,
+      'dogged': SendTypeSpec.ATTEMPT,
+      'dog': SendTypeSpec.ATTEMPT,
+      'incomplete': SendTypeSpec.ATTEMPT,
+      'failed': SendTypeSpec.ATTEMPT,
+      'fail': SendTypeSpec.ATTEMPT,
+      'one hang': SendTypeSpec.ATTEMPT,
+      'with falls': SendTypeSpec.ATTEMPT,
+      'not clean': SendTypeSpec.ATTEMPT,
+      // Beta flash variations
+      'beta flash': SendTypeSpec.FLASH,
+      'betaflash': SendTypeSpec.FLASH,
+      'worked': SendTypeSpec.PROJECT,
+    };
+    
+    transformed.send_type = sendMap[sendStr] || transformed.send_type as SendTypeSpec;
+  }
+  
+  // Parse various date formats intelligently
+  if (transformed.date && typeof transformed.date === 'string') {
+    transformed.date = parseFlexibleDate(transformed.date);
+  }
+  
+  // Parse skills from various formats
+  if (transformed.skills && typeof transformed.skills === 'string') {
+    transformed.skills = parseSkills(transformed.skills);
+  }
+  if (transformed.physical_skills && typeof transformed.physical_skills === 'string') {
+    transformed.physical_skills = parseSkills(transformed.physical_skills);
+  }
+  if (transformed.technical_skills && typeof transformed.technical_skills === 'string') {
+    transformed.technical_skills = parseSkills(transformed.technical_skills);
+  }
+  
+  // Clean location - handle empty or whitespace-only strings
+  if (transformed.location && typeof transformed.location === 'string') {
+    transformed.location = transformed.location
+      .replace(/\s+/g, ' ')
+      .trim();
+    
+    // If location is empty after trimming, try to find it in other fields
+    if (!transformed.location) {
+      // Check if gym field has a value
+      if (transformed.gym && typeof transformed.gym === 'string' && transformed.gym.trim()) {
+        transformed.location = transformed.gym.trim();
+      }
+      // Check if country field has a value
+      else if (transformed.country && typeof transformed.country === 'string' && transformed.country.trim()) {
+        transformed.location = transformed.country.trim();
+      }
+    }
+  } else if (!transformed.location) {
+    // If no location field, check gym or country
+    if (transformed.gym && typeof transformed.gym === 'string' && transformed.gym.trim()) {
+      transformed.location = transformed.gym.trim();
+    } else if (transformed.country && typeof transformed.country === 'string' && transformed.country.trim()) {
+      transformed.location = transformed.country.trim();
+    }
+  }
+  
+  // If still no location, check if the name field contains location info
+  if (!transformed.location && transformed.name) {
+    // Common patterns: "Route Name at Location" or "Route Name - Location"
+    const locationMatch = transformed.name.match(/(?:at|@|-)\s*(.+)$/i);
+    if (locationMatch) {
+      transformed.location = locationMatch[1].trim();
+    }
+  }
+  
+  // Parse rating if it's a string
+  if (transformed.rating !== undefined && typeof transformed.rating === 'string') {
+    // Handle star ratings like "3 stars", "***", "4/5"
+    const ratingStr = transformed.rating.toLowerCase();
+    if (ratingStr.includes('star')) {
+      const match = ratingStr.match(/(\d+)/);
+      if (match) transformed.rating = parseInt(match[1]);
+    } else if (ratingStr.match(/^\*+$/)) {
+      transformed.rating = ratingStr.length; // Count asterisks
+    } else if (ratingStr.match(/^\d+\/\d+$/)) {
+      const [num, denom] = ratingStr.split('/').map(Number);
+      transformed.rating = Math.round((num / denom) * 5); // Convert to 5-star scale
+    } else {
+      const parsed = parseFloat(ratingStr);
+      if (!isNaN(parsed)) transformed.rating = parsed;
+    }
+  }
+  
+  // Parse attempts flexibly
+  if (transformed.attempts !== undefined && typeof transformed.attempts === 'string') {
+    const attemptStr = transformed.attempts.toLowerCase();
+    // Handle patterns like "3 tries", "2 attempts", "first go", "flash"
+    if (attemptStr.includes('first') || attemptStr.includes('flash') || attemptStr.includes('onsight')) {
+      transformed.attempts = 1;
+    } else {
+      const match = attemptStr.match(/(\d+)/);
+      if (match) transformed.attempts = parseInt(match[1]);
+    }
+  }
+  
+  return transformed;
+}
+
+/**
+ * Parse flexible date formats
+ */
+function parseFlexibleDate(dateStr: string): string {
+  const cleaned = dateStr.trim();
+  
+  // Already in correct format
+  if (cleaned.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    return cleaned;
+  }
+  
+  // Common date formats to try
+  const formats = [
+    // MM/DD/YYYY, M/D/YYYY
+    { regex: /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/, order: ['month', 'day', 'year'] },
+    // DD/MM/YYYY, D/M/YYYY (European)
+    { regex: /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/, order: ['day', 'month', 'year'], isEuropean: true },
+    // MM-DD-YYYY, M-D-YYYY
+    { regex: /^(\d{1,2})-(\d{1,2})-(\d{4})$/, order: ['month', 'day', 'year'] },
+    // DD.MM.YYYY (European)
+    { regex: /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/, order: ['day', 'month', 'year'] },
+    // YYYY/MM/DD
+    { regex: /^(\d{4})\/(\d{1,2})\/(\d{1,2})$/, order: ['year', 'month', 'day'] },
+    // Month DD, YYYY with time and timezone (e.g., "March 7, 2025 6:30 AM (MST) → 7:30 AM")
+    { regex: /^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\s+(\d{1,2}),?\s+(\d{4})\s+.*/i, order: ['month', 'day', 'year'], isNamed: true },
+    // Month DD, YYYY (e.g., "January 15, 2023")
+    { regex: /^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\s+(\d{1,2}),?\s+(\d{4})$/i, order: ['month', 'day', 'year'], isNamed: true },
+    // DD Month YYYY (e.g., "15 January 2023")
+    { regex: /^(\d{1,2})\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*,?\s+(\d{4})$/i, order: ['day', 'month', 'year'], isNamed: true },
+  ];
+  
+  for (const format of formats) {
+    const match = cleaned.match(format.regex);
+    if (match) {
+      let year = '', month = '', day = '';
+      
+      if (format.isNamed) {
+        const monthNames: Record<string, string> = {
+          jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06',
+          jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12'
+        };
+        
+        for (let i = 0; i < format.order.length; i++) {
+          const part = format.order[i];
+          const value = match[i + 1];
+          if (part === 'month') {
+            month = monthNames[value.substring(0, 3).toLowerCase()] || '01';
+          } else if (part === 'day') {
+            day = value.padStart(2, '0');
+          } else if (part === 'year') {
+            year = value;
+          }
+        }
+      } else {
+        for (let i = 0; i < format.order.length; i++) {
+          const part = format.order[i];
+          const value = match[i + 1].padStart(2, '0');
+          if (part === 'year') year = match[i + 1];
+          else if (part === 'month') month = value;
+          else if (part === 'day') day = value;
+        }
+        
+        // Validate day/month for ambiguous formats
+        if (!format.isEuropean && parseInt(day) > 12 && parseInt(month) <= 12) {
+          // Swap if day > 12 and month <= 12 (likely European format)
+          [day, month] = [month, day];
+        }
+      }
+      
+      return `${year}-${month}-${day}`;
+    }
+  }
+  
+  // Try more aggressive parsing for complex formats
+  // Handle formats with time and timezone info
+  const complexDateMatch = cleaned.match(/(\w+)\s+(\d{1,2}),?\s+(\d{4})/i);
+  if (complexDateMatch) {
+    const monthNames: Record<string, string> = {
+      jan: '01', january: '01', feb: '02', february: '02', mar: '03', march: '03',
+      apr: '04', april: '04', may: '05', jun: '06', june: '06',
+      jul: '07', july: '07', aug: '08', august: '08', sep: '09', september: '09',
+      oct: '10', october: '10', nov: '11', november: '11', dec: '12', december: '12'
+    };
+    
+    const monthStr = complexDateMatch[1].toLowerCase();
+    const day = complexDateMatch[2].padStart(2, '0');
+    const year = complexDateMatch[3];
+    
+    const month = monthNames[monthStr] || monthNames[monthStr.substring(0, 3)];
+    if (month) {
+      return `${year}-${month}-${day}`;
+    }
+  }
+  
+  // Try parsing with Date object as last resort
+  const parsed = new Date(cleaned);
+  if (!isNaN(parsed.getTime())) {
+    const year = parsed.getFullYear();
+    const month = (parsed.getMonth() + 1).toString().padStart(2, '0');
+    const day = parsed.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+  
+  return cleaned; // Return original if no format matches
+}
+
+/**
+ * Parse skills from various formats
+ */
+function parseSkills(skillStr: string): string {
+  // Common delimiters: comma, semicolon, pipe, slash
+  const skills = skillStr
+    .split(/[,;|\/]/)
+    .map(s => s.trim())
+    .filter(s => s.length > 0)
+    .map(s => {
+      // Normalize common skill terms
+      const normalized = s.toLowerCase();
+      const skillMap: Record<string, string> = {
+        'crimp': 'crimpy',
+        'crimps': 'crimpy',
+        'crimping': 'crimpy',
+        'dyno': 'dynamic',
+        'dynos': 'dynamic',
+        'slab': 'slabby',
+        'overhang': 'overhanging',
+        'roof': 'roofs',
+        'stem': 'stemming',
+        'mantle': 'mantles',
+        'mantel': 'mantles',
+        'jam': 'jamming',
+        'crack': 'cracks',
+        'tech': 'technical',
+        'techy': 'technical',
+        'balance': 'balancy',
+        'pump': 'pumpy',
+        'enduro': 'endurance',
+        'power': 'powerful',
+        'delicate': 'delicate',
+        'heel': 'heel hooks',
+        'toe': 'toe hooks',
+      };
+      
+      return skillMap[normalized] || s;
+    });
+  
+  return skills.join(', ');
+}
+
+/**
  * Checks if a climb already exists in the database for the current user.
  */
 export async function checkDuplicateClimb( /* ... existing code ... */
@@ -107,6 +450,21 @@ async function processParsedData(
   for (let i = 0; i < parsedClimbs.length; i++) {
     let csvClimbRecord = { ...parsedClimbs[i] }; // Clone to modify grade
     const rowIndex = i + 1;
+    
+    // Preprocess the record with intelligent transformations
+    csvClimbRecord = intelligentlyTransformRecord(csvClimbRecord);
+    
+    // Debug logging for problematic records
+    if (!csvClimbRecord.location || !csvClimbRecord.location.trim() || 
+        !csvClimbRecord.date || !csvClimbRecord.date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      console.log(`Row ${rowIndex} transformation result:`, {
+        location: csvClimbRecord.location,
+        date: csvClimbRecord.date,
+        originalDate: parsedClimbs[i].date,
+        gym: csvClimbRecord.gym,
+        country: csvClimbRecord.country
+      });
+    }
 
     // **Grade Normalization Step**
     if (csvClimbRecord.grade) {

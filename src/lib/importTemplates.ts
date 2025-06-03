@@ -58,7 +58,7 @@ export const genericJsonTemplate: ImportMappingTemplate = {
   sourceType: "genericJson", name: "Generic JSON", isJson: true,
   headerToCsvClimbField: {}, // User maps all
   // No specific sourceGradeSystem for generic JSON, assume user maps grades as they are or detection handles it.
-  transform: (r,c) => { /* ... (existing minified transform) ... */ let p:Partial<CsvClimb>={}; for(const k in c){const f=c[k]; if(f&&r.hasOwnProperty(k)){const v=r[k]; if(v!==null&&v!==undefined&&v!==''){if(['attempts','rating','elevation_gain','stiffness'].includes(f)){const n=parseFloat(v); if(!isNaN(n))(p as any)[f]=n} else if(f==='type')p.type=String(v).toLowerCase()as ClimbTypeSpec; else if(f==='send_type')p.send_type=String(v).toLowerCase()as SendTypeSpec; else if(['skills','physical_skills','technical_skills'].includes(f)){if(Array.isArray(v))(p as any)[f]=v.map(String); else (p as any)[f]=String(v).split(',').map(s=>s.trim()).filter(s=>s!=='')} else (p as any)[f]=String(v)}}}} return p;}
+  transform: (r,c) => { /* ... (existing minified transform) ... */ let p:Partial<CsvClimb>={}; for(const k in c){const f=c[k]; if(f&&r.hasOwnProperty(k)){const v=r[k]; if(v!==null&&v!==undefined&&v!==''){if(['attempts','rating','elevation_gain','stiffness'].includes(f)){const n=parseFloat(v); if(!isNaN(n))(p as any)[f]=n} else if(f==='type')p.type=String(v).toLowerCase()as ClimbTypeSpec; else if(f==='send_type')p.send_type=String(v).toLowerCase()as SendTypeSpec; else if(['skills','physical_skills','technical_skills'].includes(f)){if(Array.isArray(v))(p as any)[f]=v.map(String); else (p as any)[f]=String(v).split(',').map(s=>s.trim()).filter(s=>s!=='')} else (p as any)[f]=String(v)}}} return p;}
 };
 
 export const ALL_IMPORT_TEMPLATES: ImportMappingTemplate[] = [

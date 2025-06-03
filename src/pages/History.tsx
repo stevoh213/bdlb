@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, Download } from "lucide-react";
+import { ArrowLeft, Calendar, Download, Upload } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
 // Components used by History.tsx directly
@@ -185,6 +185,12 @@ const History = () => {
           </Link>
           <h1 className="text-2xl font-bold text-stone-800 flex-1">Session History</h1>
           <div className="flex items-center gap-2">
+            <Link to="/import">
+              <Button variant="outline" size="sm" className="text-stone-600 border-stone-300">
+                <Upload className="h-4 w-4 mr-2" />
+                Import
+              </Button>
+            </Link>
             {sessions.length > 0 && (
               <Button variant="outline" size="sm" onClick={handleExportData} className="text-stone-600 border-stone-300">
                 <Download className="h-4 w-4 mr-2" />

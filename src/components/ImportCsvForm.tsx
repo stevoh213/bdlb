@@ -19,6 +19,8 @@ const TARGET_CLIMB_FIELDS: (keyof Omit<Climb, 'id' | 'user_id' | 'session_id' | 
   'physical_skills', 'technical_skills'
 ];
 
+const REQUIRED_FIELDS: (keyof CsvClimb)[] = ['name', 'grade', 'type', 'send_type', 'date', 'location'];
+
 interface ParsedDataState {
   fileName: string;
   isJson: boolean;
@@ -57,27 +59,89 @@ const ImportCsvForm: React.FC = () => {
 
   const guessGenericMappings = (keys: string[]): Record<string, keyof CsvClimb | ''> => {
     const newMappings: Record<string, keyof CsvClimb | ''> = {};
+    
+    // Common field name patterns for intelligent mapping
+    const fieldPatterns: Record<keyof CsvClimb, RegExp[]> = {
+      name: [/^(route|climb|problem|boulder)[\s_-]?(name|title)?$/i, /^name$/i, /^title$/i, /^route$/i, /^climb$/i],
+      grade: [/^(route|climb)?[\s_-]?grade$/i, /^difficulty$/i, /^rating$/i, /^your[\s_-]?rating$/i],
+      type: [/^(climb|route|style)[\s_-]?type$/i, /^style$/i, /^discipline$/i, /^category$/i],
+      send_type: [/^(send|tick|ascent)[\s_-]?type$/i, /^(lead|tick)[\s_-]?style$/i, /^status$/i, /^result$/i],
+      date: [/^(climb|send|tick|log|ascent)[\s_-]?date$/i, /^date$/i, /^when$/i, /^logged$/i],
+      location: [/^(climb)?[\s_-]?location$/i, /^(area|crag|sector|wall|gym|venue|site)$/i, /^where$/i, /^place$/i, /^climbing[\s_-]?(area|gym|crag)$/i],
+      attempts: [/^(num|number)?[\s_-]?(of)?[\s_-]?attempts$/i, /^tries$/i, /^goes$/i],
+      rating: [/^(star|quality)[\s_-]?rating$/i, /^stars$/i, /^quality$/i, /^score$/i],
+      notes: [/^(climb)?[\s_-]?(notes|comments?|description|memo|beta)$/i, /^feedback$/i],
+      duration: [/^(climb|time)[\s_-]?(duration|time|length)$/i, /^time[\s_-]?on[\s_-]?wall$/i],
+      elevation_gain: [/^elevation[\s_-]?(gain)?$/i, /^height$/i, /^vertical$/i],
+      color: [/^(route|hold)?[\s_-]?colou?r$/i, /^tape$/i],
+      gym: [/^gym[\s_-]?(name)?$/i, /^(climbing)?[\s_-]?center$/i, /^facility$/i],
+      country: [/^country$/i, /^nation$/i, /^region$/i],
+      skills: [/^skills?$/i, /^techniques?$/i, /^style[\s_-]?tags?$/i],
+      stiffness: [/^(grade)?[\s_-]?stiffness$/i, /^(feels?|felt)$/i, /^sandbagged?$/i],
+      physical_skills: [/^physical[\s_-]?skills?$/i, /^strength$/i, /^power$/i],
+      technical_skills: [/^technical[\s_-]?skills?$/i, /^technique$/i, /^footwork$/i]
+    };
+    
     keys.forEach(key => {
-      const normalizedKey = key.toLowerCase().replace(/[\s_-]/g, '');
+      const normalizedKey = key.toLowerCase().replace(/[\s_-]+/g, '');
       let bestMatch: keyof CsvClimb | '' = '';
-      if (normalizedKey === 'climbname' || normalizedKey === 'routename' || normalizedKey === 'name') bestMatch = 'name';
-      else if (normalizedKey === 'climbtype' || normalizedKey === 'routetype') bestMatch = 'type';
-      else if (normalizedKey === 'sendtype' || normalizedKey === 'ticktype') bestMatch = 'send_type';
-      else if (normalizedKey === 'climbdate' || normalizedKey === 'sessiondate') bestMatch = 'date';
-      else if (normalizedKey === 'climblocation' || normalizedKey === 'area' || normalizedKey === 'crag') bestMatch = 'location';
-      else if (normalizedKey === 'starnumber' || normalizedKey === 'stars') bestMatch = 'rating';
-      else if (normalizedKey === 'comment' || normalizedKey === 'description') bestMatch = 'notes';
-      else if (normalizedKey === 'timeonwall' || normalizedKey === 'climbingtime') bestMatch = 'duration';
-      else if (normalizedKey === 'climbstiffness' || normalizedKey === 'gradestiffness') bestMatch = 'stiffness';
-      else {
-        const matchedTarget = TARGET_CLIMB_FIELDS.find(
-          targetField => normalizedKey.includes(targetField.toLowerCase()) || targetField.toLowerCase().includes(normalizedKey)
-        ) as keyof CsvClimb | undefined;
-        if (matchedTarget) bestMatch = matchedTarget;
+      let highestScore = 0;
+      
+      // Check each field pattern
+      for (const [field, patterns] of Object.entries(fieldPatterns) as [keyof CsvClimb, RegExp[]][]) {
+        for (const pattern of patterns) {
+          if (pattern.test(key)) {
+            bestMatch = field;
+            highestScore = 1;
+            break;
+          }
+        }
+        
+        // Fuzzy matching based on similarity
+        if (highestScore < 1) {
+          const fieldNorm = field.toLowerCase().replace(/_/g, '');
+          const similarity = calculateSimilarity(normalizedKey, fieldNorm);
+          if (similarity > highestScore && similarity > 0.6) {
+            highestScore = similarity;
+            bestMatch = field;
+          }
+        }
       }
+      
       newMappings[key] = bestMatch;
     });
+    
     return newMappings;
+  };
+  
+  // Helper function for fuzzy string matching
+  const calculateSimilarity = (str1: string, str2: string): number => {
+    const longer = str1.length > str2.length ? str1 : str2;
+    const shorter = str1.length > str2.length ? str2 : str1;
+    
+    if (longer.length === 0) return 1.0;
+    
+    const editDistance = (s1: string, s2: string): number => {
+      const costs: number[] = [];
+      for (let i = 0; i <= s1.length; i++) {
+        let lastValue = i;
+        for (let j = 0; j <= s2.length; j++) {
+          if (i === 0) costs[j] = j;
+          else if (j > 0) {
+            let newValue = costs[j - 1];
+            if (s1.charAt(i - 1) !== s2.charAt(j - 1)) {
+              newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
+            }
+            costs[j - 1] = lastValue;
+            lastValue = newValue;
+          }
+        }
+        if (i > 0) costs[s2.length] = lastValue;
+      }
+      return costs[s2.length];
+    };
+    
+    return (longer.length - editDistance(longer, shorter)) / longer.length;
   };
 
   const applyTemplateOrGuessMappings = (keys: string[], isJsonContext: boolean) => {
@@ -347,7 +411,10 @@ const ImportCsvForm: React.FC = () => {
               <h3 className="text-lg font-semibold text-gray-800 mb-2">
                 {parsedData.isJson ? "JSON Key Mapping" : "Column Mapping"}
               </h3>
-              <CardDescription className="mb-3">Map {parsedData.isJson ? "JSON keys" : "CSV columns"} to the application's climb fields. Unmapped items will not be imported.</CardDescription>
+              <CardDescription className="mb-3">
+                Map {parsedData.isJson ? "JSON keys" : "CSV columns"} to the application's climb fields. 
+                Fields marked with <span className="text-red-500 font-bold">*</span> are required.
+              </CardDescription>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 border rounded-md bg-gray-50/50">
                 {currentSourceKeys.map(sourceKey => ( // Use currentSourceKeys which is headersOrKeys
                   <div key={sourceKey} className="flex flex-col space-y-1">
@@ -355,24 +422,54 @@ const ImportCsvForm: React.FC = () => {
                       <span className="font-semibold">{sourceKey}</span>
                     </label>
                     <Select
-                      value={columnMappings[sourceKey] || ''}
-                      onValueChange={(value) => handleMappingChange(sourceKey, value as keyof CsvClimb | '')}
+                      value={columnMappings[sourceKey] || 'none'}
+                      onValueChange={(value) => handleMappingChange(sourceKey, value === 'none' ? '' : value as keyof CsvClimb | '')}
                     >
                       <SelectTrigger id={`map-${sourceKey}`} className="bg-white"><SelectValue placeholder="Do not import" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Do not import</SelectItem>
+                        <SelectItem value="none">Do not import</SelectItem>
                         {TARGET_CLIMB_FIELDS.map(field => (
-                          <SelectItem key={field} value={field}>{field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</SelectItem>
+                          <SelectItem key={field} value={field}>
+                            {field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            {REQUIRED_FIELDS.includes(field as keyof CsvClimb) && (
+                              <span className="text-red-500 font-bold ml-1">*</span>
+                            )}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                 ))}
               </div>
+              
+              {/* Show unmapped required fields */}
+              {(() => {
+                const mappedFields = Object.values(columnMappings).filter(v => v !== '');
+                const unmappedRequired = REQUIRED_FIELDS.filter(field => !mappedFields.includes(field));
+                if (unmappedRequired.length > 0) {
+                  return (
+                    <Alert className="mt-3">
+                      <AlertTitle className="text-amber-600">Missing Required Mappings</AlertTitle>
+                      <AlertDescription>
+                        The following required fields are not yet mapped:
+                        <ul className="list-disc list-inside mt-1">
+                          {unmappedRequired.map(field => (
+                            <li key={field}>
+                              <strong>{field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</strong>
+                              <span className="text-red-500 font-bold ml-1">*</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </AlertDescription>
+                    </Alert>
+                  );
+                }
+                return null;
+              })()}
             </div>
           </>
         )}
-        {importResult && ( /* ... existing result display ... */
+        {importResult && (
             <div className="mt-6 p-4 border rounded-md bg-gray-50">
             <h3 className="text-xl font-semibold mb-3 text-gray-800">Import Results</h3>
             <div className="space-y-1">
@@ -382,10 +479,33 @@ const ImportCsvForm: React.FC = () => {
             {importResult.errors && importResult.errors.length > 0 && (
               <div className="mt-3">
                 <h4 className="font-semibold text-gray-700">Error Details:</h4>
+                {importResult.successCount === 0 && importResult.errors.some(err => 
+                  err.includes('Name is required') || 
+                  err.includes('Location is required') || 
+                  err.includes('Date must be in YYYY-MM-DD format')
+                ) && (
+                  <Alert className="mt-2 mb-2">
+                    <AlertTitle>Mapping Required</AlertTitle>
+                    <AlertDescription>
+                      It looks like required fields are not mapped correctly. Please ensure you've mapped:
+                      <ul className="list-disc list-inside mt-2">
+                        <li><strong>Name</strong> - The climb/route name column</li>
+                        <li><strong>Grade</strong> - The difficulty rating column</li>
+                        <li><strong>Type</strong> - The climb style (sport, boulder, etc.)</li>
+                        <li><strong>Send Type</strong> - How you completed it (send, attempt, etc.)</li>
+                        <li><strong>Date</strong> - When you climbed it (YYYY-MM-DD or MM/DD/YYYY format)</li>
+                        <li><strong>Location</strong> - Where you climbed (crag, gym, area)</li>
+                      </ul>
+                    </AlertDescription>
+                  </Alert>
+                )}
                 <Alert variant="destructive" className="mt-2 max-h-48 overflow-y-auto">
                   <AlertDescription>
                     <ul className="list-disc list-inside text-sm">
-                      {importResult.errors.map((err, i) => <li key={i}>{err}</li>)}
+                      {importResult.errors.slice(0, 10).map((err, i) => <li key={i}>{err}</li>)}
+                      {importResult.errors.length > 10 && (
+                        <li className="font-semibold">... and {importResult.errors.length - 10} more errors</li>
+                      )}
                     </ul>
                   </AlertDescription>
                 </Alert>
