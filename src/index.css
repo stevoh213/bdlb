@@ -1,4 +1,5 @@
 
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -123,4 +124,4 @@
     offset-distance: 100%;
   }
 }
-</keyframes>
+
