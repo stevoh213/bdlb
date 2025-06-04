@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -5,8 +6,9 @@ import { supabase } from '@/integrations/supabase/client';
 interface AuthContextProps {
   user: User | null;
   loading: boolean;
-  signIn: (email: string) => Promise<void>;
-  signUp: (email: string, password?: string) => Promise<void>;
+  isAuthenticated: boolean;
+  signIn: (email: string, password?: string) => Promise<{ error: any }>;
+  signUp: (email: string, password?: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
 
@@ -30,7 +32,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(session?.user ?? null);
       setLoading(false);
       
-      // Handle sign up event correctly
+      // Handle sign in event correctly
       if (event === 'SIGNED_IN' && session?.user) {
         // Create or update profile
         const { error } = await supabase
@@ -52,14 +54,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signIn = async (email: string) => {
+  const signIn = async (email: string, password?: string) => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signInWithOtp({ email });
-      if (error) throw error;
-      alert('Check your email for the magic link to sign in.');
+      if (password) {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        return { error };
+      } else {
+        const { error } = await supabase.auth.signInWithOtp({ email });
+        if (!error) {
+          alert('Check your email for the magic link to sign in.');
+        }
+        return { error };
+      }
     } catch (error: any) {
-      alert(error.error_description || error.message);
+      return { error };
     } finally {
       setLoading(false);
     }
@@ -69,10 +78,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       setLoading(true);
       const { error } = await supabase.auth.signUp({ email, password });
-      if (error) throw error;
-      alert('Check your email to verify your account.');
+      if (!error) {
+        alert('Check your email to verify your account.');
+      }
+      return { error };
     } catch (error: any) {
-      alert(error.error_description || error.message);
+      return { error };
     } finally {
       setLoading(false);
     }
@@ -89,7 +100,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const value: AuthContextProps = { user, loading, signIn, signUp, signOut };
+  const value: AuthContextProps = { 
+    user, 
+    loading, 
+    isAuthenticated: !!user,
+    signIn, 
+    signUp, 
+    signOut 
+  };
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 

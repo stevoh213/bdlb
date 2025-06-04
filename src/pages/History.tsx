@@ -69,11 +69,11 @@ const History = () => {
       id: s.id,
       location: s.location,
       climbingType: s.climbingType,
-      startTime: s.startTime instanceof Date ? s.startTime.toISOString() : s.startTime, 
-      endTime: s.endTime ? (s.endTime instanceof Date ? s.endTime.toISOString() : s.endTime) : '',
+      startTime: s.startTime instanceof Date ? s.startTime.toISOString() : new Date(s.startTime).toISOString(), 
+      endTime: s.endTime ? (s.endTime instanceof Date ? s.endTime.toISOString() : new Date(s.endTime).toISOString()) : '',
       climbs: s.climbs?.map(c => ({
         ...c, 
-        timestamp: c.timestamp instanceof Date ? c.timestamp.toISOString() : c.timestamp
+        timestamp: c.timestamp instanceof Date ? c.timestamp.toISOString() : new Date(c.timestamp).toISOString()
       })) || [],
       isActive: s.isActive,
       breaks: s.breaks,
@@ -82,7 +82,7 @@ const History = () => {
       gradeSystem: s.gradeSystem,
       aiAnalysis: s.aiAnalysis ? {
         ...s.aiAnalysis,
-        generatedAt: s.aiAnalysis.generatedAt instanceof Date ? s.aiAnalysis.generatedAt.toISOString() : (s.aiAnalysis.generatedAt || ''),
+        generatedAt: s.aiAnalysis.generatedAt instanceof Date ? s.aiAnalysis.generatedAt.toISOString() : (s.aiAnalysis.generatedAt ? new Date(s.aiAnalysis.generatedAt).toISOString() : ''),
       } : undefined,
     }));
     
