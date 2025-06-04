@@ -36,7 +36,7 @@ const HistoryDialogs = ({
           climb={editingClimb} 
           open={true} 
           onOpenChange={(open) => !open && onCloseEditClimb()} 
-          onSave={(climbId, updates) => onSaveClimb(climbId, updates)}
+          onSave={(updates) => onSaveClimb(editingClimb.id, updates)}
           onDelete={(climb) => onOpenDeleteDialog(climb, 'climb')}
         />
       )}
@@ -45,7 +45,7 @@ const HistoryDialogs = ({
           session={editingSession} 
           open={true} 
           onOpenChange={(open) => !open && onCloseEditSession()} 
-          onSave={(sessionId, updates) => onSaveSession(sessionId, updates)} 
+          onSave={(updates) => onSaveSession(editingSession.id, updates)} 
         />
       )}
       {deleteConfirm && (
