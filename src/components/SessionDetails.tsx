@@ -153,12 +153,12 @@ const SessionDetails = ({
         </Card>
       )}
 
-      {climbs.length > 0 && (
+      {climbs && climbs.length > 0 && (
         <Card className="border-stone-200 shadow-lg">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-emerald-600" />
-              Climbs ({climbs.length})
+              Climbs ({climbs?.length || 0})
             </CardTitle>
           </CardHeader>
           <CardContent>
