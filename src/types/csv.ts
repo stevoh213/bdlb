@@ -12,4 +12,5 @@ export interface CSVRecord {
   duration?: string;
   grade_system?: string;
   climbing_type?: string;
+  session_id?: string;
 }

@@ -146,7 +146,7 @@ const transformCSVToClimbData = (csvData: CSVRecord[], userId: string): Omit<Cli
       location: record.location || 'Unknown Location',
       attempts: parseInt(record.attempts) || 1,
       notes: record.climb_notes,
-      session_id: record.session_id || 'no-session-id', // Ensure session_id is handled
+      session_id: 'default-session-id', // Will be replaced with actual session ID
     };
   });
 };
@@ -192,9 +192,9 @@ export const importClimbsFromCsv = async ({ userId, preParsedData }: { userId: s
           user_id: userId,
           date: climbData.date,
           location: climbData.location,
-          duration: climbData.duration || 60,
+          duration: typeof climbData.duration === 'string' ? parseInt(climbData.duration) || 60 : climbData.duration || 60,
           notes: `Imported climb session for ${climbData.name}`,
-          default_climb_type: climbData.type,
+          default_climb_type: mapClimbType(climbData.type),
         };
 
         const { data: session, error: sessionError } = await supabase
@@ -213,8 +213,8 @@ export const importClimbsFromCsv = async ({ userId, preParsedData }: { userId: s
           session_id: session.id,
           name: climbData.name,
           grade: climbData.grade,
-          type: climbData.type,
-          send_type: climbData.send_type,
+          type: mapClimbType(climbData.type),
+          send_type: mapSendType(climbData.send_type),
           attempts: climbData.attempts || 1,
           date: climbData.date,
           location: climbData.location,
