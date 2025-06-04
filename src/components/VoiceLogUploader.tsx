@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,24 +14,54 @@ const getSupabaseAccessToken = async (): Promise<string | null> => {
 };
 
 // SpeechRecognition interface (typescript doesn't have it by default)
-interface CustomSpeechRecognition extends EventTarget {
+interface SpeechRecognitionEvent {
+  results: SpeechRecognitionResultList;
+  resultIndex: number;
+}
+
+interface SpeechRecognitionErrorEvent {
+  error: string;
+}
+
+interface SpeechRecognitionResultList {
+  length: number;
+  item(index: number): SpeechRecognitionResult;
+  [index: number]: SpeechRecognitionResult;
+}
+
+interface SpeechRecognitionResult {
+  length: number;
+  item(index: number): SpeechRecognitionAlternative;
+  [index: number]: SpeechRecognitionAlternative;
+  isFinal: boolean;
+}
+
+interface SpeechRecognitionAlternative {
+  transcript: string;
+  confidence: number;
+}
+
+interface SpeechRecognition extends EventTarget {
   continuous: boolean;
   interimResults: boolean;
   lang: string;
   start: () => void;
   stop: () => void;
-  onresult: ((event: any) => void) | null;
-  onerror: ((event: any) => void) | null;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
   onend: (() => void) | null;
 }
 
 declare global {
   interface Window {
-    SpeechRecognition: typeof CustomSpeechRecognition;
-    webkitSpeechRecognition: typeof CustomSpeechRecognition;
+    SpeechRecognition: {
+      new (): SpeechRecognition;
+    };
+    webkitSpeechRecognition: {
+      new (): SpeechRecognition;
+    };
   }
 }
-
 
 interface VoiceLogUploaderProps {
   onUploadSuccess?: () => void;
@@ -40,15 +71,15 @@ const VoiceLogUploader: React.FC<VoiceLogUploaderProps> = ({ onUploadSuccess }) 
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [transcript, setTranscript] = useState<string>('');
   const [originalFilename, setOriginalFilename] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(false); // For form submission
-  const [error, setError] = useState<string | null>(null); // For form submission errors
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Speech Recognition State
   const [isRecording, setIsRecording] = useState<boolean>(false);
   const [speechRecognitionError, setSpeechRecognitionError] = useState<string | null>(null);
   const [isSpeechApiSupported, setIsSpeechApiSupported] = useState<boolean>(true);
-  const recognitionRef = useRef<CustomSpeechRecognition | null>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   useEffect(() => {
     const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -93,30 +124,30 @@ const VoiceLogUploader: React.FC<VoiceLogUploaderProps> = ({ onUploadSuccess }) 
       setIsRecording(false);
     } else {
       const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognitionAPI) { // Should be caught by useEffect check, but as a safeguard
-          setSpeechRecognitionError("Cannot start recording: Speech Recognition API not available.");
-          return;
+      if (!SpeechRecognitionAPI) {
+        setSpeechRecognitionError("Cannot start recording: Speech Recognition API not available.");
+        return;
       }
-      recognitionRef.current = new SpeechRecognitionAPI() as CustomSpeechRecognition;
+      recognitionRef.current = new SpeechRecognitionAPI();
       recognitionRef.current.continuous = true;
       recognitionRef.current.interimResults = true;
-      recognitionRef.current.lang = 'en-US'; // Or make this configurable
+      recognitionRef.current.lang = 'en-US';
 
-      let finalTranscript = transcript; // Use a local variable to build upon
+      let finalTranscript = transcript;
 
-      recognitionRef.current.onresult = (event: any) => {
+      recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
         let interimTranscript = '';
         for (let i = event.resultIndex; i < event.results.length; ++i) {
           if (event.results[i].isFinal) {
-            finalTranscript += event.results[i][0].transcript + ' '; // Add space after final segment
+            finalTranscript += event.results[i][0].transcript + ' ';
           } else {
             interimTranscript += event.results[i][0].transcript;
           }
         }
-        setTranscript(finalTranscript + interimTranscript); // Show interim results live
+        setTranscript(finalTranscript + interimTranscript);
       };
 
-      recognitionRef.current.onerror = (event: any) => {
+      recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
         console.error('Speech recognition error:', event.error);
         setSpeechRecognitionError(`Error: ${event.error}`);
         setIsRecording(false);
@@ -124,8 +155,6 @@ const VoiceLogUploader: React.FC<VoiceLogUploaderProps> = ({ onUploadSuccess }) 
 
       recognitionRef.current.onend = () => {
         setIsRecording(false);
-        // finalTranscript already contains the full text up to this point
-        // if continuous is false, this is where you'd get the 'final' final transcript
       };
 
       try {

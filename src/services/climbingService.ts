@@ -34,7 +34,11 @@ export const fetchSessions = async (userId: string): Promise<ClimbingSession[]> 
       .order('date', { ascending: false });
 
     handleSupabaseError(error, 'fetchSessions');
-    return data || [];
+    return (data || []).map(session => ({
+      ...session,
+      location_type: session.location_type as 'indoor' | 'outdoor' | undefined,
+      default_climb_type: session.default_climb_type as 'sport' | 'trad' | 'boulder' | 'top rope' | 'alpine' | undefined
+    }));
   } catch (error) {
     console.error('Error in fetchSessions:', error);
     throw error;
@@ -52,7 +56,11 @@ export const addSession = async (sessionData: NewSessionData, userId: string): P
 
     handleSupabaseError(error, 'addSession');
     if (!data) throw new Error("Failed to add session, no data returned.");
-    return data;
+    return {
+      ...data,
+      location_type: data.location_type as 'indoor' | 'outdoor' | undefined,
+      default_climb_type: data.default_climb_type as 'sport' | 'trad' | 'boulder' | 'top rope' | 'alpine' | undefined
+    };
   } catch (error) {
     console.error('Error in addSession:', error);
     throw error;
@@ -70,7 +78,11 @@ export const updateSession = async (sessionId: string, updates: UpdateSessionDat
 
     handleSupabaseError(error, 'updateSession');
     if (!data) throw new Error("Failed to update session, no data returned.");
-    return data;
+    return {
+      ...data,
+      location_type: data.location_type as 'indoor' | 'outdoor' | undefined,
+      default_climb_type: data.default_climb_type as 'sport' | 'trad' | 'boulder' | 'top rope' | 'alpine' | undefined
+    };
   } catch (error) {
     console.error('Error in updateSession:', error);
     throw error;
@@ -123,7 +135,11 @@ export const fetchClimbsBySessionId = async (sessionId: string): Promise<Climb[]
       .order('created_at', { ascending: true }); // Or by date, or another field
 
     handleSupabaseError(error, 'fetchClimbsBySessionId');
-    return data || [];
+    return (data || []).map(climb => ({
+      ...climb,
+      type: climb.type as 'sport' | 'trad' | 'boulder' | 'top rope' | 'alpine',
+      send_type: climb.send_type as 'send' | 'attempt' | 'flash' | 'onsight' | 'project'
+    }));
   } catch (error) {
     console.error('Error in fetchClimbsBySessionId:', error);
     throw error;
@@ -144,7 +160,11 @@ export const fetchAllUserClimbs = async (userId: string): Promise<Climb[]> => {
       .order('date', { ascending: false }); // Matching original hook
 
     handleSupabaseError(error, 'fetchAllUserClimbs');
-    return data || [];
+    return (data || []).map(climb => ({
+      ...climb,
+      type: climb.type as 'sport' | 'trad' | 'boulder' | 'top rope' | 'alpine',
+      send_type: climb.send_type as 'send' | 'attempt' | 'flash' | 'onsight' | 'project'
+    }));
   } catch (error) {
     console.error('Error in fetchAllUserClimbs:', error);
     throw error;
@@ -163,7 +183,11 @@ export const addClimb = async (climbData: NewClimbData, sessionId: string, userI
 
     handleSupabaseError(error, 'addClimb');
     if (!data) throw new Error("Failed to add climb, no data returned.");
-    return data;
+    return {
+      ...data,
+      type: data.type as 'sport' | 'trad' | 'boulder' | 'top rope' | 'alpine',
+      send_type: data.send_type as 'send' | 'attempt' | 'flash' | 'onsight' | 'project'
+    };
   } catch (error) {
     console.error('Error in addClimb:', error);
     throw error;
@@ -181,7 +205,11 @@ export const updateClimb = async (climbId: string, updates: UpdateClimbData): Pr
 
     handleSupabaseError(error, 'updateClimb');
     if (!data) throw new Error("Failed to update climb, no data returned.");
-    return data;
+    return {
+      ...data,
+      type: data.type as 'sport' | 'trad' | 'boulder' | 'top rope' | 'alpine',
+      send_type: data.send_type as 'send' | 'attempt' | 'flash' | 'onsight' | 'project'
+    };
   } catch (error) {
     console.error('Error in updateClimb:', error);
     throw error;

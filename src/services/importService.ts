@@ -1,3 +1,4 @@
+
 /**
  * @file Service for handling climb import logic, including CSV parsing and duplicate detection.
  */
@@ -355,7 +356,7 @@ function parseSkills(skillStr: string): string {
 /**
  * Checks if a climb already exists in the database for the current user.
  */
-export async function checkDuplicateClimb( /* ... existing code ... */
+export async function checkDuplicateClimb(
   climb: Partial<Climb> & { user_id: string }
 ): Promise<Climb | null> {
   if (!climb.name || !climb.grade || !climb.date || !climb.location || !climb.user_id) {
@@ -379,7 +380,6 @@ export async function checkDuplicateClimb( /* ... existing code ... */
   }
 }
 
-
 /**
  * Transforms a CsvClimb object into a Partial<Climb> object suitable for database insertion.
  * Grade normalization should happen *before* this, or this function needs grade system info.
@@ -391,12 +391,22 @@ function transformCsvClimbToDbClimb(
     rowIndex: number
 ): Partial<Climb> | null {
   try {
-    const dbClimb: Partial<Climb> = { /* ... existing CsvClimb to Climb mapping ... */
-      user_id: userId, name: csvClimb.name, grade: csvClimb.grade, type: csvClimb.type,
-      send_type: csvClimb.send_type, date: csvClimb.date, location: csvClimb.location,
-      attempts: csvClimb.attempts, rating: csvClimb.rating, notes: csvClimb.notes,
-      color: csvClimb.color, gym: csvClimb.gym, country: csvClimb.country,
+    const dbClimb: Partial<Climb> = {
+      user_id: userId, 
+      name: csvClimb.name, 
+      grade: csvClimb.grade, 
+      type: csvClimb.type,
+      send_type: csvClimb.send_type, 
+      date: csvClimb.date, 
+      location: csvClimb.location,
+      attempts: csvClimb.attempts, 
+      rating: csvClimb.rating, 
+      notes: csvClimb.notes,
+      color: csvClimb.color, 
+      gym: csvClimb.gym, 
+      country: csvClimb.country,
     };
+    
     // Duration parsing
     if (csvClimb.duration !== undefined) {
       if (typeof csvClimb.duration === 'string') {
@@ -407,10 +417,12 @@ function transformCsvClimbToDbClimb(
       } else if (typeof csvClimb.duration === 'number') dbClimb.duration = csvClimb.duration;
     }
     if (csvClimb.elevation_gain !== undefined) dbClimb.elevation_gain = csvClimb.elevation_gain;
+    
     // Skills array conversion
     if (csvClimb.skills) dbClimb.skills = Array.isArray(csvClimb.skills) ? csvClimb.skills : csvClimb.skills.split(',').map(s => s.trim()).filter(s => s !== '');
     if (csvClimb.physical_skills) dbClimb.physical_skills = Array.isArray(csvClimb.physical_skills) ? csvClimb.physical_skills : csvClimb.physical_skills.split(',').map(s => s.trim()).filter(s => s !== '');
     if (csvClimb.technical_skills) dbClimb.technical_skills = Array.isArray(csvClimb.technical_skills) ? csvClimb.technical_skills : csvClimb.technical_skills.split(',').map(s => s.trim()).filter(s => s !== '');
+    
     // Stiffness
     if (csvClimb.stiffness !== undefined) {
       const stiffnessNum = Number(csvClimb.stiffness);
@@ -476,7 +488,6 @@ async function processParsedData(
         isBoulder
       );
       if (normalized !== csvClimbRecord.grade) {
-        // console.log(`Grade normalized for row ${rowIndex}: "${csvClimbRecord.grade}" (${sourceGradeSystem || 'detected'}) -> "${normalized}" (${targetGradeSystem || (isBoulder ? 'Font' : 'French')})`);
         csvClimbRecord.grade = normalized;
       }
     }
@@ -501,42 +512,47 @@ async function processParsedData(
     const duplicateCheckPayload = { ...dbClimbData, user_id: userId } as Partial<Climb> & { user_id: string };
     try {
       const duplicate = await checkDuplicateClimb(duplicateCheckPayload);
-      if (duplicate) { /* ... existing duplicate handling ... */
+      if (duplicate) {
         const message = `Row ${rowIndex}: Duplicate climb already exists (ID: ${duplicate.id}) for climb named "${dbClimbData.name}" with grade "${dbClimbData.grade}".`;
         console.warn(`[processParsedData] ${message}`);
-        importErrors.push(message); errorCount++; continue;
+        importErrors.push(message); 
+        errorCount++; 
+        continue;
       }
-    } catch (dupError: any) { /* ... existing error handling ... */
+    } catch (dupError: any) {
       const message = `Row ${rowIndex} (Climb: "${dbClimbData.name}"): Error during duplicate check: ${dupError.message}`;
       console.error(`[processParsedData] ${message}`, dupError.stack);
-      importErrors.push(message); errorCount++; continue;
+      importErrors.push(message); 
+      errorCount++; 
+      continue;
     }
 
     try {
-      const { error: insertError } = await supabase.from('climbs').insert([dbClimbData]);
-      if (insertError) { /* ... existing error handling ... */
+      const { error: insertError } = await supabase.from('climbs').insert(dbClimbData);
+      if (insertError) {
         const message = `Row ${rowIndex} (Climb: "${dbClimbData.name}"): Error inserting climb - ${insertError.message}`;
         console.error(`[processParsedData] ${message}`, dbClimbData);
-        importErrors.push(message); errorCount++;
+        importErrors.push(message); 
+        errorCount++;
       } else {
         successCount++;
       }
-    } catch (insertCatchError: any) { /* ... existing error handling ... */
+    } catch (insertCatchError: any) {
       const message = `Row ${rowIndex} (Climb: "${dbClimbData.name}"): Unexpected error during database insertion: ${insertCatchError.message}`;
       console.error(`[processParsedData] ${message}`, insertCatchError.stack);
-      importErrors.push(message); errorCount++;
+      importErrors.push(message); 
+      errorCount++;
     }
   }
   return { successCount, errorCount, errors: importErrors };
 }
-
 
 export async function importClimbsFromCsv(
   params: ImportParams
 ): Promise<{ successCount: number; errorCount: number; errors: string[]; }> {
   const { userId, csvString, preParsedData, sourceGradeSystem, defaultClimbType, targetGradeSystem } = params;
 
-  if (!userId) { /* ... existing error handling ... */
+  if (!userId) {
     console.error("[importClimbsFromCsv] Error: userId is required.");
     return { successCount: 0, errorCount: 0, errors: ["User ID is required for import."] };
   }
@@ -545,45 +561,104 @@ export async function importClimbsFromCsv(
   // Let's make the app's internal "standard" French for routes and Font for boulders.
   const appTargetGradeSystem = targetGradeSystem; // If caller provides one, use it. Otherwise, normalizeGrade will use its own defaults.
 
-
   if (preParsedData) {
-    // console.log("[importClimbsFromCsv] Processing pre-parsed data with grade system hints:", sourceGradeSystem, defaultClimbType);
     return processParsedData(preParsedData, userId, sourceGradeSystem, defaultClimbType, appTargetGradeSystem);
   }
 
   if (csvString) {
-    // console.log("[importClimbsFromCsv] Processing CSV string with grade system hints:", sourceGradeSystem, defaultClimbType);
-    // ... (Papa.parse logic remains largely the same) ...
-    // The key is that CsvClimbArray produced by Papa.parse will then be passed to processParsedData
-    // along with sourceGradeSystem, defaultClimbType, and appTargetGradeSystem.
     let parseErrorCount = 0;
     const parseErrorsMessages: string[] = [];
 
     return new Promise((resolve) => {
-      Papa.parse<Record<string, any>>(csvString, { /* ... Papa.parse options ... */
-        header: true, skipEmptyLines: true, dynamicTyping: true, // dynamicTyping for basic numbers
+      Papa.parse<Record<string, any>>(csvString, {
+        header: true, 
+        skipEmptyLines: true, 
+        dynamicTyping: true, // dynamicTyping for basic numbers
         complete: async (results) => {
           const { data: rows, errors: papaParseErrors } = results;
-          if (papaParseErrors.length > 0) { /* ... error handling ... */
-            papaParseErrors.forEach(err => { const msg = `CSV Parsing Error: ${err.message} (Code: ${err.code}, Row: ${err.row + 2})`; console.error(msg); parseErrorsMessages.push(msg); parseErrorCount++; });
+          if (papaParseErrors.length > 0) {
+            papaParseErrors.forEach(err => { 
+              const msg = `CSV Parsing Error: ${err.message} (Code: ${err.code}, Row: ${err.row + 2})`;
+              console.error(msg); 
+              parseErrorsMessages.push(msg); 
+              parseErrorCount++; 
+            });
           }
-          const CsvClimbArray: CsvClimb[] = []; // Transform rows to CsvClimb[]
-          for (let i = 0; i < rows.length; i++) { /* ... (row to CsvClimb mapping logic as before) ... */
-            const row = rows[i]; const rowIndex = i+2;
+          
+          const CsvClimbArray: CsvClimb[] = [];
+          for (let i = 0; i < rows.length; i++) {
+            const row = rows[i]; 
+            const rowIndex = i+2;
             try {
                 const mappedRow: Partial<CsvClimb> = {};
-                for(const key in row){if(Object.prototype.hasOwnProperty.call(row,key)&&row[key]!==null&&row[key]!==undefined){const normKey=key.toLowerCase().replace(/\s+/g,'');switch(normKey){case 'name':mappedRow.name=String(row[key]);break;case 'grade':mappedRow.grade=String(row[key]);break;case 'type':mappedRow.type=String(row[key])as ClimbTypeSpec;break;case 'send_type':mappedRow.send_type=String(row[key])as SendTypeSpec;break;case 'date':mappedRow.date=String(row[key]);break;case 'location':mappedRow.location=String(row[key]);break;case 'attempts':mappedRow.attempts=Number(row[key]);break;case 'rating':mappedRow.rating=Number(row[key]);break;case 'notes':mappedRow.notes=String(row[key]);break;case 'duration':mappedRow.duration=row[key];break;case 'elevation_gain':mappedRow.elevation_gain=Number(row[key]);break;case 'color':mappedRow.color=String(row[key]);break;case 'gym':mappedRow.gym=String(row[key]);break;case 'country':mappedRow.country=String(row[key]);break;case 'skills':mappedRow.skills=String(row[key]);break;case 'stiffness':mappedRow.stiffness=String(row[key]);break;case 'physical_skills':mappedRow.physical_skills=String(row[key]);break;case 'technical_skills':mappedRow.technical_skills=String(row[key]);break;}}}
-                CsvClimbArray.push({name:mappedRow.name||'',grade:mappedRow.grade||'',type:mappedRow.type||''as ClimbTypeSpec,send_type:mappedRow.send_type||''as SendTypeSpec,date:mappedRow.date||'',location:mappedRow.location||'',attempts:mappedRow.attempts,rating:mappedRow.rating,notes:mappedRow.notes,duration:mappedRow.duration,elevation_gain:mappedRow.elevation_gain,color:mappedRow.color,gym:mappedRow.gym,country:mappedRow.country,skills:mappedRow.skills,stiffness:mappedRow.stiffness,physical_skills:mappedRow.physical_skills,technical_skills:mappedRow.technical_skills,});
-            } catch (mapErr:any) {const msg=`Row ${rowIndex}: Error mapping CSV row: ${mapErr.message}`; console.error(msg,row,mapErr.stack); parseErrorsMessages.push(msg); parseErrorCount++;}
+                for(const key in row){
+                  if(Object.prototype.hasOwnProperty.call(row,key) && row[key] !== null && row[key] !== undefined){
+                    const normKey = key.toLowerCase().replace(/\s+/g,'');
+                    switch(normKey){
+                      case 'name':mappedRow.name=String(row[key]);break;
+                      case 'grade':mappedRow.grade=String(row[key]);break;
+                      case 'type':mappedRow.type=String(row[key]) as ClimbTypeSpec;break;
+                      case 'send_type':mappedRow.send_type=String(row[key]) as SendTypeSpec;break;
+                      case 'date':mappedRow.date=String(row[key]);break;
+                      case 'location':mappedRow.location=String(row[key]);break;
+                      case 'attempts':mappedRow.attempts=Number(row[key]);break;
+                      case 'rating':mappedRow.rating=Number(row[key]);break;
+                      case 'notes':mappedRow.notes=String(row[key]);break;
+                      case 'duration':mappedRow.duration=row[key];break;
+                      case 'elevation_gain':mappedRow.elevation_gain=Number(row[key]);break;
+                      case 'color':mappedRow.color=String(row[key]);break;
+                      case 'gym':mappedRow.gym=String(row[key]);break;
+                      case 'country':mappedRow.country=String(row[key]);break;
+                      case 'skills':mappedRow.skills=String(row[key]);break;
+                      case 'stiffness':mappedRow.stiffness=String(row[key]);break;
+                      case 'physical_skills':mappedRow.physical_skills=String(row[key]);break;
+                      case 'technical_skills':mappedRow.technical_skills=String(row[key]);break;
+                    }
+                  }
+                }
+                CsvClimbArray.push({
+                  name:mappedRow.name||'',
+                  grade:mappedRow.grade||'',
+                  type:mappedRow.type||'' as ClimbTypeSpec,
+                  send_type:mappedRow.send_type||'' as SendTypeSpec,
+                  date:mappedRow.date||'',
+                  location:mappedRow.location||'',
+                  attempts:mappedRow.attempts,
+                  rating:mappedRow.rating,
+                  notes:mappedRow.notes,
+                  duration:mappedRow.duration,
+                  elevation_gain:mappedRow.elevation_gain,
+                  color:mappedRow.color,
+                  gym:mappedRow.gym,
+                  country:mappedRow.country,
+                  skills:mappedRow.skills,
+                  stiffness:mappedRow.stiffness,
+                  physical_skills:mappedRow.physical_skills,
+                  technical_skills:mappedRow.technical_skills,
+                });
+            } catch (mapErr:any) {
+              const msg=`Row ${rowIndex}: Error mapping CSV row: ${mapErr.message}`; 
+              console.error(msg,row,mapErr.stack); 
+              parseErrorsMessages.push(msg); 
+              parseErrorCount++;
+            }
           }
+          
           if (parseErrorCount > 0 && CsvClimbArray.length === 0) {
-            resolve({ successCount: 0, errorCount: parseErrorCount, errors: parseErrorsMessages }); return;
+            resolve({ successCount: 0, errorCount: parseErrorCount, errors: parseErrorsMessages }); 
+            return;
           }
+          
           const processingResult = await processParsedData(CsvClimbArray, userId, sourceGradeSystem, defaultClimbType, appTargetGradeSystem);
-          resolve({ successCount:processingResult.successCount, errorCount:processingResult.errorCount+parseErrorCount, errors:[...parseErrorsMessages,...processingResult.errors] });
+          resolve({ 
+            successCount:processingResult.successCount, 
+            errorCount:processingResult.errorCount+parseErrorCount, 
+            errors:[...parseErrorsMessages,...processingResult.errors] 
+          });
         },
-        error: (parseError: any) => { /* ... error handling ... */
-          const msg = `Critical CSV Parsing Error: ${parseError.message}`; console.error(msg, parseError);
+        error: (parseError: any) => {
+          const msg = `Critical CSV Parsing Error: ${parseError.message}`; 
+          console.error(msg, parseError);
           resolve({ successCount: 0, errorCount: 1, errors: [msg] });
         }
       });
