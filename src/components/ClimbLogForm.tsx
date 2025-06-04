@@ -144,13 +144,6 @@ const ClimbLogForm = ({ onSubmit, onCancel, gradeSystem = 'yds', sessionLocation
       {showOptional && (
         <Card className="border-stone-200 bg-stone-50">
           <CardContent className="p-4 space-y-4">
-            <LocationSelector
-              value={location}
-              onChange={setLocation}
-              placeholder={sessionLocation ? `Using session location: ${sessionLocation}` : "Enter specific location (optional)"}
-              className="mb-4"
-            />
-
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="height" className="text-stone-700">Height (ft)</Label>
@@ -208,6 +201,12 @@ const ClimbLogForm = ({ onSubmit, onCancel, gradeSystem = 'yds', sessionLocation
                 rows={3}
               />
             </div>
+
+            <LocationSelector
+              value={location}
+              onChange={setLocation}
+              placeholder={sessionLocation ? `Using session location: ${sessionLocation}` : "Enter specific location (optional)"}
+            />
           </CardContent>
         </Card>
       )}
