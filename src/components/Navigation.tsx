@@ -1,16 +1,35 @@
+
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import { Mountain, History, LogOut, User, Menu, X, Settings, BarChart3, Beaker } from 'lucide-react';
 
 const Navigation = () => {
   const { signOut, user } = useAuth();
+  const { toast } = useToast();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Signed out",
+        description: "You have been successfully signed out.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error signing out",
+        description: "There was a problem signing you out. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -92,7 +111,7 @@ const Navigation = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={signOut}
+                  onClick={handleSignOut}
                   className="flex items-center space-x-1 text-gray-500 hover:text-gray-700"
                 >
                   <LogOut className="h-4 w-4" />
@@ -215,7 +234,7 @@ const Navigation = () => {
               variant="outline"
               size="sm"
               onClick={() => {
-                signOut();
+                handleSignOut();
                 setIsMobileMenuOpen(false);
               }}
               className="w-full flex items-center justify-center space-x-2 text-red-600 border-red-200 hover:bg-red-50"

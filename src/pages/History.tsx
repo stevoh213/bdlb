@@ -1,163 +1,232 @@
-import { useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import SessionAnalysis from "@/components/SessionAnalysis";
-import HistorySessionListView from "@/components/HistorySessionListView";
-import HistorySessionDetailsView from "@/components/HistorySessionDetailsView";
-import { useSessionHistory } from "@/hooks/useSessionHistory";
-import { useSessionManagement } from "@/hooks/useSessionManagement";
-import { exportToCSV } from "@/utils/csvExport";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
+
+import React, { useState, useEffect } from 'react';
+import { LocalClimb, Session } from '@/types/climbing';
+import { useClimbingSessions } from '@/hooks/useClimbingSessions';
+import { useClimbs } from '@/hooks/useClimbs';
+import HistorySessionListView from '@/components/HistorySessionListView';
+import HistorySessionDetailsView from '@/components/HistorySessionDetailsView';
+import HistoryDialogs from '@/components/HistoryDialogs';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { FileDown, FileUp } from 'lucide-react';
+import { exportClimbsToCsv, importClimbsFromCsv } from '@/services/importService';
+import { useToast } from '@/hooks/use-toast';
 
 const History = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const {
-    user,
-    sessions,
-    selectedSession,
-    climbsForSelectedSession,
-    isLoadingSessions,
-    editingClimb,
-    editingSession,
-    deleteConfirm,
-    showAnalysisDrawer,
-
-    handleSelectSession,
-    handleOpenEditClimbDialog,
-    handleCloseEditClimbDialog,
-    handleOpenEditSessionDialog,
-    handleCloseEditSessionDialog,
-    handleOpenDeleteDialog,
-    handleCloseDeleteDialog,
-    handleSaveClimb,
-    handleSaveSession,
-    handleConfirmDelete,
-    
-    handleOpenAnalysisDrawer,
-    handleCloseAnalysisDrawer,
-    handleAnalysisSaved,
-  } = useSessionHistory();
-
-  const { resumeEndedSession } = useSessionManagement();
+  const { sessions, isLoading: sessionsLoading } = useClimbingSessions();
+  const { climbs, addClimb, updateClimb, deleteClimb } = useClimbs();
   const { toast } = useToast();
-  const { signOut } = useAuth();
+  
+  const [selectedSession, setSelectedSession] = useState<Session | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<LocalClimb | Session | null>(null);
+  const [editForm, setEditForm] = useState<any>({});
 
-  // Handle auto-opening session from navigation state
-  useEffect(() => {
-    const state = location.state as { selectedSessionId?: string; autoOpen?: boolean } | undefined;
-    if (state?.selectedSessionId && state?.autoOpen) {
-      handleSelectSession(state.selectedSessionId);
-      // Clear the navigation state to prevent re-opening on page refresh
-      navigate(location.pathname, { replace: true, state: {} });
-    }
-  }, [location.state, handleSelectSession, navigate, location.pathname]);
+  // Convert sessions data to proper format with Date objects
+  const formattedSessions: Session[] = sessions?.map(session => ({
+    ...session,
+    startTime: new Date(session.startTime),
+    endTime: new Date(session.endTime),
+    climbs: session.climbs?.map(climb => ({
+      ...climb,
+      timestamp: typeof climb.timestamp === 'string' ? climb.timestamp : new Date(climb.timestamp).toISOString()
+    })) || []
+  })) || [];
 
-  const handleExportData = () => {
-    if (sessions.length === 0) {
-      toast({
-        title: "No Data to Export",
-        description: "You don't have any sessions to export yet.",
-        variant: "destructive"
-      });
-      return;
+  const handleEditItem = (item: LocalClimb | Session) => {
+    setEditingItem(item);
+    setEditForm(item);
+    setEditDialogOpen(true);
+  };
+
+  const handleDeleteItem = (item: LocalClimb | Session) => {
+    setEditingItem(item);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingItem) return;
+    
+    if ('name' in editingItem) {
+      // It's a climb
+      updateClimb(editingItem.id, editForm);
     }
+    // Session editing would go here
     
-    // Convert sessions to format expected by exportToCSV
-    const exportData = sessions.map(s => ({
-      ...s,
-      startTime: s.startTime instanceof Date ? s.startTime.toISOString() : s.startTime, 
-      endTime: s.endTime ? (s.endTime instanceof Date ? s.endTime.toISOString() : s.endTime) : '',
-      climbs: s.climbs?.map(c => ({
-        ...c, 
-        timestamp: c.timestamp instanceof Date ? c.timestamp.toISOString() : c.timestamp
-      })) || [],
-      aiAnalysis: s.aiAnalysis ? {
-        ...s.aiAnalysis,
-        generatedAt: s.aiAnalysis.generatedAt instanceof Date ? s.aiAnalysis.generatedAt.toISOString() : (s.aiAnalysis.generatedAt || ''),
-      } : undefined,
-    }));
+    setEditDialogOpen(false);
+    setEditingItem(null);
+  };
+
+  const handleDelete = () => {
+    if (!editingItem) return;
     
-    exportToCSV(exportData);
+    if ('name' in editingItem) {
+      // It's a climb
+      deleteClimb(editingItem.id);
+    }
+    // Session deletion would go here
+    
+    setDeleteDialogOpen(false);
+    setEditingItem(null);
+  };
+
+  const handleExport = () => {
+    const csvContent = exportClimbsToCsv(climbs);
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'climbing-history.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+    
     toast({
       title: "Export Complete",
-      description: `Exported ${sessions.length} sessions to CSV`
+      description: "Your climbing history has been exported to CSV.",
     });
   };
 
-  const performLogout = () => {
-    signOut();
-    toast({
-      title: "Logged Out",
-      description: "You have been successfully logged out"
-    });
+  const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const csvContent = e.target?.result as string;
+        const importedClimbs = importClimbsFromCsv(csvContent);
+        
+        importedClimbs.forEach(climb => {
+          addClimb(climb);
+        });
+        
+        toast({
+          title: "Import Complete",
+          description: `Successfully imported ${importedClimbs.length} climbs.`,
+        });
+        
+        setImportDialogOpen(false);
+      } catch (error) {
+        toast({
+          title: "Import Error",
+          description: error instanceof Error ? error.message : "Failed to import CSV file.",
+          variant: "destructive",
+        });
+      }
+    };
+    
+    reader.readAsText(file);
   };
 
-  const handleResumeSession = (sessionId: string) => {
-    resumeEndedSession(sessionId);
-    navigate('/'); // Navigate back to the main page where the session can be managed
-  };
-
-  // Show session analysis in full screen if showAnalysisDrawer is true and we have a selected session
-  if (selectedSession && showAnalysisDrawer) {
+  if (sessionsLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-stone-100 p-4">
-        <SessionAnalysis
-          session={selectedSession}
-          onClose={handleCloseAnalysisDrawer}
-          onAnalysisSaved={handleAnalysisSaved}
-          autoStart={false}
-        />
+      <div className="container mx-auto p-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+          <div className="space-y-3">
+            <div className="h-4 bg-gray-200 rounded"></div>
+            <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+            <div className="h-4 bg-gray-200 rounded w-4/6"></div>
+          </div>
+        </div>
       </div>
     );
   }
 
-  if (selectedSession && !showAnalysisDrawer) {
-    return (
-      <HistorySessionDetailsView
-        session={selectedSession}
-        climbs={climbsForSelectedSession}
-        currentUser={user}
-        editingClimb={editingClimb}
-        editingSession={editingSession}
-        deleteConfirm={deleteConfirm}
-        onClose={() => handleSelectSession(null)}
-        onEditSession={handleOpenEditSessionDialog}
-        onDeleteSession={(session) => handleOpenDeleteDialog(session, 'session')}
-        onResumeSession={handleResumeSession}
-        onShowAnalysisDrawer={handleOpenAnalysisDrawer}
-        onEditClimb={handleOpenEditClimbDialog}
-        onDeleteClimb={(climb) => handleOpenDeleteDialog(climb, 'climb')}
-        onLogout={performLogout}
-        onCloseEditClimb={handleCloseEditClimbDialog}
-        onCloseEditSession={handleCloseEditSessionDialog}
-        onCloseDeleteDialog={handleCloseDeleteDialog}
-        onSaveClimb={handleSaveClimb}
-        onSaveSession={handleSaveSession}
-        onConfirmDelete={handleConfirmDelete}
-        onOpenDeleteDialog={handleOpenDeleteDialog}
-      />
-    );
-  }
-
-  // Default view: List of sessions
   return (
-    <HistorySessionListView
-      sessions={sessions}
-      isLoadingSessions={isLoadingSessions}
-      editingClimb={editingClimb}
-      editingSession={editingSession}
-      deleteConfirm={deleteConfirm}
-      onSelectSession={handleSelectSession}
-      onExportData={handleExportData}
-      onCloseEditClimb={handleCloseEditClimbDialog}
-      onCloseEditSession={handleCloseEditSessionDialog}
-      onCloseDeleteDialog={handleCloseDeleteDialog}
-      onSaveClimb={handleSaveClimb}
-      onSaveSession={handleSaveSession}
-      onConfirmDelete={handleConfirmDelete}
-      onOpenDeleteDialog={handleOpenDeleteDialog}
-    />
+    <div className="container mx-auto p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Climbing History</h1>
+        <div className="flex gap-2">
+          <Button onClick={() => setImportDialogOpen(true)} variant="outline">
+            <FileUp className="h-4 w-4 mr-2" />
+            Import CSV
+          </Button>
+          <Button onClick={handleExport} variant="outline">
+            <FileDown className="h-4 w-4 mr-2" />
+            Export CSV
+          </Button>
+        </div>
+      </div>
+
+      <Tabs defaultValue="sessions" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="sessions">Sessions</TabsTrigger>
+          <TabsTrigger value="climbs">All Climbs</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="sessions">
+          {selectedSession ? (
+            <HistorySessionDetailsView
+              session={selectedSession}
+              onBack={() => setSelectedSession(null)}
+              onEditClimb={handleEditItem}
+              onDeleteClimb={handleDeleteItem}
+            />
+          ) : (
+            <HistorySessionListView
+              sessions={formattedSessions}
+              onSelectSession={setSelectedSession}
+              onEditSession={handleEditItem}
+              onDeleteSession={handleDeleteItem}
+            />
+          )}
+        </TabsContent>
+        
+        <TabsContent value="climbs">
+          <Card>
+            <CardHeader>
+              <CardTitle>All Climbs</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {climbs.length === 0 ? (
+                <p className="text-muted-foreground">No climbs recorded yet.</p>
+              ) : (
+                <div className="space-y-2">
+                  {climbs.map((climb) => (
+                    <div key={climb.id} className="flex items-center justify-between p-3 border rounded">
+                      <div>
+                        <h4 className="font-medium">{climb.name}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {climb.grade} • {climb.tickType} • {new Date(climb.timestamp).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline" onClick={() => handleEditItem(climb)}>
+                          Edit
+                        </Button>
+                        <Button size="sm" variant="destructive" onClick={() => handleDeleteItem(climb)}>
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      <HistoryDialogs
+        editDialogOpen={editDialogOpen}
+        setEditDialogOpen={setEditDialogOpen}
+        deleteDialogOpen={deleteDialogOpen}
+        setDeleteDialogOpen={setDeleteDialogOpen}
+        importDialogOpen={importDialogOpen}
+        setImportDialogOpen={setImportDialogOpen}
+        editingItem={editingItem}
+        setEditingItem={setEditingItem}
+        editForm={editForm}
+        setEditForm={setEditForm}
+        handleSaveEdit={handleSaveEdit}
+        handleDelete={handleDelete}
+        handleImport={handleImport}
+      />
+    </div>
   );
 };
 
