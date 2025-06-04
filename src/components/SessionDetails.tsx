@@ -44,7 +44,9 @@ const SessionDetails = ({
   if (!session) return null;
 
   const sessionStartTime = typeof session.startTime === 'string' ? new Date(session.startTime) : session.startTime;
-  const climbingTypeStyleKey = session.climbingType.replace(/\s+/g, '_').toLowerCase() as ClimbingTypeStyleKey;
+  const climbingTypeStyleKey = session.climbingType 
+    ? session.climbingType.replace(/\s+/g, '_').toLowerCase() as ClimbingTypeStyleKey
+    : 'boulder'; // Default fallback if climbingType is undefined
 
   return (
     <div className="space-y-4">
