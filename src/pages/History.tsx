@@ -32,7 +32,8 @@ const History = () => {
     endTime: new Date(session.endTime),
     climbs: session.climbs?.map(climb => ({
       ...climb,
-      timestamp: typeof climb.timestamp === 'string' ? climb.timestamp : new Date(climb.timestamp).toISOString()
+      timestamp: new Date(climb.timestamp || new Date()),
+      tickType: climb.tickType || 'attempt'
     })) || []
   })) || [];
 
@@ -51,8 +52,12 @@ const History = () => {
     if (!editingItem) return;
     
     if ('name' in editingItem) {
-      // It's a climb
-      updateClimb(editingItem.id, editForm);
+      // It's a climb - convert to proper format
+      const climbUpdate = {
+        ...editForm,
+        timestamp: editForm.timestamp ? new Date(editForm.timestamp) : new Date()
+      };
+      updateClimb(editingItem.id, climbUpdate);
     }
     // Session editing would go here
     

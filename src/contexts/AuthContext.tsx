@@ -31,13 +31,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state change:', event, session?.user?.id);
       
-      if (event === 'SIGNED_OUT') {
-        console.log('User signed out, clearing state');
-        setUser(null);
-        setLoading(false);
-        return;
-      }
-      
       setUser(session?.user ?? null);
       setLoading(false);
       
@@ -100,19 +93,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
-      console.log('Signing out...');
-      setLoading(true);
+      console.log('Starting sign out...');
+      // Don't set loading here - let the auth state change handle it
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error('Error signing out:', error);
-        setLoading(false);
         throw error;
       }
       console.log('Sign out successful');
-      // The onAuthStateChange will handle clearing the user state and setting loading to false
     } catch (error: any) {
       console.error('Error signing out:', error.message);
-      setLoading(false);
+      setLoading(false); // Only set loading false on error
       throw error;
     }
   };
