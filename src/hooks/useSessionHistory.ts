@@ -1,13 +1,12 @@
-
-
-import { useState, useMemo, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useClimbingSessions } from '@/hooks/useClimbingSessions';
 import { useClimbs } from '@/hooks/useClimbs';
-import { Climb, LocalClimb, Session } from '@/types/climbing';
+import { useSessionManagement } from '@/hooks/useSessionManagement';
 import { supabase } from '@/integrations/supabase/client';
+import { Climb, LocalClimb, Session } from '@/types/climbing';
+import { useCallback, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 // Types for dialog states
 type EditingClimbState = LocalClimb | null;
@@ -18,20 +17,18 @@ export const useSessionHistory = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const location = useLocation();
+  const { resumeEndedSession: resumeFromSessionManagement } = useSessionManagement();
 
   // Data fetching hooks
   const { 
     sessions: rawSessions, 
     isLoading: isLoadingSessions, 
-    addSession,
     updateSession,
     deleteSession 
   } = useClimbingSessions();
   const { 
     climbs: allUserClimbs, 
     isLoading: isLoadingClimbs, 
-    addClimb, 
     updateClimb,
     deleteClimb 
   } = useClimbs();
@@ -128,12 +125,9 @@ export const useSessionHistory = () => {
     handleSaveSession(sessionId, { aiAnalysis: analysis });
   }, [handleSaveSession]);
   
-  const resumeEndedSession = (sessionId: string) => {
-    const sessionToResume = sessions.find(session => session.id === sessionId);
-    if (!sessionToResume) return;
-    console.warn("resumeEndedSession needs to be re-implemented with backend logic and React Query");
-    toast({ title: "Resume Session", description: "This feature needs an update for the new data layer." });
-  };
+  const resumeEndedSession = useCallback((sessionId: string) => {
+    resumeFromSessionManagement(sessionId);
+  }, [resumeFromSessionManagement]);
 
   // Additional handlers needed by History.tsx
   const handleBackFromDetails = useCallback(() => {
@@ -142,7 +136,8 @@ export const useSessionHistory = () => {
 
   const handleResumeSession = useCallback((sessionId: string) => {
     resumeEndedSession(sessionId);
-  }, []);
+    navigate('/');
+  }, [resumeEndedSession, navigate]);
 
   const handleLogout = useCallback(async () => {
     try {

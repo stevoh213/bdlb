@@ -1,18 +1,17 @@
-import React from 'react';
-import { useSessionHistory } from '@/hooks/useSessionHistory';
-import HistorySessionListView from '@/components/HistorySessionListView';
 import HistorySessionDetailsView from '@/components/HistorySessionDetailsView';
+import HistorySessionListView from '@/components/HistorySessionListView';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileDown, FileUp } from 'lucide-react';
-import { exportClimbsToCsv, importClimbsFromCsv } from '@/services/importService';
 import { useToast } from '@/hooks/use-toast';
 import { useClimbs } from '@/hooks/useClimbs';
+import { useSessionHistory } from '@/hooks/useSessionHistory';
+import { exportClimbsToCsv, importClimbsFromCsv } from '@/services/importService';
+import { FileDown, FileUp } from 'lucide-react';
 
 const History = () => {
   const { toast } = useToast();
-  const { climbs, addClimb } = useClimbs();
+  const { climbs: allUserClimbs, addClimb } = useClimbs();
   
   const {
     sessions,
@@ -43,7 +42,7 @@ const History = () => {
   } = useSessionHistory();
 
   const handleExport = () => {
-    const csvContent = exportClimbsToCsv(climbs);
+    const csvContent = exportClimbsToCsv(allUserClimbs);
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -159,6 +158,7 @@ const History = () => {
           ) : (
             <HistorySessionListView
               sessions={sessions}
+              allUserClimbs={allUserClimbs}
               onSelectSession={handleSelectSession}
               onEditSession={handleEditSession}
               onDeleteSession={handleDeleteSession}
@@ -172,11 +172,11 @@ const History = () => {
               <CardTitle>All Climbs</CardTitle>
             </CardHeader>
             <CardContent>
-              {climbs.length === 0 ? (
+              {allUserClimbs.length === 0 ? (
                 <p className="text-muted-foreground">No climbs recorded yet.</p>
               ) : (
                 <div className="space-y-2">
-                  {climbs.map((climb) => (
+                  {allUserClimbs.map((climb) => (
                     <div key={climb.id} className="flex items-center justify-between p-3 border rounded">
                       <div>
                         <h4 className="font-medium">{climb.name}</h4>

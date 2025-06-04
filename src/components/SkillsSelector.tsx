@@ -1,12 +1,12 @@
-import { useState, useEffect, useMemo } from "react";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PlusCircle, Search, Plus } from "lucide-react";
-import { physicalSkills as defaultPhysicalSkills, technicalSkills as defaultTechnicalSkills } from "@/utils/skills";
 import { useToast } from "@/hooks/use-toast";
+import { physicalSkills as defaultPhysicalSkills, technicalSkills as defaultTechnicalSkills } from "@/utils/skills";
+import { Plus, PlusCircle, Search } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 interface SkillsSelectorProps {
   selectedPhysicalSkills: string[];

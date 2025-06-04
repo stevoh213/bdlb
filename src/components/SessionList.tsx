@@ -1,13 +1,11 @@
-
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, Clock, ChevronDown } from "lucide-react";
-import { formatDate, getSessionDuration } from "@/lib/utils";
-import { cn } from "@/lib/utils";
-import styles from "./SessionList.module.css"; // Import the CSS module
-import { Session } from "@/types/climbing"; // Assuming global Session type
+import { Card, CardContent } from "@/components/ui/card";
+import { cn, formatDate, getSessionDuration } from "@/lib/utils";
+import { Climb, Session } from "@/types/climbing"; // Added Climb type
+import { ChevronDown, Clock, MapPin } from "lucide-react";
 import { useState } from "react";
+import styles from "./SessionList.module.css"; // Import the CSS module
 
 // Define ClimbingType more strictly if possible, or use string.
 // This should align with the values used as keys in SessionList.module.css
@@ -16,12 +14,13 @@ type ClimbingTypeStyleKey = 'sport' | 'trad' | 'boulder' | 'top_rope' | 'toprope
 
 interface SessionListProps {
   sessions: Session[]; // Using global Session type
+  allUserClimbs: Climb[]; // Added prop
   selectedSessionId?: string | null; // To highlight the selected session
   onSelectSession: (sessionId: string) => void;
   showLoadMore?: boolean; // Control whether to show load more button
 }
 
-const SessionList = ({ sessions, selectedSessionId, onSelectSession, showLoadMore = true }: SessionListProps) => {
+const SessionList = ({ sessions, allUserClimbs, selectedSessionId, onSelectSession, showLoadMore = true }: SessionListProps) => {
   const [displayCount, setDisplayCount] = useState(5);
   
   if (sessions.length === 0) {
@@ -42,6 +41,9 @@ const SessionList = ({ sessions, selectedSessionId, onSelectSession, showLoadMor
         // Ensure session.startTime is a Date object, or handle string conversion
         const sessionStartTime = typeof session.startTime === 'string' ? new Date(session.startTime) : session.startTime;
         
+        // Calculate climb count for the current session
+        const climbCount = allUserClimbs.filter(climb => climb.session_id === session.id).length;
+
         // Determine the style key for climbing type, handling potential variations and undefined values
         const climbingTypeStyleKey = session.climbingType 
           ? session.climbingType.replace(/\s+/g, '_').toLowerCase() as ClimbingTypeStyleKey
@@ -91,7 +93,7 @@ const SessionList = ({ sessions, selectedSessionId, onSelectSession, showLoadMor
               
               <div className="flex items-center justify-between text-sm">
                 <span className="text-stone-600">Climbs logged</span>
-                <span className="font-semibold text-emerald-600">{session.climbs?.length || 0}</span>
+                <span className="font-semibold text-emerald-600">{climbCount}</span>
               </div>
             </CardContent>
           </Card>

@@ -1,15 +1,17 @@
-import { useState } from "react";
-import { useSessionManagement } from "@/hooks/useSessionManagement";
-import { useAuth } from "@/contexts/AuthContext";
-import { LocalClimb } from "@/types/climbing";
-import SessionControl from "@/components/SessionControl";
 import ClimbLogSection from "@/components/ClimbLogSection";
-import RecentSessions from "@/components/RecentSessions";
 import EditClimbDialog from "@/components/EditClimbDialog";
+import RecentSessions from "@/components/RecentSessions";
+import SessionControl from "@/components/SessionControl";
+import { useAuth } from "@/contexts/AuthContext";
+import { useClimbs } from "@/hooks/useClimbs";
+import { useSessionManagement } from "@/hooks/useSessionManagement";
+import { LocalClimb } from "@/types/climbing";
+import { useState } from "react";
 
 const Index = () => {
   const [editingClimb, setEditingClimb] = useState<LocalClimb | null>(null);
   const { user } = useAuth();
+  const { climbs: allUserClimbs } = useClimbs();
   
   const {
     currentSession,
@@ -45,7 +47,7 @@ const Index = () => {
         />
 
         {/* Recent Sessions History - Only show when no active session */}
-        {!currentSession && <RecentSessions sessions={sessions} />}
+        {!currentSession && <RecentSessions sessions={sessions} allUserClimbs={allUserClimbs} />}
 
         {/* Edit Climb Dialog */}
         {editingClimb && (

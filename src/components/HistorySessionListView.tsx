@@ -1,14 +1,14 @@
-
-import { Card, CardContent } from "@/components/ui/card";
+import HistoryDialogs from "@/components/HistoryDialogs";
+import SessionList from "@/components/SessionList";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Climb, LocalClimb, Session } from "@/types/climbing";
 import { ArrowLeft, Calendar, Download, Upload } from "lucide-react";
 import { Link } from "react-router-dom";
-import SessionList from "@/components/SessionList";
-import HistoryDialogs from "@/components/HistoryDialogs";
-import { Session, LocalClimb } from "@/types/climbing";
 
 interface HistorySessionListViewProps {
   sessions: Session[];
+  allUserClimbs: Climb[];
   isLoadingSessions: boolean;
   editingClimb: LocalClimb | null;
   editingSession: Session | null;
@@ -26,6 +26,7 @@ interface HistorySessionListViewProps {
 
 const HistorySessionListView = ({
   sessions,
+  allUserClimbs,
   isLoadingSessions,
   editingClimb,
   editingSession,
@@ -85,6 +86,7 @@ const HistorySessionListView = ({
           <SessionList 
             sessions={sessions} 
             onSelectSession={onSelectSession}
+            allUserClimbs={allUserClimbs}
           />
         )}
         

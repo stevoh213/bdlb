@@ -1,9 +1,9 @@
-import { Card } from "@/components/ui/card";
-import { useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import ClimbingHeatMap from "@/components/ClimbingHeatMap";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { useClimbs } from "@/hooks/useClimbs";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useState } from "react";
 
 export default function Metrics() {
   const { climbs, isLoading } = useClimbs();

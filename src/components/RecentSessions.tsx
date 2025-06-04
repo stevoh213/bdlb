@@ -1,16 +1,16 @@
-
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { History, Calendar } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Climb, Session } from "@/types/climbing";
+import { Calendar, History } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { Session } from "@/types/climbing";
 import SessionList from "./SessionList";
 
 interface RecentSessionsProps {
   sessions: Session[];
+  allUserClimbs: Climb[];
 }
 
-const RecentSessions = ({ sessions }: RecentSessionsProps) => {
+const RecentSessions = ({ sessions, allUserClimbs }: RecentSessionsProps) => {
   const navigate = useNavigate();
 
   const handleSessionClick = (sessionId: string) => {
@@ -45,6 +45,7 @@ const RecentSessions = ({ sessions }: RecentSessionsProps) => {
       ) : (
         <SessionList 
           sessions={recentSessions} 
+          allUserClimbs={allUserClimbs}
           onSelectSession={handleSessionClick}
           showLoadMore={false}
         />

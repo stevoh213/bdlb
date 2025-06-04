@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
-import { Session, LocalClimb } from "@/types/climbing";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useClimbingSessions } from "@/hooks/useClimbingSessions";
 import { useClimbs } from "@/hooks/useClimbs";
-import { useAuth } from "@/contexts/AuthContext";
+import { Climb, LocalClimb, Session } from "@/types/climbing";
+import { useCallback, useEffect, useState } from "react";
 
 export const useSessionManagement = () => {
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
@@ -14,7 +14,7 @@ export const useSessionManagement = () => {
   
   // Use database hooks
   const { sessions: dbSessions, addSessionAsync: addDbSession, updateSessionAsync: updateDbSession } = useClimbingSessions();
-  const { addClimbAsync: addDbClimb } = useClimbs();
+  const { climbs: allUserClimbs, addClimbAsync: addDbClimb } = useClimbs();
 
   useEffect(() => {
     // Only load current active session from localStorage
@@ -62,7 +62,7 @@ export const useSessionManagement = () => {
     localStorage.setItem('climbs', JSON.stringify(climbs));
   }, [currentSession, climbs]);
 
-  const startSession = async (sessionData: Omit<Session, 'id' | 'startTime' | 'endTime' | 'climbs' | 'isActive' | 'breaks' | 'totalBreakTime'>) => {
+  const startSession = useCallback(async (sessionData: Omit<Session, 'id' | 'startTime' | 'endTime' | 'climbs' | 'isActive' | 'breaks' | 'totalBreakTime'>) => {
     if (!user) {
       toast({
         title: "Error",
@@ -108,32 +108,52 @@ export const useSessionManagement = () => {
         variant: "destructive"
       });
     }
-  };
+  }, [user, toast, addDbSession, setCurrentSession]);
 
-  const pauseSession = () => {
+  const pauseSession = useCallback(() => {
     if (!currentSession) return;
     setCurrentSession(prev => prev ? { ...prev, isActive: false } : null);
     toast({
       title: "Session Paused",
       description: "Session has been paused"
     });
-  };
+  }, [currentSession, setCurrentSession, toast]);
 
-  const resumeSession = () => {
+  const resumeSession = useCallback(() => {
     if (!currentSession) return;
     setCurrentSession(prev => prev ? { ...prev, isActive: true } : null);
     toast({
       title: "Session Resumed",
       description: "Session has been resumed"
     });
-  };
+  }, [currentSession, setCurrentSession, toast]);
 
-  const resumeEndedSession = (sessionId: string) => {
+  const resumeEndedSession = useCallback((sessionId: string) => {
     const sessionToResume = dbSessions?.find(session => session.id === sessionId);
     if (!sessionToResume) return;
 
+    const historicalDbClimbs = allUserClimbs.filter(climb => climb.session_id === sessionId);
+    const mappedLocalClimbs: LocalClimb[] = historicalDbClimbs.map((climb: Climb): LocalClimb => ({
+      id: climb.id,
+      name: climb.name,
+      grade: climb.grade,
+      tickType: climb.send_type === 'project' ? 'attempt' : climb.send_type,
+      attempts: climb.attempts,
+      timestamp: new Date(climb.date),
+      sessionId: climb.session_id,
+      notes: climb.notes,
+      height: climb.height,
+      timeOnWall: climb.time_on_wall,
+      effort: climb.effort,
+      physicalSkills: climb.physical_skills,
+      technicalSkills: climb.technical_skills,
+    }));
+
+    setClimbs(mappedLocalClimbs);
+
     const resumedSession: Session = {
       ...sessionToResume,
+      climbs: mappedLocalClimbs,
       endTime: undefined,
       isActive: true
     };
@@ -145,9 +165,9 @@ export const useSessionManagement = () => {
       title: "Session Resumed",
       description: `Resumed ${sessionToResume.climbingType} session at ${sessionToResume.location}`
     });
-  };
+  }, [dbSessions, toast, setCurrentSession, allUserClimbs, setClimbs]);
 
-  const endSession = async () => {
+  const endSession = useCallback(async () => {
     if (!currentSession || !user) return;
     
     const endTime = new Date();
@@ -179,9 +199,9 @@ export const useSessionManagement = () => {
         variant: "destructive"
       });
     }
-  };
+  }, [currentSession, user, updateDbSession, setCurrentSession, setClimbs, setSessionTime, toast, climbs]);
 
-  const addClimb = async (climb: Omit<LocalClimb, 'id' | 'timestamp' | 'sessionId'>) => {
+  const addClimb = useCallback(async (climb: Omit<LocalClimb, 'id' | 'timestamp' | 'sessionId'>) => {
     if (!currentSession || !user) {
       toast({
         title: "Error",
@@ -223,8 +243,9 @@ export const useSessionManagement = () => {
         technical_skills: climb.technicalSkills || [],
         effort: climb.effort,
         height: climb.height,
-        time_on_wall: climb.timeOnWall
-      }, currentSession.id, user.id);
+        time_on_wall: climb.timeOnWall,
+        sessionId: currentSession.id // user.id is handled by useClimbs internal mutationFn
+      });
 
       toast({
         title: "Climb Saved",
@@ -248,9 +269,9 @@ export const useSessionManagement = () => {
         variant: "destructive"
       });
     }
-  };
+  }, [currentSession, user, toast, setClimbs, setCurrentSession, addDbClimb]);
 
-  const updateClimb = (climbId: string, updates: Partial<LocalClimb>) => {
+  const updateClimb = useCallback((climbId: string, updates: Partial<LocalClimb>) => {
     setClimbs(prevClimbs => 
       prevClimbs.map(climb => 
         climb.id === climbId ? { ...climb, ...updates } : climb
@@ -270,9 +291,9 @@ export const useSessionManagement = () => {
       title: "Climb Updated",
       description: `Updated details for ${updates.name || 'climb'}`
     });
-  };
+  }, [setClimbs, setCurrentSession, toast]);
 
-  const deleteClimb = (climbId: string) => {
+  const deleteClimb = useCallback((climbId: string) => {
     const climbToDelete = climbs.find(c => c.id === climbId);
 
     setClimbs(prevClimbs => prevClimbs.filter(climb => climb.id !== climbId));
@@ -295,7 +316,7 @@ export const useSessionManagement = () => {
         variant: "destructive",
       });
     }
-  };
+  }, [climbs, setClimbs, setCurrentSession, toast]);
 
   return {
     currentSession,
