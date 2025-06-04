@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -14,22 +13,35 @@ export const useClimbingSessions = () => {
   const { data: sessions = [], isLoading, error } = useQuery<Session[], Error>({
     queryKey: ['climbing_sessions', user?.id],
     queryFn: async (): Promise<Session[]> => {
-      if (!user) return [];
-      const dbSessions: ClimbingSession[] = await climbingService.fetchSessions(user.id);
-      return dbSessions.map((cs: ClimbingSession): Session => ({
-        id: cs.id,
-        location: cs.location,
-        climbingType: cs.default_climb_type || 'sport', // Default to 'sport' or handle as error/log if undefined
-        gradeSystem: cs.gradeSystem,
-        notes: cs.notes,
-        startTime: new Date(cs.date),
-        endTime: cs.duration ? new Date(new Date(cs.date).getTime() + cs.duration * 60000) : undefined, // Assuming duration is in minutes
-        climbs: [], // Initialize with empty climbs
-        isActive: false, // Default value
-        breaks: 0, // Default value
-        totalBreakTime: 0, // Default value
-        aiAnalysis: undefined, // Default value
-      }));
+      if (!user) {
+        console.log('No user found, returning empty sessions array');
+        return [];
+      }
+      
+      console.log('Fetching sessions for user:', user.id);
+      
+      try {
+        const dbSessions: ClimbingSession[] = await climbingService.fetchSessions(user.id);
+        console.log('Fetched sessions from DB:', dbSessions);
+        
+        return dbSessions.map((cs: ClimbingSession): Session => ({
+          id: cs.id,
+          location: cs.location,
+          climbingType: cs.default_climb_type || 'sport',
+          gradeSystem: cs.gradeSystem,
+          notes: cs.notes,
+          startTime: new Date(cs.date),
+          endTime: cs.duration ? new Date(new Date(cs.date).getTime() + cs.duration * 60000) : undefined,
+          climbs: [],
+          isActive: false,
+          breaks: 0,
+          totalBreakTime: 0,
+          aiAnalysis: undefined,
+        }));
+      } catch (error) {
+        console.error('Error fetching sessions:', error);
+        throw error;
+      }
     },
     enabled: !!user,
   });
