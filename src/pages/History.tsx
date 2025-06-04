@@ -64,29 +64,8 @@ const History = () => {
       return;
     }
     
-    // Convert sessions to format expected by exportToCSV - fix the type issues
-    const exportData = sessions.map(s => ({
-      id: s.id,
-      location: s.location,
-      climbingType: s.climbingType,
-      startTime: s.startTime instanceof Date ? s.startTime.toISOString() : new Date(s.startTime).toISOString(), 
-      endTime: s.endTime ? (s.endTime instanceof Date ? s.endTime.toISOString() : new Date(s.endTime).toISOString()) : '',
-      climbs: s.climbs?.map(c => ({
-        ...c, 
-        timestamp: c.timestamp instanceof Date ? c.timestamp.toISOString() : new Date(c.timestamp).toISOString()
-      })) || [],
-      isActive: s.isActive,
-      breaks: s.breaks,
-      totalBreakTime: s.totalBreakTime,
-      notes: s.notes,
-      gradeSystem: s.gradeSystem,
-      aiAnalysis: s.aiAnalysis ? {
-        ...s.aiAnalysis,
-        generatedAt: s.aiAnalysis.generatedAt instanceof Date ? s.aiAnalysis.generatedAt.toISOString() : (s.aiAnalysis.generatedAt ? new Date(s.aiAnalysis.generatedAt).toISOString() : ''),
-      } : undefined,
-    }));
-    
-    exportToCSV(exportData);
+    // Pass sessions directly to exportToCSV - let the export function handle the conversion
+    exportToCSV(sessions);
     toast({
       title: "Export Complete",
       description: `Exported ${sessions.length} sessions to CSV`
