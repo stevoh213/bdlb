@@ -14,14 +14,14 @@ describe('detectGradeSystem', () => {
   });
 
   it('should detect French with hint or specific pattern', () => {
-    expect(detectGradeSystem('6a+')).toBe(GradeSystem.FRENCH);
-    expect(detectGradeSystem('7b')).toBe(GradeSystem.FRENCH);
+    expect(detectGradeSystem('6a+', false)).toBe(GradeSystem.FRENCH);
+    expect(detectGradeSystem('7b', false)).toBe(GradeSystem.FRENCH);
     expect(detectGradeSystem('4c')).toBe(GradeSystem.FRENCH); // common low French
   });
 
   it('should detect Font with hint or specific pattern', () => {
-    expect(detectGradeSystem('6A+')).toBe(GradeSystem.FONT);
-    expect(detectGradeSystem('7B')).toBe(GradeSystem.FONT);
+    expect(detectGradeSystem('6A+', true)).toBe(GradeSystem.FONT);
+    expect(detectGradeSystem('7B', true)).toBe(GradeSystem.FONT);
     expect(detectGradeSystem('8A')).toBe(GradeSystem.FONT); // common higher Font
   });
 

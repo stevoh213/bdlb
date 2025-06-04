@@ -1,3 +1,4 @@
+
 import EditClimbDialog from "@/components/EditClimbDialog";
 import EditSessionDialog from "@/components/EditSessionDialog";
 import DeleteConfirmDialog from "@/components/DeleteConfirmDialog";
@@ -35,8 +36,8 @@ const HistoryDialogs = ({
           climb={editingClimb} 
           open={true} 
           onOpenChange={(open) => !open && onCloseEditClimb()} 
-          onSave={(climbId, updates) => onSaveClimb(climbId, updates)}
-          onDelete={() => onOpenDeleteDialog(editingClimb, 'climb')}
+          onSave={onSaveClimb}
+          onDelete={(climb) => onOpenDeleteDialog(climb, 'climb')}
         />
       )}
       {editingSession && (
@@ -44,7 +45,7 @@ const HistoryDialogs = ({
           session={editingSession} 
           open={true} 
           onOpenChange={(open) => !open && onCloseEditSession()} 
-          onSave={(sessionId, updates) => onSaveSession(sessionId, updates)}
+          onSave={onSaveSession} 
         />
       )}
       {deleteConfirm && (

@@ -1,8 +1,6 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { CSVRecord } from '@/types/csv';
 import { Climb } from '@/types/climbing';
-import { CsvClimb, ClimbTypeSpec, SendTypeSpec } from '@/lib/importSpec';
 import { v4 as uuidv4 } from 'uuid';
 
 interface SessionData {
@@ -37,7 +35,7 @@ const parseCSVData = (csvData: CSVRecord[]): { sessions: SessionData[]; climbs: 
       id: sessionId,
       location: record.location,
       date: record.date,
-      duration: parseFloat(record.duration || '60') || 60, // Default duration
+      duration: parseFloat(record.duration) || 60, // Default duration
       notes: record.session_notes,
       gradeSystem: record.grade_system,
       climbingType: record.climbing_type,
@@ -79,7 +77,7 @@ const uploadDataToSupabase = async (csvData: CSVRecord[], userId: string) => {
             location: session.location,
             notes: session.notes,
             gradeSystem: session.gradeSystem,
-            default_climb_type: mapClimbType(session.climbingType),
+            default_climb_type: session.climbingType,
           },
         ])
         .select()
@@ -94,14 +92,7 @@ const uploadDataToSupabase = async (csvData: CSVRecord[], userId: string) => {
 
     // Then, insert the climbs, referencing the session IDs
     const climbsToInsert = climbs.map((climb, index) => ({
-      name: climb.name,
-      grade: climb.grade,
-      type: mapClimbType(climb.type),
-      send_type: mapSendType(climb.send_type),
-      attempts: climb.attempts,
-      date: climb.date,
-      location: climb.location,
-      notes: climb.notes,
+      ...climb,
       user_id: userId,
       session_id: sessionIds[index % sessionIds.length], // Assign session ID
     }));
@@ -146,15 +137,15 @@ const transformCSVToClimbData = (csvData: CSVRecord[], userId: string): Omit<Cli
       location: record.location || 'Unknown Location',
       attempts: parseInt(record.attempts) || 1,
       notes: record.climb_notes,
-      session_id: 'default-session-id', // Will be replaced with actual session ID
+      session_id: record.session_id || 'no-session-id', // Ensure session_id is handled
     };
   });
 };
 
-const insertClimbsBatch = async (climbsToInsert: any[], userId: string): Promise<void> => {
+const insertClimbsBatch = async (climbsToInsert: Partial<Climb>[], userId: string): Promise<void> => {
   if (climbsToInsert.length === 0) return;
 
-  // Ensure all required fields are present and properly typed
+  // Ensure all required fields are present
   const validClimbs = climbsToInsert.filter(climb => 
     climb.name && 
     climb.grade && 
@@ -162,112 +153,25 @@ const insertClimbsBatch = async (climbsToInsert: any[], userId: string): Promise
     climb.send_type && 
     climb.type &&
     climb.session_id
-  );
+  ) as Array<Required<Pick<Climb, 'name' | 'grade' | 'location' | 'send_type' | 'type' | 'session_id'>> & Partial<Climb>>;
 
   if (validClimbs.length === 0) {
     throw new Error('No valid climbs to insert');
   }
 
+  // Add user_id to all climbs
+  const climbsWithUserId = validClimbs.map(climb => ({
+    ...climb,
+    user_id: userId,
+  }));
+
   const { error } = await supabase
     .from('climbs')
-    .insert(validClimbs);
+    .insert(climbsWithUserId);
 
   if (error) {
     console.error('Error inserting climbs batch:', error);
     throw error;
-  }
-};
-
-// New function for importing climbs from CSV data
-export const importClimbsFromCsv = async ({ userId, preParsedData }: { userId: string; preParsedData: CsvClimb[] }) => {
-  try {
-    let successCount = 0;
-    let errorCount = 0;
-    const errors: string[] = [];
-
-    for (const climbData of preParsedData) {
-      try {
-        // Create a session for each climb (or group them as needed)
-        const sessionData = {
-          user_id: userId,
-          date: climbData.date,
-          location: climbData.location,
-          duration: typeof climbData.duration === 'string' ? parseInt(climbData.duration) || 60 : climbData.duration || 60,
-          notes: `Imported climb session for ${climbData.name}`,
-          default_climb_type: mapClimbType(climbData.type),
-        };
-
-        const { data: session, error: sessionError } = await supabase
-          .from('climbing_sessions')
-          .insert(sessionData)
-          .select()
-          .single();
-
-        if (sessionError) {
-          throw sessionError;
-        }
-
-        // Insert the climb
-        const climbInsertData = {
-          user_id: userId,
-          session_id: session.id,
-          name: climbData.name,
-          grade: climbData.grade,
-          type: mapClimbType(climbData.type),
-          send_type: mapSendType(climbData.send_type),
-          attempts: climbData.attempts || 1,
-          date: climbData.date,
-          location: climbData.location,
-          notes: climbData.notes,
-        };
-
-        const { error: climbError } = await supabase
-          .from('climbs')
-          .insert(climbInsertData);
-
-        if (climbError) {
-          throw climbError;
-        }
-
-        successCount++;
-      } catch (error: any) {
-        errorCount++;
-        errors.push(`Error importing climb "${climbData.name}": ${error.message}`);
-      }
-    }
-
-    return {
-      successCount,
-      errorCount,
-      errors,
-    };
-  } catch (error: any) {
-    console.error('Error in importClimbsFromCsv:', error);
-    throw error;
-  }
-};
-
-// Check for duplicate climb function
-export const checkDuplicateClimb = async (climbData: any, userId: string): Promise<boolean> => {
-  try {
-    const { data, error } = await supabase
-      .from('climbs')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('name', climbData.name)
-      .eq('grade', climbData.grade)
-      .eq('date', climbData.date)
-      .eq('location', climbData.location);
-
-    if (error) {
-      console.error('Error checking for duplicates:', error);
-      return false;
-    }
-
-    return (data && data.length > 0);
-  } catch (error) {
-    console.error('Error in checkDuplicateClimb:', error);
-    return false;
   }
 };
 
