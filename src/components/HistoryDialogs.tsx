@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { LocalClimb, Session } from '@/types/climbing';
 import { Button } from '@/components/ui/button';
@@ -20,7 +21,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { importClimbsFromCsv } from '@/services/importService';
 
 interface HistoryDialogsProps {
   editDialogOpen: boolean;
@@ -46,7 +46,6 @@ const HistoryDialogs: React.FC<HistoryDialogsProps> = ({
   importDialogOpen,
   setImportDialogOpen,
   editingItem,
-  setEditingItem,
   editForm,
   setEditForm,
   handleSaveEdit,

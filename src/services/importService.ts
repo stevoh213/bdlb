@@ -2,7 +2,6 @@
 import Papa from 'papaparse';
 import { LocalClimb, Session } from '@/types/climbing';
 import { CsvRow } from '@/types/csv';
-import { convertGrade } from '@/lib/gradeConversion';
 
 export const importClimbsFromCsv = (csvContent: string): LocalClimb[] => {
   const results = Papa.parse<CsvRow>(csvContent, {
@@ -28,7 +27,7 @@ export const importClimbsFromCsv = (csvContent: string): LocalClimb[] => {
       name: row.name || '',
       grade: row.grade || '',
       tickType: (row.ticktype as LocalClimb['tickType']) || 'attempt',
-      timestamp: row.date ? new Date(row.date).toISOString() : new Date().toISOString(),
+      timestamp: row.date ? new Date(row.date) : new Date(),
       location: row.location || '',
       notes: row.notes || '',
       attempts: row.attempts ? parseInt(row.attempts) : 1,
@@ -44,7 +43,7 @@ export const exportClimbsToCsv = (climbs: LocalClimb[]): string => {
     name: climb.name,
     grade: climb.grade,
     tickType: climb.tickType,
-    date: climb.timestamp,
+    date: climb.timestamp instanceof Date ? climb.timestamp.toISOString() : climb.timestamp,
     location: climb.location || '',
     notes: climb.notes || '',
     attempts: climb.attempts || 1,

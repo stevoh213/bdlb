@@ -30,6 +30,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state change:', event, session?.user?.id);
+      
+      if (event === 'SIGNED_OUT') {
+        console.log('User signed out, clearing state');
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+      
       setUser(session?.user ?? null);
       setLoading(false);
       
@@ -49,13 +57,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (error) {
           console.error('Error creating/updating profile:', error);
         }
-      }
-
-      // Handle sign out event
-      if (event === 'SIGNED_OUT') {
-        console.log('User signed out, clearing state');
-        setUser(null);
-        setLoading(false);
       }
     });
 
@@ -104,15 +105,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error('Error signing out:', error);
+        setLoading(false);
         throw error;
       }
       console.log('Sign out successful');
-      // The onAuthStateChange will handle clearing the user state
+      // The onAuthStateChange will handle clearing the user state and setting loading to false
     } catch (error: any) {
       console.error('Error signing out:', error.message);
-      throw error;
-    } finally {
       setLoading(false);
+      throw error;
     }
   };
 
