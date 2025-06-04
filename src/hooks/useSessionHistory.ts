@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useClimbingSessions } from '@/hooks/useClimbingSessions';
 import { useClimbs } from '@/hooks/useClimbs';
 import { Climb, LocalClimb, Session } from '@/types/climbing';
+import { supabase } from '@/integrations/supabase/client';
 
 // Types for dialog states
 type EditingClimbState = LocalClimb | null;
@@ -61,11 +62,12 @@ export const useSessionHistory = () => {
       timestamp: new Date(climb.date),
       sessionId: climb.session_id,
       notes: climb.notes,
-      height: undefined, 
-      timeOnWall: undefined,
-      effort: undefined,
-      physicalSkills: undefined,
-      technicalSkills: undefined,
+      // Map the new fields from database
+      height: climb.height,
+      timeOnWall: climb.time_on_wall,
+      effort: climb.effort,
+      physicalSkills: climb.physical_skills,
+      technicalSkills: climb.technical_skills,
     }));
   }, [allUserClimbs, selectedSession]);
 
@@ -133,7 +135,33 @@ export const useSessionHistory = () => {
     toast({ title: "Resume Session", description: "This feature needs an update for the new data layer." });
   };
 
+  // Additional handlers needed by History.tsx
+  const handleBackFromDetails = useCallback(() => {
+    handleSelectSession(null);
+  }, [handleSelectSession]);
+
+  const handleResumeSession = useCallback((sessionId: string) => {
+    resumeEndedSession(sessionId);
+  }, []);
+
+  const handleLogout = useCallback(async () => {
+    try {
+      await supabase.auth.signOut();
+      toast({ title: "Logged out successfully" });
+      // Navigation will be handled by auth state change
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast({ 
+        title: "Logout failed", 
+        description: "Please try again", 
+        variant: "destructive" 
+      });
+    }
+  }, [toast]);
+
   return {
+    // Rename user to currentUser for History.tsx compatibility
+    currentUser: user,
     user,
     sessions,
     selectedSession,
@@ -145,20 +173,39 @@ export const useSessionHistory = () => {
     deleteConfirm,
     showAnalysisDrawer,
 
-    // Handlers
+    // Handlers with aliases for History.tsx compatibility
     handleSelectSession,
+    handleBackFromDetails,
+    
+    // Edit handlers (both original and alias names)
     handleOpenEditClimbDialog,
+    handleEditClimb: handleOpenEditClimbDialog,
     handleCloseEditClimbDialog,
+    handleCloseEditClimb: handleCloseEditClimbDialog,
+    
     handleOpenEditSessionDialog,
+    handleEditSession: handleOpenEditSessionDialog,
     handleCloseEditSessionDialog,
+    handleCloseEditSession: handleCloseEditSessionDialog,
+    
+    // Delete handlers
     handleOpenDeleteDialog,
+    handleDeleteSession: (session: Session) => handleOpenDeleteDialog(session, 'session'),
+    handleDeleteClimb: (climb: LocalClimb) => handleOpenDeleteDialog(climb, 'climb'),
     handleCloseDeleteDialog,
+    
+    // Save handlers
     handleSaveClimb,
     handleSaveSession,
     handleConfirmDelete,
     
-    // AI Analysis Drawer
+    // Additional handlers
+    handleResumeSession,
+    handleLogout,
+    
+    // AI Analysis Drawer (both original and alias names)
     handleOpenAnalysisDrawer,
+    handleShowAnalysisDrawer: handleOpenAnalysisDrawer,
     handleCloseAnalysisDrawer,
     handleAnalysisSaved,
   };

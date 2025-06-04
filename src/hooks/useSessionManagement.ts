@@ -13,7 +13,7 @@ export const useSessionManagement = () => {
   const { user } = useAuth();
   
   // Use database hooks
-  const { sessions: dbSessions, addSessionAsync: addDbSession } = useClimbingSessions();
+  const { sessions: dbSessions, addSessionAsync: addDbSession, updateSessionAsync: updateDbSession } = useClimbingSessions();
   const { addClimbAsync: addDbClimb } = useClimbs();
 
   useEffect(() => {
@@ -154,9 +154,11 @@ export const useSessionManagement = () => {
     const duration = Math.floor((endTime.getTime() - currentSession.startTime.getTime()) / 60000); // minutes
     
     try {
-      // Update session duration in database (session was created at start)
-      // For now, we'll skip updating duration since useClimbingSessions hook structure
-      // needs to be examined. The session is already saved with duration 0.
+      // Update session duration in database
+      await updateDbSession({
+        sessionId: currentSession.id,
+        updates: { duration }
+      });
       
       // Clear local state
       setCurrentSession(null);
@@ -173,7 +175,7 @@ export const useSessionManagement = () => {
       console.error('Failed to end session:', error);
       toast({
         title: "Session End Error", 
-        description: "Session ended but there may have been an issue",
+        description: "Session ended but duration may not be saved correctly",
         variant: "destructive"
       });
     }
