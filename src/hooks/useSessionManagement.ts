@@ -209,7 +209,6 @@ export const useSessionManagement = () => {
     try {
       // Save to database immediately
       await addDbClimb({
-        sessionId: currentSession.id,
         name: climb.name,
         grade: climb.grade,
         type: currentSession.climbingType,
@@ -223,7 +222,7 @@ export const useSessionManagement = () => {
         effort: climb.effort,
         height: climb.height,
         time_on_wall: climb.timeOnWall
-      });
+      }, currentSession.id, user.id);
 
       toast({
         title: "Climb Saved",
