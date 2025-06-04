@@ -58,34 +58,40 @@ const History = () => {
     });
   };
 
-  const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const handleImportClick = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv';
+    input.onchange = (event: Event) => {
+      const file = (event.target as HTMLInputElement).files?.[0];
+      if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const csvContent = e.target?.result as string;
-        const importedClimbs = importClimbsFromCsv(csvContent);
-        
-        importedClimbs.forEach(climb => {
-          addClimb(climb);
-        });
-        
-        toast({
-          title: "Import Complete",
-          description: `Successfully imported ${importedClimbs.length} climbs.`,
-        });
-      } catch (error) {
-        toast({
-          title: "Import Error",
-          description: error instanceof Error ? error.message : "Failed to import CSV file.",
-          variant: "destructive",
-        });
-      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const csvContent = e.target?.result as string;
+          const importedClimbs = importClimbsFromCsv(csvContent);
+          
+          importedClimbs.forEach(climb => {
+            addClimb(climb);
+          });
+          
+          toast({
+            title: "Import Complete",
+            description: `Successfully imported ${importedClimbs.length} climbs.`,
+          });
+        } catch (error) {
+          toast({
+            title: "Import Error",
+            description: error instanceof Error ? error.message : "Failed to import CSV file.",
+            variant: "destructive",
+          });
+        }
+      };
+      
+      reader.readAsText(file);
     };
-    
-    reader.readAsText(file);
+    input.click();
   };
 
   if (isLoadingSessions) {
@@ -108,14 +114,8 @@ const History = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Climbing History</h1>
         <div className="flex gap-2">
-          <Button variant="outline">
+          <Button onClick={handleImportClick} variant="outline">
             <FileUp className="h-4 w-4 mr-2" />
-            <input
-              type="file"
-              accept=".csv"
-              onChange={handleImport}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-            />
             Import CSV
           </Button>
           <Button onClick={handleExport} variant="outline">
