@@ -1,6 +1,9 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { CSVRecord } from '@/types/csv';
 import { Climb } from '@/types/climbing';
+import { CsvClimb } from '@/lib/importSpec';
+import { validateClimbRecord } from '@/lib/importValidation';
 import { v4 as uuidv4 } from 'uuid';
 
 interface SessionData {
@@ -95,6 +98,8 @@ const uploadDataToSupabase = async (csvData: CSVRecord[], userId: string) => {
       ...climb,
       user_id: userId,
       session_id: sessionIds[index % sessionIds.length], // Assign session ID
+      type: mapClimbType(climb.type),
+      send_type: mapSendType(climb.send_type),
     }));
 
     // Use insertClimbsBatch to handle batch insertion
@@ -137,7 +142,7 @@ const transformCSVToClimbData = (csvData: CSVRecord[], userId: string): Omit<Cli
       location: record.location || 'Unknown Location',
       attempts: parseInt(record.attempts) || 1,
       notes: record.climb_notes,
-      session_id: record.session_id || 'no-session-id', // Ensure session_id is handled
+      session_id: record.session_id || 'no-session-id',
     };
   });
 };
@@ -175,4 +180,93 @@ const insertClimbsBatch = async (climbsToInsert: Partial<Climb>[], userId: strin
   }
 };
 
-export { uploadDataToSupabase, transformCSVToClimbData, insertClimbsBatch };
+// Add the missing importClimbsFromCsv function
+const importClimbsFromCsv = async ({ userId, preParsedData }: { userId: string; preParsedData: CsvClimb[] }): Promise<{ successCount: number; errorCount: number; errors: string[] }> => {
+  const results = {
+    successCount: 0,
+    errorCount: 0,
+    errors: [] as string[]
+  };
+
+  if (!preParsedData || preParsedData.length === 0) {
+    results.errors.push('No data provided for import');
+    return results;
+  }
+
+  // Create a default session for imported climbs
+  const defaultSessionId = uuidv4();
+  const defaultSession = {
+    id: defaultSessionId,
+    user_id: userId,
+    date: new Date().toISOString().split('T')[0],
+    duration: 120, // 2 hours default
+    location: 'Imported Session',
+    notes: 'Session created from imported climbs',
+  };
+
+  try {
+    // Insert the default session
+    const { error: sessionError } = await supabase
+      .from('climbing_sessions')
+      .insert([defaultSession]);
+
+    if (sessionError) {
+      console.error('Error creating default session:', sessionError);
+      results.errors.push(`Failed to create session: ${sessionError.message}`);
+      results.errorCount = preParsedData.length;
+      return results;
+    }
+
+    // Process each climb
+    for (const climbData of preParsedData) {
+      try {
+        // Validate the climb record
+        const validationErrors = validateClimbRecord(climbData);
+        if (validationErrors.length > 0) {
+          results.errorCount++;
+          results.errors.push(`Validation failed for climb "${climbData.name}": ${validationErrors.join(', ')}`);
+          continue;
+        }
+
+        // Transform and insert the climb
+        const climbToInsert = {
+          user_id: userId,
+          session_id: defaultSessionId,
+          name: climbData.name,
+          grade: climbData.grade,
+          type: climbData.type,
+          send_type: climbData.send_type,
+          date: climbData.date,
+          location: climbData.location,
+          attempts: climbData.attempts || 1,
+          rating: climbData.rating,
+          notes: climbData.notes || '',
+        };
+
+        const { error: insertError } = await supabase
+          .from('climbs')
+          .insert([climbToInsert]);
+
+        if (insertError) {
+          console.error('Error inserting climb:', insertError);
+          results.errorCount++;
+          results.errors.push(`Failed to insert climb "${climbData.name}": ${insertError.message}`);
+        } else {
+          results.successCount++;
+        }
+      } catch (error: any) {
+        console.error('Error processing climb:', error);
+        results.errorCount++;
+        results.errors.push(`Error processing climb "${climbData.name}": ${error.message}`);
+      }
+    }
+  } catch (error: any) {
+    console.error('Error during import:', error);
+    results.errors.push(`Import failed: ${error.message}`);
+    results.errorCount = preParsedData.length;
+  }
+
+  return results;
+};
+
+export { uploadDataToSupabase, transformCSVToClimbData, insertClimbsBatch, importClimbsFromCsv };

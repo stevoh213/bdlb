@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import SessionAnalysis from "@/components/SessionAnalysis";
@@ -64,22 +63,15 @@ const History = () => {
       return;
     }
     
-    // Convert sessions to format expected by exportToCSV - fix the type issues
+    // Convert sessions to format expected by exportToCSV
     const exportData = sessions.map(s => ({
-      id: s.id,
-      location: s.location,
-      climbingType: s.climbingType,
+      ...s,
       startTime: s.startTime instanceof Date ? s.startTime.toISOString() : s.startTime, 
       endTime: s.endTime ? (s.endTime instanceof Date ? s.endTime.toISOString() : s.endTime) : '',
       climbs: s.climbs?.map(c => ({
         ...c, 
         timestamp: c.timestamp instanceof Date ? c.timestamp.toISOString() : c.timestamp
       })) || [],
-      isActive: s.isActive,
-      breaks: s.breaks,
-      totalBreakTime: s.totalBreakTime,
-      notes: s.notes,
-      gradeSystem: s.gradeSystem,
       aiAnalysis: s.aiAnalysis ? {
         ...s.aiAnalysis,
         generatedAt: s.aiAnalysis.generatedAt instanceof Date ? s.aiAnalysis.generatedAt.toISOString() : (s.aiAnalysis.generatedAt || ''),

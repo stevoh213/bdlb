@@ -29,6 +29,14 @@ const HistoryDialogs = ({
   onConfirmDelete,
   onOpenDeleteDialog,
 }: HistoryDialogsProps) => {
+  const getItemName = (item: Session | LocalClimb, type: 'session' | 'climb'): string => {
+    if (type === 'session') {
+      return (item as Session).location;
+    } else {
+      return (item as LocalClimb).name;
+    }
+  };
+
   return (
     <>
       {editingClimb && (
@@ -55,7 +63,7 @@ const HistoryDialogs = ({
           onConfirm={onConfirmDelete} 
           title={deleteConfirm.type === 'session' ? 'Delete Session' : 'Delete Climb'} 
           description={deleteConfirm.type === 'session' ? 'Are you sure you want to delete this entire climbing session? This will also delete all climbs in this session.' : 'Are you sure you want to delete this climb?'} 
-          itemName={deleteConfirm.type === 'session' ? (deleteConfirm.item as Session).location : (deleteConfirm.item as LocalClimb).name} 
+          itemName={getItemName(deleteConfirm.item, deleteConfirm.type)} 
         />
       )}
     </>
