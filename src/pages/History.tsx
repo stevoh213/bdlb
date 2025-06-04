@@ -1,9 +1,8 @@
-
-
+import { useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, Download, Upload } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 
 // Components used by History.tsx directly
 import EditClimbDialog from "@/components/EditClimbDialog";
@@ -27,6 +26,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const History = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const {
     user,
     sessions,
@@ -58,6 +58,16 @@ const History = () => {
   const { resumeEndedSession } = useSessionManagement();
   const { toast } = useToast();
   const { signOut } = useAuth();
+
+  // Handle auto-opening session from navigation state
+  useEffect(() => {
+    const state = location.state as { selectedSessionId?: string; autoOpen?: boolean } | undefined;
+    if (state?.selectedSessionId && state?.autoOpen) {
+      handleSelectSession(state.selectedSessionId);
+      // Clear the navigation state to prevent re-opening on page refresh
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, handleSelectSession, navigate, location.pathname]);
 
   const handleExportData = () => {
     if (sessions.length === 0) {
@@ -238,4 +248,3 @@ const History = () => {
 };
 
 export default History;
-

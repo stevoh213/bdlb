@@ -13,8 +13,8 @@ export type Database = {
         Row: {
           created_at: string
           date: string
-          default_climb_type: Database["public"]["Enums"]["climb_type"] | null
-          duration: number
+          default_climb_type: string | null
+          duration: number | null
           gradeSystem: string | null
           id: string
           location: string
@@ -25,9 +25,9 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          date: string
-          default_climb_type?: Database["public"]["Enums"]["climb_type"] | null
-          duration: number
+          date?: string
+          default_climb_type?: string | null
+          duration?: number | null
           gradeSystem?: string | null
           id?: string
           location: string
@@ -39,8 +39,8 @@ export type Database = {
         Update: {
           created_at?: string
           date?: string
-          default_climb_type?: Database["public"]["Enums"]["climb_type"] | null
-          duration?: number
+          default_climb_type?: string | null
+          duration?: number | null
           gradeSystem?: string | null
           id?: string
           location?: string
@@ -54,75 +54,45 @@ export type Database = {
       climbs: {
         Row: {
           attempts: number | null
-          color: string | null
-          country: string | null
           created_at: string
           date: string
-          duration: number | null
-          elevation_gain: number | null
           grade: string
-          gym: string | null
           id: string
           location: string
           name: string
           notes: string | null
-          physical_skills: string[] | null
-          rating: number | null
           send_type: string
-          session_id: string | null
-          skills: string[] | null
-          stiffness: number | null
-          technical_skills: string[] | null
+          session_id: string
           type: string
           updated_at: string
           user_id: string
         }
         Insert: {
           attempts?: number | null
-          color?: string | null
-          country?: string | null
           created_at?: string
           date?: string
-          duration?: number | null
-          elevation_gain?: number | null
           grade: string
-          gym?: string | null
           id?: string
           location: string
           name: string
           notes?: string | null
-          physical_skills?: string[] | null
-          rating?: number | null
           send_type: string
-          session_id?: string | null
-          skills?: string[] | null
-          stiffness?: number | null
-          technical_skills?: string[] | null
+          session_id: string
           type: string
           updated_at?: string
           user_id: string
         }
         Update: {
           attempts?: number | null
-          color?: string | null
-          country?: string | null
           created_at?: string
           date?: string
-          duration?: number | null
-          elevation_gain?: number | null
           grade?: string
-          gym?: string | null
           id?: string
           location?: string
           name?: string
           notes?: string | null
-          physical_skills?: string[] | null
-          rating?: number | null
           send_type?: string
-          session_id?: string | null
-          skills?: string[] | null
-          stiffness?: number | null
-          technical_skills?: string[] | null
+          session_id?: string
           type?: string
           updated_at?: string
           user_id?: string
@@ -169,15 +139,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_grade_system_for_climb_type: {
-        Args: { climb_type: string }
-        Returns: string
-      }
+      [_ in never]: never
     }
     Enums: {
-      climb_send_type: "send" | "attempt" | "project" | "onsight" | "flash"
-      climb_type: "boulder" | "sport" | "trad" | "top rope" | "alpine"
-      location_type: "indoor" | "outdoor"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -292,10 +257,6 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {
-      climb_send_type: ["send", "attempt", "project", "onsight", "flash"],
-      climb_type: ["boulder", "sport", "trad", "top rope", "alpine"],
-      location_type: ["indoor", "outdoor"],
-    },
+    Enums: {},
   },
 } as const

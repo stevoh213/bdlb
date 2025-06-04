@@ -14,7 +14,7 @@ const RecentSessions = ({ sessions }: RecentSessionsProps) => {
   const navigate = useNavigate();
 
   const handleSessionClick = (sessionId: string) => {
-    navigate('/history', { state: { selectedSessionId: sessionId } });
+    navigate('/history', { state: { selectedSessionId: sessionId, autoOpen: true } });
   };
 
   // Limit to 3 most recent sessions for the dashboard
