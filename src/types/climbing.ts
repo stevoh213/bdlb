@@ -22,6 +22,9 @@ export interface Climb {
   stiffness?: number;
   physical_skills?: string[];
   technical_skills?: string[];
+  effort?: number;
+  height?: number;
+  time_on_wall?: number;
 }
 
 export interface ClimbingSession {

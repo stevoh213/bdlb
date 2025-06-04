@@ -66,6 +66,11 @@ export type Database = {
           type: string
           updated_at: string
           user_id: string
+          physical_skills: string[] | null
+          technical_skills: string[] | null
+          effort: number | null
+          height: number | null
+          time_on_wall: number | null
         }
         Insert: {
           attempts?: number | null
@@ -81,6 +86,11 @@ export type Database = {
           type: string
           updated_at?: string
           user_id: string
+          physical_skills?: string[] | null
+          technical_skills?: string[] | null
+          effort?: number | null
+          height?: number | null
+          time_on_wall?: number | null
         }
         Update: {
           attempts?: number | null
@@ -96,6 +106,11 @@ export type Database = {
           type?: string
           updated_at?: string
           user_id?: string
+          physical_skills?: string[] | null
+          technical_skills?: string[] | null
+          effort?: number | null
+          height?: number | null
+          time_on_wall?: number | null
         }
         Relationships: [
           {

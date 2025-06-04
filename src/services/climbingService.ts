@@ -9,7 +9,7 @@ export type UpdateSessionData = Partial<Omit<ClimbingSession, 'id' | 'user_id' |
 
 // For climbs, ClimbLog is often used as the input type for new climbs.
 // The task refers to ClimbData, which I'll take to mean Partial<Climb> for updates and something like ClimbLog for additions.
-export type NewClimbData = Omit<Climb, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'session_id'>; // session_id will be passed as a separate param
+export type NewClimbData = Omit<Climb, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'session_id' | 'rating' | 'duration' | 'elevation_gain' | 'color' | 'gym' | 'country' | 'skills' | 'stiffness'>; // session_id will be passed as a separate param
 export type UpdateClimbData = Partial<Omit<Climb, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'session_id'>>;
 
 const handleSupabaseError = (error: any, context: string) => {
@@ -138,7 +138,12 @@ export const fetchClimbsBySessionId = async (sessionId: string): Promise<Climb[]
     return (data || []).map(climb => ({
       ...climb,
       type: climb.type as 'sport' | 'trad' | 'boulder' | 'top rope' | 'alpine',
-      send_type: climb.send_type as 'send' | 'attempt' | 'flash' | 'onsight' | 'project'
+      send_type: climb.send_type as 'send' | 'attempt' | 'flash' | 'onsight' | 'project',
+      physical_skills: climb.physical_skills || [],
+      technical_skills: climb.technical_skills || [],
+      effort: climb.effort || undefined,
+      height: climb.height || undefined,
+      time_on_wall: climb.time_on_wall || undefined
     }));
   } catch (error) {
     console.error('Error in fetchClimbsBySessionId:', error);
@@ -163,7 +168,12 @@ export const fetchAllUserClimbs = async (userId: string): Promise<Climb[]> => {
     return (data || []).map(climb => ({
       ...climb,
       type: climb.type as 'sport' | 'trad' | 'boulder' | 'top rope' | 'alpine',
-      send_type: climb.send_type as 'send' | 'attempt' | 'flash' | 'onsight' | 'project'
+      send_type: climb.send_type as 'send' | 'attempt' | 'flash' | 'onsight' | 'project',
+      physical_skills: climb.physical_skills || [],
+      technical_skills: climb.technical_skills || [],
+      effort: climb.effort || undefined,
+      height: climb.height || undefined,
+      time_on_wall: climb.time_on_wall || undefined
     }));
   } catch (error) {
     console.error('Error in fetchAllUserClimbs:', error);
@@ -186,7 +196,12 @@ export const addClimb = async (climbData: NewClimbData, sessionId: string, userI
     return {
       ...data,
       type: data.type as 'sport' | 'trad' | 'boulder' | 'top rope' | 'alpine',
-      send_type: data.send_type as 'send' | 'attempt' | 'flash' | 'onsight' | 'project'
+      send_type: data.send_type as 'send' | 'attempt' | 'flash' | 'onsight' | 'project',
+      physical_skills: data.physical_skills || [],
+      technical_skills: data.technical_skills || [],
+      effort: data.effort || undefined,
+      height: data.height || undefined,
+      time_on_wall: data.time_on_wall || undefined
     };
   } catch (error) {
     console.error('Error in addClimb:', error);
@@ -208,7 +223,12 @@ export const updateClimb = async (climbId: string, updates: UpdateClimbData): Pr
     return {
       ...data,
       type: data.type as 'sport' | 'trad' | 'boulder' | 'top rope' | 'alpine',
-      send_type: data.send_type as 'send' | 'attempt' | 'flash' | 'onsight' | 'project'
+      send_type: data.send_type as 'send' | 'attempt' | 'flash' | 'onsight' | 'project',
+      physical_skills: data.physical_skills || [],
+      technical_skills: data.technical_skills || [],
+      effort: data.effort || undefined,
+      height: data.height || undefined,
+      time_on_wall: data.time_on_wall || undefined
     };
   } catch (error) {
     console.error('Error in updateClimb:', error);

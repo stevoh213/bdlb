@@ -11,10 +11,10 @@ import SessionForm from "./SessionForm";
 interface SessionControlProps {
   currentSession: Session | null;
   sessionTime: number;
-  onStartSession: (session: Omit<Session, 'id' | 'startTime' | 'endTime' | 'climbs' | 'isActive' | 'breaks' | 'totalBreakTime'>) => void;
+  onStartSession: (session: Omit<Session, 'id' | 'startTime' | 'endTime' | 'climbs' | 'isActive' | 'breaks' | 'totalBreakTime'>) => Promise<void>;
   onPauseSession: () => void;
   onResumeSession: () => void;
-  onEndSession: () => void;
+  onEndSession: () => Promise<void>;
 }
 
 const SessionControl = ({
@@ -38,8 +38,8 @@ const SessionControl = ({
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  const handleStartSession = (sessionData: Omit<Session, 'id' | 'startTime' | 'endTime' | 'climbs' | 'isActive' | 'breaks' | 'totalBreakTime'>) => {
-    onStartSession(sessionData);
+  const handleStartSession = async (sessionData: Omit<Session, 'id' | 'startTime' | 'endTime' | 'climbs' | 'isActive' | 'breaks' | 'totalBreakTime'>) => {
+    await onStartSession(sessionData);
     setShowSessionForm(false);
   };
 

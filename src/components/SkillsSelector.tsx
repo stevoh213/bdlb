@@ -55,7 +55,7 @@ const SkillsSelector = ({
   };
 
   const handleAddNewSkill = (type: 'physical' | 'technical') => {
-    let newSkillInput = type === 'physical' ? newPhysicalSkillInput.trim() : newTechnicalSkillInput.trim();
+    const newSkillInput = type === 'physical' ? newPhysicalSkillInput.trim() : newTechnicalSkillInput.trim();
     const allSkills = type === 'physical' ? allPhysicalSkills : allTechnicalSkills;
     const setAllSkills = type === 'physical' ? setAllPhysicalSkills : setAllTechnicalSkills;
     const selectedSkills = type === 'physical' ? selectedPhysicalSkills : selectedTechnicalSkills;

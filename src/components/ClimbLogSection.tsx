@@ -9,15 +9,15 @@ import ClimbList from "./ClimbList";
 
 interface ClimbLogSectionProps {
   currentSession: Session | null;
-  onAddClimb: (climb: Omit<LocalClimb, 'id' | 'timestamp' | 'sessionId'>) => void;
+  onAddClimb: (climb: Omit<LocalClimb, 'id' | 'timestamp' | 'sessionId'>) => Promise<void>;
   onEditClimb: (climb: LocalClimb) => void;
 }
 
 const ClimbLogSection = ({ currentSession, onAddClimb, onEditClimb }: ClimbLogSectionProps) => {
   const [showClimbForm, setShowClimbForm] = useState(false);
 
-  const handleAddClimb = (climb: Omit<LocalClimb, 'id' | 'timestamp' | 'sessionId'>) => {
-    onAddClimb(climb);
+  const handleAddClimb = async (climb: Omit<LocalClimb, 'id' | 'timestamp' | 'sessionId'>) => {
+    await onAddClimb(climb);
     setShowClimbForm(false);
   };
 
