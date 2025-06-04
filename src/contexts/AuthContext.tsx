@@ -50,6 +50,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           console.error('Error creating/updating profile:', error);
         }
       }
+
+      // Handle sign out event
+      if (event === 'SIGNED_OUT') {
+        console.log('User signed out, clearing state');
+        setUser(null);
+        setLoading(false);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -100,8 +107,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         throw error;
       }
       console.log('Sign out successful');
-      // Clear user state immediately
-      setUser(null);
+      // The onAuthStateChange will handle clearing the user state
     } catch (error: any) {
       console.error('Error signing out:', error.message);
       throw error;
