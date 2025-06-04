@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Session, LocalClimb } from "@/types/climbing";
 import { useToast } from "@/hooks/use-toast";
@@ -200,31 +199,56 @@ export const useSessionManagement = () => {
   };
 
   const updateClimb = (climbId: string, updates: Partial<LocalClimb>) => {
-    setClimbs(prev => prev.map(climb => climb.id === climbId ? { ...climb, ...updates } : climb));
-
-    if (currentSession) {
-      setCurrentSession(prev => prev ? {
-        ...prev,
-        climbs: prev.climbs.map(climb => climb.id === climbId ? { ...climb, ...updates } : climb)
-      } : null);
-    }
-
-    // Update local climbs
-    const updatedClimbs = climbs.map(climb => 
-      climb.id === climbId ? { ...climb, ...updates } : climb
+    setClimbs(prevClimbs => 
+      prevClimbs.map(climb => 
+        climb.id === climbId ? { ...climb, ...updates } : climb
+      )
     );
-    localStorage.setItem('climbs', JSON.stringify(updatedClimbs));
-    
+    if (currentSession) {
+      setCurrentSession(prevSession => 
+        prevSession ? {
+          ...prevSession,
+          climbs: prevSession.climbs.map(climb => 
+            climb.id === climbId ? { ...climb, ...updates } : climb
+          )
+        } : null
+      );
+    }
     toast({
       title: "Climb Updated",
-      description: "Your climb has been successfully updated."
+      description: `Updated details for ${updates.name || 'climb'}`
     });
+  };
+
+  const deleteClimb = (climbId: string) => {
+    const climbToDelete = climbs.find(c => c.id === climbId);
+
+    setClimbs(prevClimbs => prevClimbs.filter(climb => climb.id !== climbId));
+
+    if (currentSession) {
+      setCurrentSession(prevSession =>
+        prevSession
+          ? {
+              ...prevSession,
+              climbs: prevSession.climbs.filter(climb => climb.id !== climbId),
+            }
+          : null
+      );
+    }
+
+    if (climbToDelete) {
+      toast({
+        title: "Climb Deleted",
+        description: `${climbToDelete.name} (${climbToDelete.grade}) was removed from the session.`,
+        variant: "destructive",
+      });
+    }
   };
 
   return {
     currentSession,
-    climbs,
-    sessions: dbSessions || [], // Use database sessions
+    sessions: dbSessions, // Expose database sessions
+    climbs, // Expose local climbs for current session
     sessionTime,
     startSession,
     pauseSession,
@@ -232,6 +256,7 @@ export const useSessionManagement = () => {
     resumeEndedSession,
     endSession,
     addClimb,
-    updateClimb
+    updateClimb,
+    deleteClimb, // Expose deleteClimb
   };
 };

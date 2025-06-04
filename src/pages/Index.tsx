@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useSessionManagement } from "@/hooks/useSessionManagement";
 import { useAuth } from "@/contexts/AuthContext";
@@ -21,7 +20,8 @@ const Index = () => {
     resumeSession,
     endSession,
     addClimb,
-    updateClimb
+    updateClimb,
+    deleteClimb,
   } = useSessionManagement();
 
   return (
@@ -54,6 +54,7 @@ const Index = () => {
             open={!!editingClimb} 
             onOpenChange={open => !open && setEditingClimb(null)} 
             onSave={updateClimb} 
+            onDelete={deleteClimb}
           />
         )}
       </div>
