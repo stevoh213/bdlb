@@ -11,11 +11,13 @@ import { Mountain } from 'lucide-react';
 const LoginForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { signIn } = useAuth();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     
     const { error } = await signIn(email, password);
     
@@ -31,6 +33,8 @@ const LoginForm = () => {
         description: "Successfully logged in to ClimbLog",
       });
     }
+    
+    setIsLoading(false);
   };
 
   return (
@@ -67,8 +71,8 @@ const LoginForm = () => {
                 required
               />
             </div>
-            <Button type="submit" className="w-full bg-amber-600 hover:bg-amber-700">
-              Sign In
+            <Button type="submit" className="w-full bg-amber-600 hover:bg-amber-700" disabled={isLoading}>
+              {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
         </CardContent>

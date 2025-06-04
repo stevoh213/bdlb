@@ -7,8 +7,8 @@ interface AuthContextProps {
   user: User | null;
   loading: boolean;
   isAuthenticated: boolean;
-  signIn: (email: string) => Promise<void>;
-  signUp: (email: string, password?: string) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
 
@@ -54,27 +54,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signIn = async (email: string) => {
+  const signIn = async (email: string, password: string) => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signInWithOtp({ email });
-      if (error) throw error;
-      alert('Check your email for the magic link to sign in.');
+      const { error } = await supabase.auth.signInWithPassword({ 
+        email, 
+        password 
+      });
+      return { error };
     } catch (error: any) {
-      alert(error.error_description || error.message);
+      return { error };
     } finally {
       setLoading(false);
     }
   };
 
-  const signUp = async (email: string, password?: string) => {
+  const signUp = async (email: string, password: string) => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signUp({ email, password });
-      if (error) throw error;
-      alert('Check your email to verify your account.');
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { error } = await supabase.auth.signUp({ 
+        email, 
+        password,
+        options: {
+          emailRedirectTo: redirectUrl
+        }
+      });
+      return { error };
     } catch (error: any) {
-      alert(error.error_description || error.message);
+      return { error };
     } finally {
       setLoading(false);
     }

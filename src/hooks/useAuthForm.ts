@@ -65,10 +65,7 @@ export const useAuthForm = (props: UseAuthFormProps = {}) => {
     }
 
     setIsLoading(false);
-    if (signInError) {
-      return { error: signInError };
-    }
-    return { error: null };
+    return { error: signInError };
   }, [email, password, signIn, toast]);
 
   const handleSignUp = useCallback(async (event?: React.FormEvent) => {
@@ -88,10 +85,15 @@ export const useAuthForm = (props: UseAuthFormProps = {}) => {
       setIsLoading(false);
       return { error: err };
     }
-     if (password.length < 6) {
+    
+    if (password.length < 6) {
       const err = new Error("Password must be at least 6 characters long.");
       setError(err);
-      toast({ title: "Validation Error", description: err.message, variant: "destructive" });
+      toast({ 
+        title: "Validation Error", 
+        description: err.message, 
+        variant: "destructive" 
+      });
       setIsLoading(false);
       return { error: err };
     }
@@ -113,10 +115,7 @@ export const useAuthForm = (props: UseAuthFormProps = {}) => {
     }
 
     setIsLoading(false);
-    if (signUpError) {
-      return { error: signUpError };
-    }
-    return { error: null };
+    return { error: signUpError };
   }, [email, password, signUp, toast]);
 
   return {
