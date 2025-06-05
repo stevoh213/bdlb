@@ -1,6 +1,6 @@
-import { useState, useCallback, useMemo } from "react";
 import { Session } from "@/types/climbing"; // Assuming Session type is relevant
-import { getGradeSystemForClimbType, GradeSystem } from "@/utils/gradeSystem";
+import { getGradeSystemForClimbType } from "@/utils/gradeSystem";
+import { useCallback, useMemo, useState } from "react";
 
 export type ClimbingType = 'sport' | 'trad' | 'boulder' | 'top rope' | 'alpine';
 
@@ -16,7 +16,7 @@ export interface SessionFormData {
 
 // Props for the hook
 interface UseSessionFormProps {
-  onSubmit: (sessionData: Omit<Session, 'id' | 'startTime' | 'endTime' | 'climbs' | 'isActive' | 'breaks' | 'totalBreakTime'>) => void;
+  onSubmit: (sessionData: Omit<Session, 'id' | 'startTime' | 'endTime' | 'climbs' | 'isActive' | 'breaks' | 'totalBreakTime'>) => Promise<void>;
   initialData?: Partial<SessionFormData>; // For potential future edit functionality
 }
 
@@ -28,57 +28,73 @@ export const useSessionForm = ({
   const [climbingType, setClimbingType] = useState<ClimbingType>(initialData.climbingType || 'sport');
   const [notes, setNotes] = useState(initialData.notes || "");
 
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
   // Derived state: gradeSystem changes when climbingType changes
   const gradeSystem = useMemo(() => getGradeSystemForClimbType(climbingType), [climbingType]);
 
+  const handleLocationChange = useCallback((newLocation: string) => {
+    setLocation(newLocation);
+    setError(null);
+  }, []);
+
   const handleClimbingTypeChange = useCallback((newType: ClimbingType) => {
     setClimbingType(newType);
+    setError(null);
+  }, []);
+
+  const handleNotesChange = useCallback((newNotes: string) => {
+    setNotes(newNotes);
+    setError(null);
   }, []);
 
   const resetForm = useCallback(() => {
     setLocation(initialData.location || "");
     setClimbingType(initialData.climbingType || 'sport');
     setNotes(initialData.notes || "");
+    setError(null);
   }, [initialData]);
 
-  const handleSubmit = useCallback((e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!location) {
-      // Basic validation
-      console.warn("Location is required.");
+    setError(null);
+
+    if (!location.trim()) {
+      setError("Location is required.");
       return;
     }
 
+    setIsSubmitting(true);
     const sessionDataToSubmit: Omit<Session, 'id' | 'startTime' | 'endTime' | 'climbs' | 'isActive' | 'breaks' | 'totalBreakTime'> = {
-      location,
+      location: location.trim(),
       climbingType,
-      gradeSystem, // This is crucial
-      notes: notes || undefined,
-      // Ensure all fields expected by onSubmit are here.
-      // The original SessionFormProps['onSubmit'] expects:
-      // Omit<Session, 'id' | 'startTime' | 'endTime' | 'climbs' | 'isActive' | 'breaks' | 'totalBreakTime'>
-      // The Session type itself might have more fields like 'date', 'duration', etc.
-      // For now, we are only handling what was in the original form's state.
-      // If other fields like 'date', 'participants' etc. were meant to be part of this form,
-      // they'd need corresponding useState hooks and inclusion here.
-      // The original subtask mentioned: (e.g., date, location, notes, duration, summary, participants)
-      // but the provided SessionForm.tsx only had location, climbingType, notes.
-      // Assuming we stick to the existing form's scope for now.
+      gradeSystem,
+      notes: notes.trim() || undefined,
     };
 
-    onSubmit(sessionDataToSubmit);
-    resetForm();
+    try {
+      await onSubmit(sessionDataToSubmit);
+      resetForm();
+    } catch (submissionError: unknown) {
+      const message = submissionError instanceof Error ? submissionError.message : "An unexpected error occurred during submission.";
+      setError(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   }, [location, climbingType, gradeSystem, notes, onSubmit, resetForm]);
 
   return {
     location,
-    setLocation,
+    handleLocationChange,
     climbingType,
-    setClimbingType: handleClimbingTypeChange,
+    handleClimbingTypeChange,
     notes,
-    setNotes,
-    gradeSystem, // Expose the derived grade system
+    handleNotesChange,
+    gradeSystem,
     handleSubmit,
     resetForm,
+    isSubmitting,
+    error,
   };
 };

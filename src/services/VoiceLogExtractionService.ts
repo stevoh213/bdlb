@@ -108,12 +108,15 @@ export class VoiceLogExtractionService {
   }
 
   private parseAndValidateExtraction(jsonString: string): VoiceLogExtractionResult {
-    let parsed: any;
+    let parsedJson: unknown;
     try {
-      parsed = JSON.parse(jsonString);
+      parsedJson = JSON.parse(jsonString);
     } catch (error) {
       throw new Error(`Failed to parse JSON response from AI: ${(error as Error).message}`);
     }
+
+    // Assert to a loose structure for validation steps
+    const parsed = parsedJson as Partial<VoiceLogExtractionResult & { session_details: Partial<ExtractedSessionDetails>, climbs: unknown[] }>;
 
     // Basic structural validation
     if (!parsed || typeof parsed !== 'object') {
@@ -135,7 +138,9 @@ export class VoiceLogExtractionService {
       throw new Error('Invalid JSON structure: climbs is missing or not an array.');
     }
 
-    parsed.climbs.forEach((climb: any, index: number) => {
+    // Validate each climb object
+    (parsed.climbs as unknown[]).forEach((climbUntyped: unknown, index: number) => {
+      const climb = climbUntyped as Partial<ExtractedClimb>;
       if (typeof climb !== 'object' || climb === null) {
         throw new Error(`Invalid JSON structure: climb at index ${index} is not an object.`);
       }
@@ -155,13 +160,18 @@ export class VoiceLogExtractionService {
       // Optional fields like climb_notes and skills can be validated further if needed
     });
 
-    // Apply defaults for optional fields if not present
-    parsed.climbs = parsed.climbs.map((climb: any) => ({
-        name: climb.name || "Unknown Climb",
-        ...climb,
-        attempts: climb.attempts === undefined ? 1 : climb.attempts,
-    }));
-
+    // Apply defaults for optional fields if not present and ensure ExtractedClimb structure
+    parsed.climbs = (parsed.climbs as unknown[]).map((climbUntyped: unknown): ExtractedClimb => {
+        const climb = climbUntyped as Partial<ExtractedClimb>;
+        return {
+            name: climb.name || "Unknown Climb",
+            grade: climb.grade!,
+            tick_type: climb.tick_type!,
+            attempts: climb.attempts === undefined ? 1 : climb.attempts,
+            climb_notes: climb.climb_notes,
+            skills: climb.skills,
+        };
+    });
 
     return parsed as VoiceLogExtractionResult;
   }

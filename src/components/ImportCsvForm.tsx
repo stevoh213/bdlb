@@ -1,16 +1,16 @@
-import React, { useState, useCallback, useEffect, ChangeEvent } from 'react';
-import Papa from 'papaparse';
-import { Input } from '@/components/ui/input';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectLabel, SelectTrigger, SelectValue, SelectGroup } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Input } from '@/components/ui/input';
 import { Progress } from "@/components/ui/progress";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CsvClimb, ClimbTypeSpec, SendTypeSpec } from '@/lib/importSpec';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ClimbTypeSpec, CsvClimb, SendTypeSpec } from '@/lib/importSpec';
+import { ALL_IMPORT_TEMPLATES, GenericJsonClimbObject, ImportSourceType, getInitialMappingsFromTemplate } from '@/lib/importTemplates';
 import { importClimbsFromCsv } from '@/services/importService';
 import type { Climb } from '@/types/climbing';
-import { ALL_IMPORT_TEMPLATES, ImportMappingTemplate, ImportSourceType, getInitialMappingsFromTemplate, GenericJsonClimbObject } from '@/lib/importTemplates';
+import Papa from 'papaparse';
+import React, { ChangeEvent, useCallback, useEffect, useState } from 'react';
 
 const TARGET_CLIMB_FIELDS: (keyof Omit<Climb, 'id' | 'user_id' | 'session_id' | 'created_at' | 'updated_at'>)[] = [
   'name', 'grade', 'type', 'send_type', 'date', 'location',
@@ -27,7 +27,7 @@ interface ParsedDataState {
   // For CSV: actual CSV headers. For JSON: unique keys from all objects.
   headersOrKeys: string[];
   // For CSV: array of row objects. For JSON: array of original JSON objects.
-  data: Record<string, any>[];
+  data: Record<string, unknown>[];
   // For table preview (headers/keys + first few rows/objects as strings)
   previewData: string[][];
 }
@@ -210,9 +210,10 @@ const ImportCsvForm: React.FC = () => {
             applyTemplateOrGuessMappings(uniqueKeys, true);
           }
 
-        } catch (err: any) {
+        } catch (err: unknown) {
+          const errorMessage = err instanceof Error ? err.message : String(err);
           console.error("JSON parsing error:", err);
-          setParseError(`Invalid JSON file: ${err.message}`);
+          setParseError(`Invalid JSON file: ${errorMessage}`);
           setParsedData(null);
         } finally {
           setIsLoading(false);
@@ -304,24 +305,24 @@ const ImportCsvForm: React.FC = () => {
         } else { // Generic CSV/JSON transformation (if no specific template transform)
           for (const sourceKey in columnMappings) { // sourceKey is CSV header or JSON key
             const targetField = columnMappings[sourceKey];
-            if (targetField && TARGET_CLIMB_FIELDS.includes(targetField as any)) {
+            if (targetField && (TARGET_CLIMB_FIELDS as string[]).includes(targetField as string)) {
               const rawValue = rawRowObject[sourceKey];
               if (rawValue !== undefined && rawValue !== null && String(rawValue).trim() !== '') {
                 if (['attempts', 'rating', 'elevation_gain', 'stiffness'].includes(targetField)) {
                     const num = parseFloat(String(rawValue));
-                    if (!isNaN(num)) (baseCsvClimb as any)[targetField] = num;
+                    if (!isNaN(num)) (baseCsvClimb as any)[targetField as keyof CsvClimb] = num;
                 } else if (targetField === 'type') {
                   baseCsvClimb.type = String(rawValue).toLowerCase() as ClimbTypeSpec;
                 } else if (targetField === 'send_type') {
                   baseCsvClimb.send_type = String(rawValue).toLowerCase() as SendTypeSpec;
                 } else if (['skills', 'physical_skills', 'technical_skills'].includes(targetField)) {
                     if (Array.isArray(rawValue)) {
-                        (baseCsvClimb as any)[targetField] = rawValue.map(String);
+                        (baseCsvClimb as any)[targetField as keyof CsvClimb] = rawValue.map(String);
                     } else {
-                         (baseCsvClimb as any)[targetField] = String(rawValue).split(',').map(s => s.trim()).filter(s => s !== '');
+                         (baseCsvClimb as any)[targetField as keyof CsvClimb] = String(rawValue).split(',').map(s => s.trim()).filter(s => s !== '');
                     }
                 } else {
-                  (baseCsvClimb as any)[targetField] = String(rawValue);
+                  (baseCsvClimb as any)[targetField as keyof CsvClimb] = String(rawValue);
                 }
               }
             }

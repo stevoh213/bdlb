@@ -1,26 +1,28 @@
-
-import React from 'react';
-import { LocalClimb, Session } from '@/types/climbing';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { LocalClimb, Session } from '@/types/climbing';
+import React from 'react';
+
+// Define a more specific type for the edit form
+export type EditFormShape = Partial<LocalClimb & Session>;
 
 interface HistoryDialogsProps {
   editDialogOpen: boolean;
@@ -31,8 +33,8 @@ interface HistoryDialogsProps {
   setImportDialogOpen: (open: boolean) => void;
   editingItem: LocalClimb | Session | null;
   setEditingItem: (item: LocalClimb | Session | null) => void;
-  editForm: any;
-  setEditForm: (form: any) => void;
+  editForm: EditFormShape;
+  setEditForm: (form: EditFormShape) => void;
   handleSaveEdit: () => void;
   handleDelete: () => void;
   handleImport: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -83,7 +85,7 @@ const HistoryDialogs: React.FC<HistoryDialogsProps> = ({
                 <Input
                   id="tickType"
                   value={editForm.tickType || ''}
-                  onChange={(e) => setEditForm({ ...editForm, tickType: e.target.value })}
+                  onChange={(e) => setEditForm({ ...editForm, tickType: e.target.value as LocalClimb['tickType'] })}
                 />
               </div>
               <div>
@@ -92,7 +94,7 @@ const HistoryDialogs: React.FC<HistoryDialogsProps> = ({
                   id="timestamp"
                   type="datetime-local"
                   value={editForm.timestamp ? new Date(editForm.timestamp).toISOString().slice(0, 16) : ''}
-                  onChange={(e) => setEditForm({ ...editForm, timestamp: e.target.value })}
+                  onChange={(e) => setEditForm({ ...editForm, timestamp: new Date(e.target.value) })}
                 />
               </div>
               <div>

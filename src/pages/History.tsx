@@ -6,7 +6,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useClimbs } from '@/hooks/useClimbs';
 import { useSessionHistory } from '@/hooks/useSessionHistory';
+import { mapDbClimbToLocalClimb, mapLocalClimbToNewClimbData } from '@/lib/utils';
 import { exportClimbsToCsv, importClimbsFromCsv } from '@/services/importService';
+import { LocalClimb } from '@/types/climbing';
 import { FileDown, FileUp } from 'lucide-react';
 
 const History = () => {
@@ -42,7 +44,8 @@ const History = () => {
   } = useSessionHistory();
 
   const handleExport = () => {
-    const csvContent = exportClimbsToCsv(allUserClimbs);
+    const localClimbsForExport = allUserClimbs.map(mapDbClimbToLocalClimb);
+    const csvContent = exportClimbsToCsv(localClimbsForExport);
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -69,15 +72,34 @@ const History = () => {
       reader.onload = (e) => {
         try {
           const csvContent = e.target?.result as string;
-          const importedClimbs = importClimbsFromCsv(csvContent);
+          const importedClimbs: LocalClimb[] = importClimbsFromCsv(csvContent);
           
-          importedClimbs.forEach(climb => {
-            addClimb(climb);
+          // TODO: This needs a proper way to assign climbs to a session.
+          // Using a placeholder ID will likely lead to errors or orphaned climbs.
+          const sessionIdForImportedClimbs: string | null = null; // Placeholder - needs UI to select/create session
+
+          if (!sessionIdForImportedClimbs) {
+            toast({
+              title: "Import Warning",
+              description: "Climbs parsed, but no session selected for import. Climbs not saved to database.",
+              variant: "default", // Changed from destructive for a warning
+              duration: 5000,
+            });
+            console.warn("Imported climbs parsed but not saved: No session ID available.", importedClimbs);
+            return; // Do not proceed to addClimb if no sessionId
+          }
+
+          importedClimbs.forEach(localClimb => {
+            const newClimbData = mapLocalClimbToNewClimbData(localClimb);
+            addClimb({
+              ...newClimbData,
+              sessionId: sessionIdForImportedClimbs, // This is the critical missing piece
+            });
           });
           
           toast({
             title: "Import Complete",
-            description: `Successfully imported ${importedClimbs.length} climbs.`,
+            description: `Successfully imported and attempted to save ${importedClimbs.length} climbs. Check console for details.`,
           });
         } catch (error) {
           toast({
@@ -160,8 +182,18 @@ const History = () => {
               sessions={sessions}
               allUserClimbs={allUserClimbs}
               onSelectSession={handleSelectSession}
-              onEditSession={handleEditSession}
-              onDeleteSession={handleDeleteSession}
+              isLoadingSessions={isLoadingSessions}
+              editingClimb={editingClimb}
+              editingSession={editingSession}
+              deleteConfirm={deleteConfirm}
+              onExportData={handleExport}
+              onCloseEditClimb={handleCloseEditClimb}
+              onCloseEditSession={handleCloseEditSession}
+              onCloseDeleteDialog={handleCloseDeleteDialog}
+              onSaveClimb={handleSaveClimb}
+              onSaveSession={handleSaveSession}
+              onConfirmDelete={handleConfirmDelete}
+              onOpenDeleteDialog={handleOpenDeleteDialog}
             />
           )}
         </TabsContent>
@@ -185,10 +217,16 @@ const History = () => {
                         </p>
                       </div>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline" onClick={() => handleEditClimb(climb as any)}>
+                        <Button size="sm" variant="outline" onClick={() => {
+                          const localClimb = mapDbClimbToLocalClimb(climb);
+                          handleEditClimb(localClimb);
+                        }}>
                           Edit
                         </Button>
-                        <Button size="sm" variant="destructive" onClick={() => handleDeleteClimb(climb as any)}>
+                        <Button size="sm" variant="destructive" onClick={() => {
+                          const localClimb = mapDbClimbToLocalClimb(climb);
+                          handleDeleteClimb(localClimb);
+                        }}>
                           Delete
                         </Button>
                       </div>

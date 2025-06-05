@@ -86,7 +86,7 @@ const SessionList = ({ sessions, allUserClimbs, selectedSessionId, onSelectSessi
                   <div>{formatDate(sessionStartTime)}</div>
                   <div className="flex items-center gap-1 justify-end">
                     <Clock className="h-3 w-3" />
-                    {getSessionDuration(session)}m
+                    {getSessionDuration(session.startTime, session.endTime)}
                   </div>
                 </div>
               </div>

@@ -1,7 +1,6 @@
-
-import { useState, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useCallback, useState } from 'react';
 
 export interface AuthFormState {
   email: string;
@@ -16,7 +15,8 @@ interface UseAuthFormProps {
 export const useAuthForm = (props: UseAuthFormProps = {}) => {
   const [email, setEmail] = useState(props.initialEmail || '');
   const [password, setPassword] = useState(props.initialPassword || '');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const [isSigningUp, setIsSigningUp] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   const { signIn, signUp } = useAuth();
@@ -24,15 +24,17 @@ export const useAuthForm = (props: UseAuthFormProps = {}) => {
 
   const handleEmailChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value);
+    setError(null);
   }, []);
 
   const handlePasswordChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setPassword(e.target.value);
+    setError(null);
   }, []);
 
   const handleSignIn = useCallback(async (event?: React.FormEvent) => {
     if (event) event.preventDefault();
-    setIsLoading(true);
+    setIsSigningIn(true);
     setError(null);
 
     // Basic validation
@@ -44,7 +46,7 @@ export const useAuthForm = (props: UseAuthFormProps = {}) => {
         description: err.message,
         variant: "destructive",
       });
-      setIsLoading(false);
+      setIsSigningIn(false);
       return { error: err };
     }
 
@@ -64,13 +66,13 @@ export const useAuthForm = (props: UseAuthFormProps = {}) => {
       });
     }
 
-    setIsLoading(false);
+    setIsSigningIn(false);
     return { error: signInError };
   }, [email, password, signIn, toast]);
 
   const handleSignUp = useCallback(async (event?: React.FormEvent) => {
     if (event) event.preventDefault();
-    setIsLoading(true);
+    setIsSigningUp(true);
     setError(null);
 
     // Basic validation
@@ -82,7 +84,7 @@ export const useAuthForm = (props: UseAuthFormProps = {}) => {
         description: err.message,
         variant: "destructive",
       });
-      setIsLoading(false);
+      setIsSigningUp(false);
       return { error: err };
     }
     
@@ -94,7 +96,7 @@ export const useAuthForm = (props: UseAuthFormProps = {}) => {
         description: err.message, 
         variant: "destructive" 
       });
-      setIsLoading(false);
+      setIsSigningUp(false);
       return { error: err };
     }
 
@@ -114,14 +116,15 @@ export const useAuthForm = (props: UseAuthFormProps = {}) => {
       });
     }
 
-    setIsLoading(false);
+    setIsSigningUp(false);
     return { error: signUpError };
   }, [email, password, signUp, toast]);
 
   return {
     email,
     password,
-    isLoading,
+    isSigningIn,
+    isSigningUp,
     error,
     setEmail,
     setPassword,
@@ -129,7 +132,6 @@ export const useAuthForm = (props: UseAuthFormProps = {}) => {
     handlePasswordChange,
     handleSignIn,
     handleSignUp,
-    setIsLoading,
     setError,
   };
 };

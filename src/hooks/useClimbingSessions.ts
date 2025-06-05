@@ -1,10 +1,10 @@
-
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import * as climbingService from '@/services/climbingService';
+import { mapDbSessionToLocalSession } from '@/lib/utils';
 import type { NewSessionData, UpdateSessionData } from '@/services/climbingService';
+import * as climbingService from '@/services/climbingService';
 import { ClimbingSession, Session } from '@/types/climbing';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export const useClimbingSessions = () => {
   const { user } = useAuth();
@@ -16,20 +16,7 @@ export const useClimbingSessions = () => {
     queryFn: async (): Promise<Session[]> => {
       if (!user) return [];
       const dbSessions: ClimbingSession[] = await climbingService.fetchSessions(user.id);
-      return dbSessions.map((cs: ClimbingSession): Session => ({
-        id: cs.id,
-        location: cs.location,
-        climbingType: cs.default_climb_type || 'sport', // Default to 'sport' or handle as error/log if undefined
-        gradeSystem: cs.gradeSystem,
-        notes: cs.notes,
-        startTime: new Date(cs.date),
-        endTime: cs.duration ? new Date(new Date(cs.date).getTime() + cs.duration * 60000) : undefined, // Assuming duration is in minutes
-        climbs: [], // Initialize with empty climbs
-        isActive: false, // Default value
-        breaks: 0, // Default value
-        totalBreakTime: 0, // Default value
-        aiAnalysis: undefined, // Default value
-      }));
+      return dbSessions.map(mapDbSessionToLocalSession);
     },
     enabled: !!user,
   });
@@ -65,7 +52,15 @@ export const useClimbingSessions = () => {
     { sessionId: string; updates: UpdateSessionData }
   >({
     mutationFn: async ({ sessionId, updates }) => {
-      return climbingService.updateSession(sessionId, updates);
+      console.log("[useClimbingSessions updateSessionMutation] Called with sessionId:", sessionId, "updates:", updates); // DEBUG
+      try {
+        const result = await climbingService.updateSession(sessionId, updates);
+        console.log("[useClimbingSessions updateSessionMutation] climbingService.updateSession successful, result:", result); // DEBUG
+        return result;
+      } catch (error) {
+        console.error("[useClimbingSessions updateSessionMutation] Error from climbingService.updateSession:", error); // DEBUG
+        throw error; // Re-throw to be caught by TanStack Query's onError
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['climbing_sessions', user?.id] });

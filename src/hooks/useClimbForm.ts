@@ -1,5 +1,5 @@
-import { useState, useCallback } from "react";
 import { getGradesForSystem } from "@/utils/gradeSystem"; // Assuming this utility is needed
+import { useCallback, useState } from "react";
 
 export type TickType = 'send' | 'attempt' | 'flash' | 'onsight';
 
@@ -18,8 +18,8 @@ export interface ClimbFormData {
 }
 
 interface UseClimbFormProps {
-  onSubmit: (climb: ClimbFormData) => void;
-  initialData?: Partial<ClimbFormData>; // For editing, though not explicitly requested for this task
+  onSubmit: (climb: ClimbFormData) => Promise<void>;
+  initialData?: Partial<ClimbFormData>;
   sessionLocation?: string;
   gradeSystem?: string;
 }
@@ -30,76 +30,139 @@ export const useClimbForm = ({
   sessionLocation,
   gradeSystem = 'yds',
 }: UseClimbFormProps) => {
-  const [name, setName] = useState(initialData.name || "");
-  const [grade, setGrade] = useState(initialData.grade || "");
-  const [location, setLocation] = useState(initialData.location || sessionLocation || "");
-  const [tickType, setTickType] = useState<TickType>(initialData.tickType || 'send');
-  const [attempts, setAttempts] = useState(initialData.attempts || 1);
-  const [height, setHeight] = useState<number | undefined>(initialData.height);
-  const [timeOnWall, setTimeOnWall] = useState<number | undefined>(initialData.timeOnWall);
-  const [effort, setEffort] = useState([initialData.effort || 7]);
-  const [notes, setNotes] = useState(initialData.notes || "");
-  const [physicalSkills, setPhysicalSkills] = useState<string[]>(initialData.physicalSkills || []);
-  const [technicalSkills, setTechnicalSkills] = useState<string[]>(initialData.technicalSkills || []);
-  const [showOptional, setShowOptional] = useState(false); // This could also be managed outside if preferred
+  const [name, setNameState] = useState(initialData.name || "");
+  const [grade, setGradeState] = useState(initialData.grade || "");
+  const [location, setLocationState] = useState(initialData.location || sessionLocation || "");
+  const [tickType, setTickTypeState] = useState<TickType>(initialData.tickType || 'send');
+  const [attempts, setAttemptsState] = useState(initialData.attempts || 1);
+  const [height, setHeightState] = useState<number | undefined>(initialData.height);
+  const [timeOnWall, setTimeOnWallState] = useState<number | undefined>(initialData.timeOnWall);
+  const [effort, setEffortState] = useState([initialData.effort || 7]);
+  const [notes, setNotesState] = useState(initialData.notes || "");
+  const [physicalSkills, setPhysicalSkillsState] = useState<string[]>(initialData.physicalSkills || []);
+  const [technicalSkills, setTechnicalSkillsState] = useState<string[]>(initialData.technicalSkills || []);
+  const [showOptional, setShowOptionalState] = useState(false);
 
-  const handleGradeChange = useCallback((newGrade: string) => {
-    setGrade(newGrade);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const setName = useCallback((value: string) => {
+    setNameState(value);
+    setError(null);
   }, []);
 
-  const handleTickTypeChange = useCallback((newTickType: TickType) => {
-    setTickType(newTickType);
+  const setGrade = useCallback((value: string) => {
+    setGradeState(value);
+    setError(null);
+  }, []);
+
+  const setLocation = useCallback((value: string) => {
+    setLocationState(value);
+    setError(null);
+  }, []);
+
+  const setTickType = useCallback((newTickType: TickType) => {
+    setTickTypeState(newTickType);
     if (newTickType !== 'attempt') {
-      setAttempts(1); // Reset attempts if not 'attempt'
+      setAttemptsState(1); // Reset attempts if not 'attempt'
     }
+    setError(null);
   }, []);
 
-  const handleAttemptsChange = useCallback((newAttempts: number) => {
-    setAttempts(newAttempts);
+  const setAttempts = useCallback((newAttempts: number) => {
+    setAttemptsState(newAttempts);
+    setError(null);
+  }, []);
+
+  const setHeight = useCallback((value: number | undefined) => {
+    setHeightState(value);
+    setError(null);
+  }, []);
+
+  const setTimeOnWall = useCallback((value: number | undefined) => {
+    setTimeOnWallState(value);
+    setError(null);
+  }, []);
+
+  const setEffort = useCallback((newEffort: number[]) => {
+    setEffortState(newEffort);
+    setError(null);
+  }, []);
+
+  const setNotes = useCallback((value: string) => {
+    setNotesState(value);
+    setError(null);
+  }, []);
+
+  const setPhysicalSkills = useCallback((value: string[]) => {
+    setPhysicalSkillsState(value);
+    setError(null);
+  }, []);
+
+  const setTechnicalSkills = useCallback((value: string[]) => {
+    setTechnicalSkillsState(value);
+    setError(null);
   }, []);
   
-  const handleEffortChange = useCallback((newEffort: number[]) => {
-    setEffort(newEffort);
+  const setShowOptional = useCallback((value: boolean) => {
+    setShowOptionalState(value);
+    // setError(null); // Typically UI state changes like this don't clear form submission errors
   }, []);
 
+
   const resetForm = useCallback(() => {
-    setName(initialData.name || "");
-    setGrade(initialData.grade || "");
-    setLocation(initialData.location || sessionLocation || "");
-    setTickType(initialData.tickType || 'send');
-    setAttempts(initialData.attempts || 1);
-    setHeight(initialData.height);
-    setTimeOnWall(initialData.timeOnWall);
-    setEffort([initialData.effort || 7]);
-    setNotes(initialData.notes || "");
-    setPhysicalSkills(initialData.physicalSkills || []);
-    setTechnicalSkills(initialData.technicalSkills || []);
-    setShowOptional(false);
+    setNameState(initialData.name || "");
+    setGradeState(initialData.grade || "");
+    setLocationState(initialData.location || sessionLocation || "");
+    setTickTypeState(initialData.tickType || 'send');
+    setAttemptsState(initialData.attempts || 1);
+    setHeightState(initialData.height);
+    setTimeOnWallState(initialData.timeOnWall);
+    setEffortState([initialData.effort || 7]);
+    setNotesState(initialData.notes || "");
+    setPhysicalSkillsState(initialData.physicalSkills || []);
+    setTechnicalSkillsState(initialData.technicalSkills || []);
+    setShowOptionalState(false);
+    setError(null); // Clear error on reset
   }, [initialData, sessionLocation]);
 
-  const handleSubmit = useCallback((e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+    setIsSubmitting(true);
+
     if (!name || !grade) {
-      // Basic validation, can be expanded
-      console.warn("Name and grade are required.");
+      setError("Name and grade are required.");
+      setIsSubmitting(false);
       return;
     }
 
-    onSubmit({
-      name,
-      grade,
-      location: location || undefined,
-      tickType,
-      attempts: tickType === 'attempt' ? attempts : undefined,
-      height,
-      timeOnWall,
-      effort: effort[0],
-      notes: notes || undefined,
-      physicalSkills: physicalSkills.length > 0 ? physicalSkills : undefined,
-      technicalSkills: technicalSkills.length > 0 ? technicalSkills : undefined,
-    });
-
-    resetForm();
+    try {
+      await onSubmit({
+        name,
+        grade,
+        location: location || undefined,
+        tickType,
+        attempts: tickType === 'attempt' ? attempts : undefined,
+        height,
+        timeOnWall,
+        effort: effort[0],
+        notes: notes || undefined,
+        physicalSkills: physicalSkills.length > 0 ? physicalSkills : undefined,
+        technicalSkills: technicalSkills.length > 0 ? technicalSkills : undefined,
+      });
+      resetForm(); // Reset form only on successful submission
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        setError(e.message);
+      } else if (typeof e === 'string') {
+        setError(e);
+      } else {
+        setError("An unexpected error occurred during submission.");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   }, [
     name,
     grade,
@@ -122,19 +185,19 @@ export const useClimbForm = ({
     name,
     setName,
     grade,
-    setGrade: handleGradeChange, // Using specific handler
+    setGrade,
     location,
     setLocation,
     tickType,
-    setTickType: handleTickTypeChange, // Using specific handler
+    setTickType,
     attempts,
-    setAttempts: handleAttemptsChange, // Using specific handler
+    setAttempts,
     height,
     setHeight,
     timeOnWall,
     setTimeOnWall,
     effort,
-    setEffort: handleEffortChange, // Using specific handler
+    setEffort,
     notes,
     setNotes,
     physicalSkills,
@@ -145,6 +208,8 @@ export const useClimbForm = ({
     setShowOptional,
     handleSubmit,
     resetForm,
-    availableGrades, // Pass available grades to the component
+    availableGrades,
+    isSubmitting,
+    error,
   };
 };

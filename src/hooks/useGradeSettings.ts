@@ -1,5 +1,6 @@
-import useLocalStorage from './useLocalStorage';
 import { toast } from '@/hooks/use-toast';
+import { useCallback, useEffect, useState } from 'react';
+import useLocalStorage from './useLocalStorage';
 // Import available grade systems if needed for validation or providing options
 // For now, assuming the component will handle fetching/displaying system options
 // import { routeGradeSystems, boulderGradeSystems } from "@/utils/gradeSystem"; 
@@ -9,47 +10,76 @@ const DEFAULT_ROUTE_GRADE_SYSTEM = 'yds';
 const DEFAULT_BOULDER_GRADE_SYSTEM = 'v_scale';
 
 export const useGradeSettings = () => {
-  const [preferredRouteGradeSystem, setPreferredRouteGradeSystem] = useLocalStorage<string>(
+  const [preferredRouteGradeSystem, setPreferredRouteGradeSystemStorage] = useLocalStorage<string>(
     'preferredRouteGradeSystem',
     DEFAULT_ROUTE_GRADE_SYSTEM
   );
 
-  const [preferredBoulderGradeSystem, setPreferredBoulderGradeSystem] = useLocalStorage<string>(
+  const [preferredBoulderGradeSystem, setPreferredBoulderGradeSystemStorage] = useLocalStorage<string>(
     'preferredBoulderGradeSystem',
     DEFAULT_BOULDER_GRADE_SYSTEM
   );
 
-  // Handle legacy preferredGradeSystem - one-time read and migration if necessary
-  // This might be better handled directly in Settings.tsx on initial load once,
-  // or when the application first runs after an update.
-  // For simplicity in the hook, we'll assume new keys are primary.
-  // If direct migration is needed here, it adds complexity.
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [isUpdatingRouteSystem, setIsUpdatingRouteSystem] = useState<boolean>(false);
+  const [isUpdatingBoulderSystem, setIsUpdatingBoulderSystem] = useState<boolean>(false);
 
-  const handleRouteGradeSystemChange = (value: string) => {
-    setPreferredRouteGradeSystem(value);
-    // Also update the legacy key for older versions if they might still be used,
-    // or if other parts of the app read the legacy key.
-    // window.localStorage.setItem('preferredGradeSystem', value); // Example of legacy support
-    toast({
-      title: "Route grade system updated",
-      // description: `Default route grade system set to ${routeGradeSystems[value]?.name}`, // Needs routeGradeSystems map
-      description: `Default route grade system updated.`,
-    });
-  };
+  // Simulate initial loading completion
+  useEffect(() => {
+    setIsLoading(false);
+  }, []); // Corrected to useEffect for one-time effect
 
-  const handleBoulderGradeSystemChange = (value: string) => {
-    setPreferredBoulderGradeSystem(value);
-    toast({
-      title: "Boulder grade system updated",
-      // description: `Default boulder grade system set to ${boulderGradeSystems[value]?.name}`, // Needs boulderGradeSystems map
-      description: `Default boulder grade system updated.`,
-    });
-  };
+  const handleRouteGradeSystemChange = useCallback((value: string) => {
+    setIsUpdatingRouteSystem(true);
+    setError(null);
+    try {
+      setPreferredRouteGradeSystemStorage(value);
+      toast({
+        title: "Route grade system updated",
+        description: `Default route grade system updated.`,
+      });
+    } catch (e) {
+      const newError = e instanceof Error ? e : new Error('Failed to update route grade system');
+      setError(newError);
+      toast({
+        title: "Update Error",
+        description: newError.message,
+        variant: "destructive",
+      });
+    }
+    setIsUpdatingRouteSystem(false);
+  }, [setPreferredRouteGradeSystemStorage, toast]);
+
+  const handleBoulderGradeSystemChange = useCallback((value: string) => {
+    setIsUpdatingBoulderSystem(true);
+    setError(null);
+    try {
+      setPreferredBoulderGradeSystemStorage(value);
+      toast({
+        title: "Boulder grade system updated",
+        description: `Default boulder grade system updated.`,
+      });
+    } catch (e) {
+      const newError = e instanceof Error ? e : new Error('Failed to update boulder grade system');
+      setError(newError);
+      toast({
+        title: "Update Error",
+        description: newError.message,
+        variant: "destructive",
+      });
+    }
+    setIsUpdatingBoulderSystem(false);
+  }, [setPreferredBoulderGradeSystemStorage, toast]);
 
   return {
     preferredRouteGradeSystem,
-    setPreferredRouteGradeSystem: handleRouteGradeSystemChange, // Renaming for clarity if preferred
+    setPreferredRouteGradeSystem: handleRouteGradeSystemChange,
     preferredBoulderGradeSystem,
-    setPreferredBoulderGradeSystem: handleBoulderGradeSystemChange, // Renaming for clarity
+    setPreferredBoulderGradeSystem: handleBoulderGradeSystemChange,
+    isLoading,
+    error,
+    isUpdatingRouteSystem,
+    isUpdatingBoulderSystem,
   };
 };

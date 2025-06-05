@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { LocalClimb, Session } from '@/types/climbing';
 import { RefreshCw } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 // Mock for Supabase access token (replace with actual implementation)
 const getSupabaseAccessToken = async (): Promise<string | null> => {
@@ -20,8 +21,8 @@ interface Preview {
   error_message?: string;
   created_at: string; // ISO string
   extracted_data_json?: { // For potential future use, though not explicitly listed for display
-    session_details: any;
-    climbs: any[];
+    session_details: Partial<Session>;
+    climbs: Partial<LocalClimb>[];
   }
 }
 

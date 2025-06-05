@@ -1,14 +1,12 @@
-
-
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { Climb } from '@/types/climbing';
-import * as climbingService from '@/services/climbingService';
 import type { NewClimbData, UpdateClimbData } from '@/services/climbingService';
+import * as climbingService from '@/services/climbingService';
+import { Climb } from '@/types/climbing';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 // Props for addClimb - requires sessionId
-interface AddClimbVariables extends NewClimbData {
+export interface AddClimbVariables extends NewClimbData {
   sessionId: string; 
 }
 
@@ -38,18 +36,36 @@ export const useClimbs = () => {
     AddClimbVariables 
   >({
     mutationFn: async ({ sessionId, ...climbData }: AddClimbVariables) => {
-      if (!user) throw new Error('User not authenticated');
-      if (!sessionId) throw new Error('Session ID is required to add a climb.');
-      return climbingService.addClimb(climbData, sessionId, user.id);
+      console.log("[useClimbs AddClimbMutation] MutationFn called. User:", JSON.parse(JSON.stringify(user)), "SessionID:", sessionId, "ClimbData:", JSON.parse(JSON.stringify(climbData))); // DEBUG
+      if (!user) {
+        console.error("[useClimbs AddClimbMutation] User not authenticated."); // DEBUG
+        throw new Error('User not authenticated');
+      }
+      if (!sessionId) {
+        console.error("[useClimbs AddClimbMutation] Session ID is required."); // DEBUG
+        throw new Error('Session ID is required to add a climb.');
+      }
+      try {
+        const result = await climbingService.addClimb(climbData, sessionId, user.id);
+        console.log("[useClimbs AddClimbMutation] Result from climbingService.addClimb:", JSON.parse(JSON.stringify(result))); // DEBUG
+        return result;
+      } catch (serviceError) {
+        console.error("[useClimbs AddClimbMutation] Error from climbingService.addClimb:", serviceError); // DEBUG
+        throw serviceError; // Re-throw to be caught by mutation's onError
+      }
     },
-    onSuccess: (data) => {
+    onSuccess: (data, variables, context) => {
+      console.log("[useClimbs AddClimbMutation] onSuccess triggered. Data:", JSON.parse(JSON.stringify(data)), "Variables:", JSON.parse(JSON.stringify(variables))); // DEBUG
       queryClient.invalidateQueries({ queryKey: ['climbs', user?.id] });
+      // Also invalidate sessions if climb count is part of session display that needs refresh
+      queryClient.invalidateQueries({ queryKey: ['climbing_sessions', user?.id] }); 
       toast({
         title: "Climb logged!",
         description: "Your climb has been successfully recorded.",
       });
     },
-    onError: (error) => {
+    onError: (error, variables, context) => {
+      console.error("[useClimbs AddClimbMutation] onError triggered. Error:", error, "Variables:", JSON.parse(JSON.stringify(variables))); // DEBUG
       toast({
         title: "Error logging climb",
         description: error.message,

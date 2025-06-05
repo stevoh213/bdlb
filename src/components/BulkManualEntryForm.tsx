@@ -1,14 +1,14 @@
-import React, { useState, ChangeEvent, FormEvent } from 'react';
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Textarea } from '@/components/ui/textarea';
 import { PlusCircle, XCircle } from 'lucide-react';
+import React, { useState } from 'react';
 
-import { CsvClimb, ClimbTypeSpec, SendTypeSpec } from '@/lib/importSpec';
+import { ClimbTypeSpec, CsvClimb, SendTypeSpec } from '@/lib/importSpec';
 import { validateClimbRecord } from '@/lib/importValidation';
 import { importClimbsFromCsv } from '@/services/importService';
 // import { useAuth } from '@/contexts/AuthContext'; // Assuming auth context for user ID
@@ -159,9 +159,10 @@ const BulkManualEntryForm: React.FC = () => {
         // Optionally reset form or just some rows
         // setManualClimbs([createNewClimbRow()]);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       console.error("Error submitting bulk manual entries:", error);
-      setImportResult({ successCount: 0, errorCount: climbsToSubmit.length, errors: [`An unexpected error occurred: ${error.message}`] });
+      setImportResult({ successCount: 0, errorCount: climbsToSubmit.length, errors: [`An unexpected error occurred: ${errorMessage}`] });
     } finally {
       setIsLoading(false);
     }

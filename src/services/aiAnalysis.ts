@@ -1,5 +1,5 @@
-import { Session } from '@/types/climbing';
 import { OPENROUTER_CONFIG } from '@/config/openrouter';
+import { Session } from '@/types/climbing';
 
 export interface AnalysisResult {
   summary: string;
@@ -50,8 +50,17 @@ export class AIAnalysisService {
       throw new Error(`Analysis failed: ${response.statusText}`);
     }
 
-    const data = await response.json();
-    const analysisText = data.choices[0]?.message?.content;
+    // Define a more specific type for the expected response structure
+    interface OpenRouterChoice {
+      message?: { content?: string };
+    }
+    interface OpenRouterResponse {
+      choices?: OpenRouterChoice[];
+      // other properties from OpenRouter API could be added here if needed
+    }
+
+    const data: OpenRouterResponse = await response.json();
+    const analysisText = data.choices?.[0]?.message?.content;
 
     if (!analysisText) {
       throw new Error('No analysis received from AI');

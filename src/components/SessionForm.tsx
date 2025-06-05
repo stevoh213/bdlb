@@ -1,44 +1,42 @@
-
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useSessionForm, type ClimbingType } from "@/hooks/useSessionForm";
 import { Session } from "@/types/climbing";
-import { gradeSystems } from "@/utils/gradeSystem"; // getGradeSystemForClimbType moved to hook
+import { gradeSystems } from "@/utils/gradeSystem";
 import LocationSelector from "./LocationSelector";
-import { useSessionForm, ClimbingType } from "@/hooks/useSessionForm"; // Import the hook
 
 interface SessionFormProps {
-  onSubmit: (session: Omit<Session, 'id' | 'startTime' | 'endTime' | 'climbs' | 'isActive' | 'breaks' | 'totalBreakTime'>) => void;
-  onCancel: () => void;
+  onSubmit: (sessionData: Omit<Session, 'id' | 'startTime' | 'endTime' | 'climbs' | 'isActive' | 'breaks' | 'totalBreakTime'>) => Promise<void>;
+  onCancel?: () => void;
 }
 
 const SessionForm = ({ onSubmit, onCancel }: SessionFormProps) => {
   const {
     location,
-    setLocation,
+    handleLocationChange,
     climbingType,
-    setClimbingType,
+    handleClimbingTypeChange,
     notes,
-    setNotes,
-    gradeSystem, // Get from hook
+    handleNotesChange,
+    gradeSystem,
     handleSubmit,
-    // resetForm, // Not directly called here, part of handleSubmit
+    isSubmitting,
+    error
   } = useSessionForm({ onSubmit });
-
-  // const gradeSystem = getGradeSystemForClimbType(climbingType); // Logic moved to hook
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <LocationSelector
         value={location}
-        onChange={setLocation}
+        onChange={handleLocationChange}
         placeholder="e.g. Red Rocks, Joshua Tree"
       />
 
       <div>
         <Label htmlFor="climbingType" className="text-stone-700 font-medium">Climbing Type *</Label>
-        <Select value={climbingType} onValueChange={(value: ClimbingType) => setClimbingType(value)} required>
+        <Select value={climbingType} onValueChange={(value: ClimbingType) => handleClimbingTypeChange(value)} required>
           <SelectTrigger className="h-12 text-lg border-stone-300 focus:border-amber-500">
             <SelectValue placeholder="Select climbing type" />
           </SelectTrigger>
@@ -60,28 +58,23 @@ const SessionForm = ({ onSubmit, onCancel }: SessionFormProps) => {
         <Textarea
           id="notes"
           value={notes}
-          onChange={(e) => setNotes(e.target.value)}
+          onChange={(e) => handleNotesChange(e.target.value)}
           placeholder="Weather, conditions, goals..."
           className="border-stone-300 resize-none"
           rows={3}
         />
       </div>
 
-      <div className="flex gap-3 pt-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-          className="flex-1 h-12 border-stone-300 text-stone-600"
-        >
-          Cancel
-        </Button>
-        <Button
-          type="submit"
-          disabled={!location}
-          className="flex-1 h-12 bg-amber-600 hover:bg-amber-700 text-white"
-        >
-          Start Session
+      {error && <p className="text-sm text-red-600">{error}</p>}
+
+      <div className="flex justify-end space-x-3">
+        {onCancel && (
+          <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
+            Cancel
+          </Button>
+        )}
+        <Button type="submit" disabled={isSubmitting} className="bg-amber-500 hover:bg-amber-600 text-white">
+          {isSubmitting ? 'Starting Session...' : 'Start Session'}
         </Button>
       </div>
     </form>

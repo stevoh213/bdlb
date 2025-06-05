@@ -4,6 +4,7 @@ import { useClimbingSessions } from '@/hooks/useClimbingSessions';
 import { useClimbs } from '@/hooks/useClimbs';
 import { useSessionManagement } from '@/hooks/useSessionManagement';
 import { supabase } from '@/integrations/supabase/client';
+import { mapDbClimbToLocalClimb, mapLocalSessionUpdatesToDbFormat } from '@/lib/utils';
 import { Climb, LocalClimb, Session } from '@/types/climbing';
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -50,23 +51,8 @@ export const useSessionHistory = () => {
   const climbsForSelectedSession = useMemo((): LocalClimb[] => {
     if (!selectedSession) return [];
     const filteredClimbs: Climb[] = allUserClimbs.filter(climb => climb.session_id === selectedSession.id);
-    return filteredClimbs.map((climb: Climb): LocalClimb => ({
-      id: climb.id,
-      name: climb.name,
-      grade: climb.grade,
-      tickType: climb.send_type === 'project' ? 'attempt' : climb.send_type,
-      attempts: climb.attempts,
-      timestamp: new Date(climb.date),
-      sessionId: climb.session_id,
-      notes: climb.notes,
-      // Map the new fields from database
-      height: climb.height,
-      timeOnWall: climb.time_on_wall,
-      effort: climb.effort,
-      physicalSkills: climb.physical_skills,
-      technicalSkills: climb.technical_skills,
-    }));
-  }, [allUserClimbs, selectedSession]);
+    return filteredClimbs.map(mapDbClimbToLocalClimb);
+  }, [allUserClimbs, selectedSession, mapDbClimbToLocalClimb]);
 
   // Handlers
   const handleSelectSession = useCallback((sessionId: string | null) => {
@@ -94,17 +80,15 @@ export const useSessionHistory = () => {
     handleCloseEditClimbDialog();
   }, [updateClimb, toast, handleCloseEditClimbDialog]);
 
-  const handleSaveSession = useCallback((sessionId: string, updates: Partial<Session>) => {
+  const handleSaveSession = useCallback((sessionId: string, localUpdates: Partial<Session>) => {
+    const dbFormattedUpdates = mapLocalSessionUpdatesToDbFormat(localUpdates);
     updateSession({ 
       sessionId, 
-      updates: {
-        location: updates.location,
-        notes: updates.notes,
-        // Map other Session fields to UpdateSessionData as needed
-      }
+      updates: dbFormattedUpdates
     });
+    toast({ title: "Session Updated", description: "Session details have been saved." });
     handleCloseEditSessionDialog();
-  }, [updateSession, handleCloseEditSessionDialog]);
+  }, [updateSession, handleCloseEditSessionDialog, mapLocalSessionUpdatesToDbFormat, toast]);
 
   const handleConfirmDelete = useCallback(() => {
     if (!deleteConfirm) return;
@@ -136,7 +120,20 @@ export const useSessionHistory = () => {
 
   const handleResumeSession = useCallback((sessionId: string) => {
     resumeEndedSession(sessionId);
-    navigate('/');
+
+    // TEMPORARY DEBUGGING:
+    setTimeout(() => { // Use setTimeout to allow effect in useSessionManagement to hopefully run
+      const storedSession = localStorage.getItem('currentSession');
+      console.log("localStorage currentSession after resume, before navigate:", storedSession);
+      if (storedSession) {
+        try {
+          console.log("Parsed localStorage currentSession:", JSON.parse(storedSession));
+        } catch (e) {
+          console.error("Error parsing stored session for debug:", e);
+        }
+      }
+      navigate('/');
+    }, 100); // Small delay
   }, [resumeEndedSession, navigate]);
 
   const handleLogout = useCallback(async () => {

@@ -2,7 +2,7 @@
  * @file Defines functions for validating imported climb data.
  */
 
-import { CsvClimb, ClimbTypeSpec, SendTypeSpec } from './importSpec';
+import { ClimbTypeSpec, CsvClimb, SendTypeSpec } from './importSpec';
 
 /**
  * Checks if a string is a valid date in YYYY-MM-DD format.
@@ -30,8 +30,8 @@ function isValidDate(dateStr: string): boolean {
  * @param value The value to check.
  * @returns True if the value is a non-negative integer, false otherwise.
  */
-function isNonNegativeInteger(value: any): boolean {
-  return Number.isInteger(value) && value >= 0;
+function isNonNegativeInteger(value: unknown): boolean {
+  return Number.isInteger(value) && (value as number) >= 0;
 }
 
 /**
@@ -39,7 +39,7 @@ function isNonNegativeInteger(value: any): boolean {
  * @param value The value to check.
  * @returns True if the value is a positive number, false otherwise.
  */
-function isPositiveNumber(value: any): boolean {
+function isPositiveNumber(value: unknown): boolean {
   return typeof value === 'number' && value > 0;
 }
 

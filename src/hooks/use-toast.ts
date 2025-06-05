@@ -1,12 +1,12 @@
 import * as React from "react"
 
 import type {
-  ToastActionElement,
-  ToastProps,
+    ToastActionElement,
+    ToastProps,
 } from "@/components/ui/toast"
 
 const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 1000
+const TOAST_REMOVE_DELAY = 1000 //ms
 
 type ToasterToast = ToastProps & {
   id: string
@@ -55,6 +55,8 @@ interface State {
 
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
 
+// addToRemoveQueue will now be called from dispatch, not the reducer.
+// It still dispatches REMOVE_TOAST itself, which is fine as it's a new action cycle.
 const addToRemoveQueue = (toastId: string) => {
   if (toastTimeouts.has(toastId)) {
     return
@@ -62,6 +64,7 @@ const addToRemoveQueue = (toastId: string) => {
 
   const timeout = setTimeout(() => {
     toastTimeouts.delete(toastId)
+    // Dispatch REMOVE_TOAST action. This is fine as it starts a new action cycle.
     dispatch({
       type: "REMOVE_TOAST",
       toastId: toastId,
@@ -88,22 +91,12 @@ export const reducer = (state: State, action: Action): State => {
       }
 
     case "DISMISS_TOAST": {
-      const { toastId } = action
-
-      // ! Side effects ! - This could be extracted into a dismissToast() action,
-      // but I'll keep it here for simplicity
-      if (toastId) {
-        addToRemoveQueue(toastId)
-      } else {
-        state.toasts.forEach((toast) => {
-          addToRemoveQueue(toast.id)
-        })
-      }
-
+      // Removed side effect (addToRemoveQueue) from here.
+      // The reducer now only updates the state.
       return {
         ...state,
         toasts: state.toasts.map((t) =>
-          t.id === toastId || toastId === undefined
+          t.id === action.toastId || action.toastId === undefined
             ? {
                 ...t,
                 open: false,
@@ -123,6 +116,8 @@ export const reducer = (state: State, action: Action): State => {
         ...state,
         toasts: state.toasts.filter((t) => t.id !== action.toastId),
       }
+    default: // Added default case to handle all action types explicitly
+        return state; 
   }
 }
 
@@ -131,7 +126,34 @@ const listeners: Array<(state: State) => void> = []
 let memoryState: State = { toasts: [] }
 
 function dispatch(action: Action) {
-  memoryState = reducer(memoryState, action)
+  const prevState = memoryState;
+  memoryState = reducer(memoryState, action);
+
+  // Handle side effect for DISMISS_TOAST after state has been updated
+  if (action.type === "DISMISS_TOAST") {
+    const { toastId } = action;
+    if (toastId) {
+      const dismissedToast = memoryState.toasts.find(t => t.id === toastId);
+      const prevToast = prevState.toasts.find(t => t.id === toastId);
+      // Check if it was just closed (went from open: true/undefined to open: false)
+      if (dismissedToast && !dismissedToast.open && (prevToast?.open !== false)) {
+        addToRemoveQueue(toastId);
+      }
+    } else {
+      // If no toastId, all toasts were targeted for dismissal.
+      // Iterate through the new state toasts. If a toast is now closed 
+      // and was previously open in prevState, queue it.
+      memoryState.toasts.forEach((toast) => {
+        if (!toast.open) {
+          const prevToast = prevState.toasts.find(pt => pt.id === toast.id);
+          if (prevToast?.open !== false) { // Was open or didn't exist (newly added & dismissed quickly)
+            addToRemoveQueue(toast.id);
+          }
+        }
+      });
+    }
+  }
+
   listeners.forEach((listener) => {
     listener(memoryState)
   })
@@ -161,10 +183,24 @@ function toast({ ...props }: Toast) {
     },
   })
 
-  // Auto-dismiss after 2.5 seconds
-  setTimeout(() => {
-    dismiss()
-  }, 2500)
+  // Auto-dismiss toasts functionality: 
+  // The original toast() function also had a setTimeout to dismiss.
+  // This should ideally be managed via TOAST_REMOVE_DELAY and open state if possible,
+  // or be part of the toast component itself if it has a duration prop.
+  // For now, keeping the explicit dismiss call for ADD_TOAST if that was intended for auto-close.
+  // If TOAST_REMOVE_DELAY is for visibility after explicit dismiss, then that's handled.
+  // This example assumes the existing auto-dismiss for newly added toasts is desired.
+  const autoDismissTimeout = props.duration || 2500; // Use duration from props or default
+  if (autoDismissTimeout > 0) { // Allow duration: 0 or negative to disable auto-dismiss
+    setTimeout(() => {
+        // Check if the toast still exists and is open before dismissing
+        // This avoids trying to dismiss a toast that was already manually dismissed
+        const currentToast = memoryState.toasts.find(t => t.id === id);
+        if (currentToast && currentToast.open) {
+            dismiss();
+        }
+    }, autoDismissTimeout);
+  }
 
   return {
     id: id,
@@ -184,7 +220,7 @@ function useToast() {
         listeners.splice(index, 1)
       }
     }
-  }, [state])
+  }, [state]) // state dependency for React.useEffect is fine.
 
   return {
     ...state,
@@ -193,4 +229,5 @@ function useToast() {
   }
 }
 
-export { useToast, toast }
+export { toast, useToast }
+

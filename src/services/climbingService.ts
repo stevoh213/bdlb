@@ -1,7 +1,6 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { ClimbingSession } from '@/types/climbing';
-import { Climb } from '@/types/climbing';
+import { Climb, ClimbingSession } from '@/types/climbing';
+import { PostgrestError } from '@supabase/supabase-js';
 
 // Define more specific input types for add/update if they differ significantly from the fetched types
 export type NewSessionData = Omit<ClimbingSession, 'id' | 'user_id' | 'created_at' | 'updated_at'>;
@@ -12,7 +11,7 @@ export type UpdateSessionData = Partial<Omit<ClimbingSession, 'id' | 'user_id' |
 export type NewClimbData = Omit<Climb, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'session_id' | 'rating' | 'duration' | 'elevation_gain' | 'color' | 'gym' | 'country' | 'skills' | 'stiffness'>; // session_id will be passed as a separate param
 export type UpdateClimbData = Partial<Omit<Climb, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'session_id'>>;
 
-const handleSupabaseError = (error: any, context: string) => {
+const handleSupabaseError = (error: PostgrestError | null, context: string) => {
   if (error) {
     console.error(`Supabase error in ${context}:`, error);
     throw error; // Re-throw the error to be caught by react-query or the caller
@@ -68,23 +67,30 @@ export const addSession = async (sessionData: NewSessionData, userId: string): P
 };
 
 export const updateSession = async (sessionId: string, updates: UpdateSessionData): Promise<ClimbingSession> => {
+  console.log("[climbingService.updateSession] Called with sessionId:", sessionId, "updates:", JSON.stringify(updates)); // DEBUG
   try {
+    console.log("[climbingService.updateSession] Attempting Supabase update..."); // DEBUG
     const { data, error } = await supabase
       .from('climbing_sessions')
       .update(updates)
       .eq('id', sessionId)
       .select()
       .single();
+    console.log("[climbingService.updateSession] Supabase update call returned. Data:", data ? JSON.stringify(data) : null, "Error:", error ? JSON.stringify(error) : null); // DEBUG
 
     handleSupabaseError(error, 'updateSession');
-    if (!data) throw new Error("Failed to update session, no data returned.");
+    if (!data) {
+      console.error("[climbingService.updateSession] No data returned from Supabase after update."); // DEBUG
+      throw new Error("Failed to update session, no data returned.");
+    }
+    console.log("[climbingService.updateSession] Update successful, returning data."); // DEBUG
     return {
       ...data,
       location_type: data.location_type as 'indoor' | 'outdoor' | undefined,
       default_climb_type: data.default_climb_type as 'sport' | 'trad' | 'boulder' | 'top rope' | 'alpine' | undefined
     };
   } catch (error) {
-    console.error('Error in updateSession:', error);
+    console.error('[climbingService.updateSession] Error caught in service catch block:', error); // DEBUG
     throw error;
   }
 };
@@ -182,30 +188,61 @@ export const fetchAllUserClimbs = async (userId: string): Promise<Climb[]> => {
 };
 
 export const addClimb = async (climbData: NewClimbData, sessionId: string, userId: string): Promise<Climb> => {
-  if (!userId) throw new Error('User not authenticated for addClimb');
-  if (!sessionId) throw new Error('Session ID is required for addClimb');
+  console.log("[climbingService.addClimb] Called with ClimbData:", JSON.parse(JSON.stringify(climbData)), "SessionID:", sessionId, "UserID:", userId);
+  if (!userId) {
+    console.error("[climbingService.addClimb] User not authenticated.");
+    throw new Error('User not authenticated for addClimb');
+  }
+  if (!sessionId) {
+    console.error("[climbingService.addClimb] Session ID is required.");
+    throw new Error('Session ID is required for addClimb');
+  }
   try {
+    const payload = { ...climbData, session_id: sessionId, user_id: userId };
+    console.log("[climbingService.addClimb] Payload for Supabase insert:", JSON.parse(JSON.stringify(payload)));
+    console.log("[climbingService.addClimb] Attempting Supabase insert..."); // DEBUG: Log before await
+    
     const { data, error } = await supabase
       .from('climbs')
-      .insert({ ...climbData, session_id: sessionId, user_id: userId })
+      .insert(payload)
       .select()
       .single();
 
-    handleSupabaseError(error, 'addClimb');
-    if (!data) throw new Error("Failed to add climb, no data returned.");
-    return {
+    // This log will only be reached if the await supabase call completes successfully or with a Supabase-specific error structure.
+    console.log("[climbingService.addClimb] Supabase response received. Data:", data ? JSON.parse(JSON.stringify(data)) : null, "Error:", error ? JSON.parse(JSON.stringify(error)) : null); // DEBUG: Improved logging for potentially null data/error
+
+    handleSupabaseError(error, 'addClimb'); // This function should log if error is a PostgrestError
+    
+    if (error) {
+        // Log again here if handleSupabaseError didn't throw but there was still an error object
+        console.error("[climbingService.addClimb] Supabase returned an error object that was handled or passed by handleSupabaseError:", JSON.parse(JSON.stringify(error)));
+        // Depending on handleSupabaseError, an error might have already been thrown.
+        // If not, and `error` is present, we should probably throw it. 
+        // However, handleSupabaseError is expected to throw for critical DB errors.
+    }
+
+    if (!data) {
+      console.error("[climbingService.addClimb] Failed to add climb, no data returned from Supabase. This is after error check.");
+      throw new Error("Failed to add climb, no data returned from Supabase after error handling.");
+    }
+    
+    const resultClimb: Climb = {
       ...data,
-      type: data.type as 'sport' | 'trad' | 'boulder' | 'top rope' | 'alpine',
-      send_type: data.send_type as 'send' | 'attempt' | 'flash' | 'onsight' | 'project',
+      type: data.type as Climb['type'], 
+      send_type: data.send_type as Climb['send_type'], 
+      date: data.date || new Date().toISOString(), 
+      name: data.name || "Unnamed Climb",
+      grade: data.grade || "Unknown Grade",
+      attempts: data.attempts === undefined || data.attempts === null ? 1 : data.attempts,
       physical_skills: data.physical_skills || [],
       technical_skills: data.technical_skills || [],
-      effort: data.effort || undefined,
-      height: data.height || undefined,
-      time_on_wall: data.time_on_wall || undefined
-    };
-  } catch (error) {
-    console.error('Error in addClimb:', error);
-    throw error;
+    } as Climb; 
+    console.log("[climbingService.addClimb] Processed result to be returned:", JSON.parse(JSON.stringify(resultClimb)));
+    return resultClimb;
+  } catch (errorCaught) { // Changed variable name to avoid conflict with supabase 'error' variable
+    console.error('[climbingService.addClimb] Error caught in service catch block:', errorCaught); // DEBUG
+    // Make sure to re-throw so the mutation knows it failed
+    throw errorCaught; 
   }
 };
 

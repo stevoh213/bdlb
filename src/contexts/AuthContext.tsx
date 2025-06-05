@@ -1,14 +1,13 @@
-
-import React, { createContext, useState, useEffect, useContext } from 'react';
-import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { AuthError, User } from '@supabase/supabase-js';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 
 interface AuthContextProps {
   user: User | null;
   loading: boolean;
   isAuthenticated: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string) => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<{ error: AuthError | Error | null }>;
+  signUp: (email: string, password: string) => Promise<{ error: AuthError | Error | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -64,8 +63,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         password 
       });
       return { error };
-    } catch (error: any) {
-      return { error };
+    } catch (caughtError: unknown) {
+      const message = caughtError instanceof Error ? caughtError.message : String(caughtError);
+      return { error: new Error(message) };
     } finally {
       setLoading(false);
     }
@@ -84,8 +84,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       });
       return { error };
-    } catch (error: any) {
-      return { error };
+    } catch (caughtError: unknown) {
+      const message = caughtError instanceof Error ? caughtError.message : String(caughtError);
+      return { error: new Error(message) };
     } finally {
       setLoading(false);
     }
@@ -94,16 +95,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signOut = async () => {
     try {
       console.log('Starting sign out...');
-      // Don't set loading here - let the auth state change handle it
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error('Error signing out:', error);
         throw error;
       }
       console.log('Sign out successful');
-    } catch (error: any) {
-      console.error('Error signing out:', error.message);
-      setLoading(false); // Only set loading false on error
+    } catch (error: unknown) {
+      console.error('Error signing out (in catch block):', error instanceof Error ? error.message : String(error));
+      setLoading(false); 
       throw error;
     }
   };

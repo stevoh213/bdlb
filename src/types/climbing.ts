@@ -39,6 +39,7 @@ export interface ClimbingSession {
   user_id: string;
   created_at: string;
   updated_at: string;
+  ai_analysis?: Session['aiAnalysis'];
 }
 
 // Local session interface for the frontend (updated to match database types)

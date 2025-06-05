@@ -1,12 +1,13 @@
-import useLocalStorage from './useLocalStorage';
 import { toast } from '@/hooks/use-toast';
 import { physicalSkills as defaultPhysicalSkills, technicalSkills as defaultTechnicalSkills } from "@/utils/skills";
+import { useCallback, useEffect, useState } from 'react';
+import useLocalStorage from './useLocalStorage';
 
 const PHYSICAL_SKILLS_KEY = 'customPhysicalSkills';
 const TECHNICAL_SKILLS_KEY = 'customTechnicalSkills';
 
 // Helper function for skill operations to avoid code duplication
-const manageSkill = (
+const manageSkillInternal = (
   skills: string[],
   setSkills: (skills: string[]) => void,
   action: 'add' | 'delete' | 'edit',
@@ -61,15 +62,73 @@ export const useSkillsSettings = () => {
     defaultTechnicalSkills
   );
 
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const [isAddingPhysicalSkill, setIsAddingPhysicalSkill] = useState(false);
+  const [isDeletingPhysicalSkill, setIsDeletingPhysicalSkill] = useState(false);
+  const [isEditingPhysicalSkill, setIsEditingPhysicalSkill] = useState(false);
+
+  const [isAddingTechnicalSkill, setIsAddingTechnicalSkill] = useState(false);
+  const [isDeletingTechnicalSkill, setIsDeletingTechnicalSkill] = useState(false);
+  const [isEditingTechnicalSkill, setIsEditingTechnicalSkill] = useState(false);
+
+  useEffect(() => {
+    // Simulate loading completion as useLocalStorage initializes synchronously for the hook consumer
+    setIsLoading(false);
+  }, []);
+
+  // Generic handler creator - not a hook itself, so no useCallback here.
+  const createSkillHandler = <Args extends unknown[]>(
+    setLoading: (loading: boolean) => void,
+    actionFn: (...args: Args) => boolean // The core logic function
+  ) => {
+    return async (...args: Args): Promise<boolean> => {
+      setLoading(true);
+      setError(null);
+      try {
+        const success = actionFn(...args);
+        // If manageSkillInternal needed to signal a critical save error beyond validation,
+        // it would need a different return type or mechanism. For now, its boolean 
+        // indicates if the operation proceeded past basic validation and was attempted.
+        // Toasts within manageSkillInternal handle user feedback for known validation issues.
+        return success;
+      } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : "An unexpected error occurred while managing skills.";
+        setError(message);
+        toast({ title: "Operation Failed", description: message, variant: "destructive" });
+        return false;
+      } finally {
+        setLoading(false);
+      }
+    };
+  };
+
   // Physical Skills Management
-  const addPhysicalSkill = (skill: string) => manageSkill(physicalSkills, setPhysicalSkills, 'add', skill);
-  const deletePhysicalSkill = (skill: string) => manageSkill(physicalSkills, setPhysicalSkills, 'delete', skill);
-  const editPhysicalSkill = (originalSkill: string, newSkill: string) => manageSkill(physicalSkills, setPhysicalSkills, 'edit', originalSkill, newSkill);
+  const addPhysicalSkill = useCallback(createSkillHandler(setIsAddingPhysicalSkill, (skill: string) => 
+    manageSkillInternal(physicalSkills, setPhysicalSkills, 'add', skill)
+  ), [physicalSkills, setPhysicalSkills]);
+  
+  const deletePhysicalSkill = useCallback(createSkillHandler(setIsDeletingPhysicalSkill, (skill: string) => 
+    manageSkillInternal(physicalSkills, setPhysicalSkills, 'delete', skill)
+  ), [physicalSkills, setPhysicalSkills]);
+  
+  const editPhysicalSkill = useCallback(createSkillHandler(setIsEditingPhysicalSkill, (originalSkill: string, newSkill: string) => 
+    manageSkillInternal(physicalSkills, setPhysicalSkills, 'edit', originalSkill, newSkill)
+  ), [physicalSkills, setPhysicalSkills]);
 
   // Technical Skills Management
-  const addTechnicalSkill = (skill: string) => manageSkill(technicalSkills, setTechnicalSkills, 'add', skill);
-  const deleteTechnicalSkill = (skill: string) => manageSkill(technicalSkills, setTechnicalSkills, 'delete', skill);
-  const editTechnicalSkill = (originalSkill: string, newSkill: string) => manageSkill(technicalSkills, setTechnicalSkills, 'edit', originalSkill, newSkill);
+  const addTechnicalSkill = useCallback(createSkillHandler(setIsAddingTechnicalSkill, (skill: string) => 
+    manageSkillInternal(technicalSkills, setTechnicalSkills, 'add', skill)
+  ), [technicalSkills, setTechnicalSkills]);
+  
+  const deleteTechnicalSkill = useCallback(createSkillHandler(setIsDeletingTechnicalSkill, (skill: string) => 
+    manageSkillInternal(technicalSkills, setTechnicalSkills, 'delete', skill)
+  ), [technicalSkills, setTechnicalSkills]);
+  
+  const editTechnicalSkill = useCallback(createSkillHandler(setIsEditingTechnicalSkill, (originalSkill: string, newSkill: string) => 
+    manageSkillInternal(technicalSkills, setTechnicalSkills, 'edit', originalSkill, newSkill)
+  ), [technicalSkills, setTechnicalSkills]);
   
   return {
     physicalSkills,
@@ -80,5 +139,13 @@ export const useSkillsSettings = () => {
     addTechnicalSkill,
     deleteTechnicalSkill,
     editTechnicalSkill,
+    isLoading,
+    error,
+    isAddingPhysicalSkill,
+    isDeletingPhysicalSkill,
+    isEditingPhysicalSkill,
+    isAddingTechnicalSkill,
+    isDeletingTechnicalSkill,
+    isEditingTechnicalSkill,
   };
 };
