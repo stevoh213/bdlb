@@ -82,19 +82,25 @@ const fontToVScaleMap: Record<string, string> = Object.fromEntries(
  */
 export function detectGradeSystem(grade: string): GradeSystem | undefined {
   if (!grade) return undefined;
-  grade = grade.toUpperCase();
 
-  if (grade.startsWith('5.')) return GradeSystem.YDS;
-  if (grade.startsWith('V')) return GradeSystem.VSCALE;
-  if (grade.match(/^[3-9][ABC]?\+?$/) || grade.match(/^[3-9][abc]\+?$/)) { // e.g., 6a, 7B+, 8a
+  const gradeUpper = grade.toUpperCase();
+
+  if (gradeUpper.startsWith('5.')) return GradeSystem.YDS;
+  if (gradeUpper.startsWith('V')) return GradeSystem.VSCALE;
+
+  if (/^[3-9][A-Ca-c]?\+?$/.test(grade)) {
       // Ambiguous: Could be French or Font. Font less likely to have lowercase 'a/b/c' for lower grades.
       // If it has 'a/b/c' it's more likely French for easier sport grades.
       // If it's a single digit or digit with A/B/C, could be Font.
       // This is where context (like climb type: bouldering/sport) is crucial.
       // For now, a very rough heuristic:
       if (grade.length === 1 && parseInt(grade) >= 3 && parseInt(grade) <= 8) return GradeSystem.FONT; // e.g. 4, 5, 6
-      if (grade.match(/^[6-9][ABC]\+?$/)) return GradeSystem.FONT; // e.g. 6A, 7B+
-      if (grade.match(/^[4-8][abc]\+?$/)) return GradeSystem.FRENCH; // e.g. 6a, 7b+
+      const letterMatch = grade.match(/[A-Ca-c]/);
+      if (letterMatch) {
+        const letter = letterMatch[0];
+        if (letter === letter.toLowerCase()) return GradeSystem.FRENCH;
+        return GradeSystem.FONT;
+      }
       // Needs more rules or external context.
   }
   // Add more detection rules here...
@@ -139,17 +145,18 @@ export function normalizeGrade(
     // we can try direct lookup in the target system's reverse map, assuming it might already BE in the target system or its partner.
   }
 
-  const upperGrade = grade.toUpperCase(); // Use uppercase for V-scale consistency e.g. v5 -> V5
+  const lowerGrade = grade.toLowerCase();
+  const upperGrade = grade.toUpperCase(); // Use uppercase for V-scale and Font consistency e.g. v5 -> V5
 
   try {
     if (detectedOriginalSystem === effectiveTargetSystem) return grade;
 
     // YDS <-> French
     if (detectedOriginalSystem === GradeSystem.YDS && effectiveTargetSystem === GradeSystem.FRENCH) {
-      return ydsToFrenchMap[grade] || grade;
+      return ydsToFrenchMap[lowerGrade] || grade;
     }
     if (detectedOriginalSystem === GradeSystem.FRENCH && effectiveTargetSystem === GradeSystem.YDS) {
-      return frenchToYdsMap[grade] || grade;
+      return frenchToYdsMap[lowerGrade] || grade;
     }
 
     // V-Scale <-> Font
@@ -157,7 +164,7 @@ export function normalizeGrade(
       return vScaleToFontMap[upperGrade] || grade;
     }
     if (detectedOriginalSystem === GradeSystem.FONT && effectiveTargetSystem === GradeSystem.VSCALE) {
-      return fontToVScaleMap[grade] || grade;
+      return fontToVScaleMap[upperGrade] || grade;
     }
 
     // Cross-category conversions (e.g., YDS to V-Scale) are generally not done directly
