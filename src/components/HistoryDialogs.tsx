@@ -1,163 +1,82 @@
 import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import EditClimbDialog from '@/components/EditClimbDialog';
+import EditSessionDialog from '@/components/EditSessionDialog';
 import { LocalClimb, Session } from '@/types/climbing';
 import React from 'react';
 
-// Define a more specific type for the edit form
-export type EditFormShape = Partial<LocalClimb & Session>;
-
 interface HistoryDialogsProps {
-  editDialogOpen: boolean;
-  setEditDialogOpen: (open: boolean) => void;
-  deleteDialogOpen: boolean;
-  setDeleteDialogOpen: (open: boolean) => void;
-  importDialogOpen: boolean;
-  setImportDialogOpen: (open: boolean) => void;
-  editingItem: LocalClimb | Session | null;
-  setEditingItem: (item: LocalClimb | Session | null) => void;
-  editForm: EditFormShape;
-  setEditForm: (form: EditFormShape) => void;
-  handleSaveEdit: () => void;
-  handleDelete: () => void;
-  handleImport: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  editingClimb: LocalClimb | null;
+  editingSession: Session | null;
+  deleteConfirm: { type: 'session' | 'climb'; item: Session | LocalClimb } | null;
+  onCloseEditClimb: () => void;
+  onCloseEditSession: () => void;
+  onCloseDeleteDialog: () => void;
+  onSaveClimb: (climbId: string, updates: Partial<LocalClimb>) => void;
+  onSaveSession: (sessionId: string, updates: Partial<Session>) => void;
+  onConfirmDelete: () => void;
+  onOpenDeleteDialog: (item: Session | LocalClimb, type: 'session' | 'climb') => void;
 }
 
-const HistoryDialogs: React.FC<HistoryDialogsProps> = ({
-  editDialogOpen,
-  setEditDialogOpen,
-  deleteDialogOpen,
-  setDeleteDialogOpen,
-  importDialogOpen,
-  setImportDialogOpen,
-  editingItem,
-  editForm,
-  setEditForm,
-  handleSaveEdit,
-  handleDelete,
-  handleImport,
-}) => {
+const HistoryDialogs = ({
+  editingClimb,
+  editingSession,
+  deleteConfirm,
+  onCloseEditClimb,
+  onCloseEditSession,
+  onCloseDeleteDialog,
+  onSaveClimb,
+  onSaveSession,
+  onConfirmDelete,
+  onOpenDeleteDialog,
+}: HistoryDialogsProps) => {
   return (
     <>
-      {/* Edit Dialog */}
-      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit {editingItem && 'name' in editingItem ? 'Climb' : 'Session'}</DialogTitle>
-          </DialogHeader>
-          {editingItem && 'name' in editingItem ? (
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  value={editForm.name || ''}
-                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="grade">Grade</Label>
-                <Input
-                  id="grade"
-                  value={editForm.grade || ''}
-                  onChange={(e) => setEditForm({ ...editForm, grade: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="tickType">Tick Type</Label>
-                <Input
-                  id="tickType"
-                  value={editForm.tickType || ''}
-                  onChange={(e) => setEditForm({ ...editForm, tickType: e.target.value as LocalClimb['tickType'] })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="timestamp">Date</Label>
-                <Input
-                  id="timestamp"
-                  type="datetime-local"
-                  value={editForm.timestamp ? new Date(editForm.timestamp).toISOString().slice(0, 16) : ''}
-                  onChange={(e) => setEditForm({ ...editForm, timestamp: new Date(e.target.value) })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="location">Location</Label>
-                <Input
-                  id="location"
-                  value={editForm.location || ''}
-                  onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="notes">Notes</Label>
-                <Textarea
-                  id="notes"
-                  value={editForm.notes || ''}
-                  onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
-                />
-              </div>
-              <Button onClick={handleSaveEdit}>Save</Button>
-            </div>
-          ) : (
-            <div>Session editing form here</div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {editingClimb && (
+        <EditClimbDialog
+          climb={editingClimb}
+          open={!!editingClimb}
+          onOpenChange={(open) => !open && onCloseEditClimb()}
+          onSave={onSaveClimb}
+          onDelete={() => onOpenDeleteDialog(editingClimb, 'climb')}
+        />
+      )}
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      {editingSession && (
+        <EditSessionDialog
+          session={editingSession}
+          open={!!editingSession}
+          onOpenChange={(open) => !open && onCloseEditSession()}
+          onSave={onSaveSession}
+        />
+      )}
+
+      <AlertDialog open={!!deleteConfirm} onOpenChange={onCloseDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Item</AlertDialogTitle>
+            <AlertDialogTitle>
+              Delete {deleteConfirm?.type === 'session' ? 'Session' : 'Climb'}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this item? This action cannot be undone.
+              Are you sure you want to delete this {deleteConfirm?.type}? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogAction onClick={onConfirmDelete} className="bg-red-600 hover:bg-red-700">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Import Dialog */}
-      <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Import CSV</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="csv-file">Select CSV File</Label>
-              <Input
-                id="csv-file"
-                type="file"
-                accept=".csv"
-                onChange={handleImport}
-              />
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </>
   );
 };
