@@ -27,7 +27,9 @@ const EditClimbDialog = ({ climb, open, onOpenChange, onSave }: EditClimbDialogP
     effort: climb.effort || "",
     notes: climb.notes || "",
     physicalSkills: climb.physicalSkills || [],
-    technicalSkills: climb.technicalSkills || []
+    technicalSkills: climb.technicalSkills || [],
+    timestampDate: climb.timestamp.toISOString().split("T")[0],
+    timestampTime: climb.timestamp.toTimeString().slice(0, 5)
   });
 
   const handleSave = () => {
@@ -41,7 +43,15 @@ const EditClimbDialog = ({ climb, open, onOpenChange, onSave }: EditClimbDialogP
       effort: formData.effort ? Number(formData.effort) : undefined,
       notes: formData.notes || undefined,
       physicalSkills: formData.physicalSkills.length > 0 ? formData.physicalSkills : undefined,
-      technicalSkills: formData.technicalSkills.length > 0 ? formData.technicalSkills : undefined
+      technicalSkills: formData.technicalSkills.length > 0 ? formData.technicalSkills : undefined,
+      timestamp: (() => {
+        const [year, month, day] = formData.timestampDate.split('-').map(Number);
+        const [hours, minutes] = formData.timestampTime.split(':').map(Number);
+        const ts = new Date(climb.timestamp);
+        ts.setFullYear(year, month - 1, day);
+        ts.setHours(hours, minutes, 0, 0);
+        return ts;
+      })()
     };
 
     onSave(climb.id, updates);
@@ -74,6 +84,27 @@ const EditClimbDialog = ({ climb, open, onOpenChange, onSave }: EditClimbDialogP
               onChange={(e) => setFormData(prev => ({ ...prev, grade: e.target.value }))}
               placeholder="5.10a, V4, etc."
             />
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label htmlFor="timestampDate">Date</Label>
+              <Input
+                id="timestampDate"
+                type="date"
+                value={formData.timestampDate}
+                onChange={(e) => setFormData(prev => ({ ...prev, timestampDate: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label htmlFor="timestampTime">Time</Label>
+              <Input
+                id="timestampTime"
+                type="time"
+                value={formData.timestampTime}
+                onChange={(e) => setFormData(prev => ({ ...prev, timestampTime: e.target.value }))}
+              />
+            </div>
           </div>
 
           <div>
