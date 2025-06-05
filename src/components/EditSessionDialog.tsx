@@ -16,16 +16,27 @@ interface EditSessionDialogProps {
 }
 
 const EditSessionDialog = ({ session, open, onOpenChange, onSave }: EditSessionDialogProps) => {
+  const formatDate = (d: Date) => d.toISOString().split('T')[0];
+  const formatTime = (d: Date) => d.toISOString().slice(11, 16);
+
   const [formData, setFormData] = useState({
     location: session.location,
     climbingType: session.climbingType,
+    date: formatDate(session.startTime),
+    startTime: formatTime(session.startTime),
+    endTime: session.endTime ? formatTime(session.endTime) : "",
     notes: session.notes || ""
   });
 
   const handleSave = () => {
+    const start = new Date(`${formData.date}T${formData.startTime}`);
+    const end = formData.endTime ? new Date(`${formData.date}T${formData.endTime}`) : undefined;
+
     const updates: Partial<Session> = {
       location: formData.location,
       climbingType: formData.climbingType as Session['climbingType'],
+      startTime: start,
+      endTime: end,
       notes: formData.notes || undefined
     };
 
@@ -53,8 +64,8 @@ const EditSessionDialog = ({ session, open, onOpenChange, onSave }: EditSessionD
 
           <div>
             <Label>Climbing Type</Label>
-            <Select 
-              value={formData.climbingType} 
+            <Select
+              value={formData.climbingType}
               onValueChange={(value) => setFormData(prev => ({ ...prev, climbingType: value as Session['climbingType'] }))}
             >
               <SelectTrigger>
@@ -68,6 +79,37 @@ const EditSessionDialog = ({ session, open, onOpenChange, onSave }: EditSessionD
                 <SelectItem value="multipitch">Multi-pitch</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="date">Date</Label>
+            <Input
+              id="date"
+              type="date"
+              value={formData.date}
+              onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label htmlFor="startTime">Start Time</Label>
+              <Input
+                id="startTime"
+                type="time"
+                value={formData.startTime}
+                onChange={(e) => setFormData(prev => ({ ...prev, startTime: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label htmlFor="endTime">End Time</Label>
+              <Input
+                id="endTime"
+                type="time"
+                value={formData.endTime}
+                onChange={(e) => setFormData(prev => ({ ...prev, endTime: e.target.value }))}
+              />
+            </div>
           </div>
 
           <div>

@@ -185,9 +185,15 @@ const History = () => {
   };
 
   const handleSaveSession = (sessionId: string, updates: Partial<Session>) => {
+    const normalizedUpdates = {
+      ...updates,
+      startTime: updates.startTime ? new Date(updates.startTime) : undefined,
+      endTime: updates.endTime ? new Date(updates.endTime) : undefined
+    };
+
     const updatedSessions = sessions.map(session => session.id === sessionId ? {
       ...session,
-      ...updates
+      ...normalizedUpdates
     } : session);
     setSessions(updatedSessions);
     localStorage.setItem('sessions', JSON.stringify(updatedSessions));
@@ -196,7 +202,7 @@ const History = () => {
     if (selectedSession?.id === sessionId) {
       setSelectedSession(prev => prev ? {
         ...prev,
-        ...updates
+        ...normalizedUpdates
       } : null);
     }
     toast({
