@@ -56,61 +56,61 @@ export type Database = {
           attempts: number | null
           created_at: string
           date: string
+          effort: number | null
           grade: string
+          height: number | null
           id: string
           location: string
           name: string
           notes: string | null
+          physical_skills: string[] | null
           send_type: string
           session_id: string
+          technical_skills: string[] | null
+          time_on_wall: number | null
           type: string
           updated_at: string
           user_id: string
-          physical_skills: string[] | null
-          technical_skills: string[] | null
-          effort: number | null
-          height: number | null
-          time_on_wall: number | null
         }
         Insert: {
           attempts?: number | null
           created_at?: string
           date?: string
+          effort?: number | null
           grade: string
+          height?: number | null
           id?: string
           location: string
           name: string
           notes?: string | null
+          physical_skills?: string[] | null
           send_type: string
           session_id: string
+          technical_skills?: string[] | null
+          time_on_wall?: number | null
           type: string
           updated_at?: string
           user_id: string
-          physical_skills?: string[] | null
-          technical_skills?: string[] | null
-          effort?: number | null
-          height?: number | null
-          time_on_wall?: number | null
         }
         Update: {
           attempts?: number | null
           created_at?: string
           date?: string
+          effort?: number | null
           grade?: string
+          height?: number | null
           id?: string
           location?: string
           name?: string
           notes?: string | null
+          physical_skills?: string[] | null
           send_type?: string
           session_id?: string
+          technical_skills?: string[] | null
+          time_on_wall?: number | null
           type?: string
           updated_at?: string
           user_id?: string
-          physical_skills?: string[] | null
-          technical_skills?: string[] | null
-          effort?: number | null
-          height?: number | null
-          time_on_wall?: number | null
         }
         Relationships: [
           {
@@ -121,6 +121,75 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      goals: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          current_value: number | null
+          description: string | null
+          difficulty: string
+          id: string
+          notes: string | null
+          priority: string
+          status: string
+          tags: string[] | null
+          target_climb_type: string | null
+          target_date: string | null
+          target_grade: string | null
+          target_location: string | null
+          target_value: number | null
+          title: string
+          type: string
+          unit: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          current_value?: number | null
+          description?: string | null
+          difficulty?: string
+          id?: string
+          notes?: string | null
+          priority?: string
+          status?: string
+          tags?: string[] | null
+          target_climb_type?: string | null
+          target_date?: string | null
+          target_grade?: string | null
+          target_location?: string | null
+          target_value?: number | null
+          title: string
+          type: string
+          unit?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          current_value?: number | null
+          description?: string | null
+          difficulty?: string
+          id?: string
+          notes?: string | null
+          priority?: string
+          status?: string
+          tags?: string[] | null
+          target_climb_type?: string | null
+          target_date?: string | null
+          target_grade?: string | null
+          target_location?: string | null
+          target_value?: number | null
+          title?: string
+          type?: string
+          unit?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -146,6 +215,45 @@ export type Database = {
           full_name?: string | null
           id?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      voice_log_previews: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          extracted_data_json: Json | null
+          id: string
+          original_audio_filename: string
+          status: string
+          storage_path: string
+          transcript_text: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          extracted_data_json?: Json | null
+          id?: string
+          original_audio_filename: string
+          status?: string
+          storage_path: string
+          transcript_text?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          extracted_data_json?: Json | null
+          id?: string
+          original_audio_filename?: string
+          status?: string
+          storage_path?: string
+          transcript_text?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
