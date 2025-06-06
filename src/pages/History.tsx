@@ -46,33 +46,77 @@ const History = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const savedSessions = localStorage.getItem("sessions");
-    if (savedSessions) {
-      const parsedSessions = JSON.parse(savedSessions);
-      parsedSessions.forEach((session: Session) => {
-        session.startTime = new Date(session.startTime);
-        if (session.endTime) session.endTime = new Date(session.endTime);
-        if (session.aiAnalysis?.generatedAt) {
-          session.aiAnalysis.generatedAt = new Date(
-            session.aiAnalysis.generatedAt,
-          );
-        }
-        session.climbs.forEach((climb: LocalClimb) => {
-          climb.timestamp = new Date(climb.timestamp);
-        });
-      });
-      setSessions(parsedSessions);
+    const loadSessions = async () => {
+      if (!user) return;
 
-      const loadAnalyses = async () => {
-        if (!user) return;
-        const ids = parsedSessions.map((s: Session) => s.id);
-        if (ids.length === 0) return;
-        const { data, error } = await supabase
+      const { data: sessionRows } = await supabase
+        .from("climbing_sessions")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("date", { ascending: false });
+
+      if (!sessionRows) return;
+
+      const ids = sessionRows.map((s) => s.id);
+      const climbsMap: Record<string, LocalClimb[]> = {};
+
+      if (ids.length > 0) {
+        const { data: entries } = await supabase
+          .from("climb_session_entries")
+          .select("session_id, climbs(*)")
+          .in("session_id", ids);
+
+        entries?.forEach((entry) => {
+          const c = entry.climbs;
+          const local: LocalClimb = {
+            id: c.id,
+            name: c.name,
+            grade: c.grade,
+            tickType: c.send_type as LocalClimb["tickType"],
+            attempts: c.attempts || undefined,
+            timestamp: new Date(c.date),
+            sessionId: entry.session_id,
+            height: c.elevation_gain || undefined,
+            timeOnWall: c.duration || undefined,
+            notes: c.notes || undefined,
+            physicalSkills: (c.physical_skills || undefined) as
+              | string[]
+              | undefined,
+            technicalSkills: (c.technical_skills || undefined) as
+              | string[]
+              | undefined,
+          };
+          if (!climbsMap[entry.session_id]) climbsMap[entry.session_id] = [];
+          climbsMap[entry.session_id].push(local);
+        });
+      }
+
+      let loaded: Session[] = sessionRows.map((row) => {
+        const start = new Date(row.date);
+        const end = new Date(start.getTime() + row.duration * 60000);
+        return {
+          id: row.id,
+          location: row.location,
+          climbingType: row.default_climb_type as Session["climbingType"],
+          gradeSystem: row.grade_system || undefined,
+          notes: row.notes || undefined,
+          startTime: start,
+          endTime: end,
+          climbs: climbsMap[row.id] || [],
+          isActive: false,
+          breaks: 0,
+          totalBreakTime: 0,
+        } as Session;
+      });
+
+      if (ids.length > 0) {
+        const { data } = await supabase
           .from("session_analyses")
           .select("*")
           .in("session_id", ids)
           .eq("user_id", user.id);
-        if (!error && data) {
+
+        if (data) {
           const map = new Map(
             data.map((row) => [
               row.session_id,
@@ -86,27 +130,22 @@ const History = () => {
               } as AIAnalysis,
             ]),
           );
-          setSessions((prev) =>
-            prev.map((s) =>
-              map.has(s.id) ? { ...s, aiAnalysis: map.get(s.id)! } : s,
-            ),
+          loaded = loaded.map((s) =>
+            map.has(s.id) ? { ...s, aiAnalysis: map.get(s.id)! } : s,
           );
         }
-      };
+      }
 
-      loadAnalyses();
+      setSessions(loaded);
 
-      // Check if we should auto-select a session from navigation state
       const { selectedSessionId } = location.state || {};
       if (selectedSessionId) {
-        const session = parsedSessions.find(
-          (s: Session) => s.id === selectedSessionId,
-        );
-        if (session) {
-          setSelectedSession(session);
-        }
+        const session = loaded.find((s) => s.id === selectedSessionId);
+        if (session) setSelectedSession(session);
       }
-    }
+    };
+
+    loadSessions();
   }, [location.state, user]);
 
   const resumeEndedSession = (sessionId: string) => {
@@ -120,7 +159,6 @@ const History = () => {
       (session) => session.id !== sessionId,
     );
     setSessions(updatedSessions);
-    localStorage.setItem("sessions", JSON.stringify(updatedSessions));
 
     // Create a resumed session (remove endTime and make it active)
     const resumedSession: Session = {
@@ -129,8 +167,7 @@ const History = () => {
       isActive: true,
     };
 
-    // Save as current session and navigate back to main page
-    localStorage.setItem("currentSession", JSON.stringify(resumedSession));
+    // Navigate back to main page
 
     toast({
       title: "Session Resumed",
@@ -219,7 +256,6 @@ const History = () => {
       ),
     }));
     setSessions(updatedSessions);
-    localStorage.setItem("sessions", JSON.stringify(updatedSessions));
 
     // Update selectedSession if it's the one being edited
     if (selectedSession) {
@@ -263,7 +299,6 @@ const History = () => {
         : session,
     );
     setSessions(updatedSessions);
-    localStorage.setItem("sessions", JSON.stringify(updatedSessions));
 
     // Update selectedSession if it's the one being edited
     if (selectedSession?.id === sessionId) {
@@ -290,7 +325,6 @@ const History = () => {
         (s) => s.id !== sessionToDelete.id,
       );
       setSessions(updatedSessions);
-      localStorage.setItem("sessions", JSON.stringify(updatedSessions));
       if (selectedSession?.id === sessionToDelete.id) {
         setSelectedSession(null);
       }
@@ -305,7 +339,6 @@ const History = () => {
         climbs: session.climbs.filter((climb) => climb.id !== climbToDelete.id),
       }));
       setSessions(updatedSessions);
-      localStorage.setItem("sessions", JSON.stringify(updatedSessions));
 
       // Update selectedSession if it contains the deleted climb
       if (selectedSession) {
@@ -337,7 +370,6 @@ const History = () => {
         : session,
     );
     setSessions(updatedSessions);
-    localStorage.setItem("sessions", JSON.stringify(updatedSessions));
 
     if (user) {
       await supabase.from("session_analyses").upsert(

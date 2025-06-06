@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Session, LocalClimb } from "@/types/climbing";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const useSessionManagement = () => {
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
@@ -9,39 +11,78 @@ export const useSessionManagement = () => {
   const [sessionTime, setSessionTime] = useState(0);
   const { toast } = useToast();
 
+  const { user } = useAuth();
+
   useEffect(() => {
-    // Load saved data from localStorage
-    const savedSession = localStorage.getItem("currentSession");
-    const savedClimbs = localStorage.getItem("climbs");
-    const savedSessions = localStorage.getItem("sessions");
+    const loadSessions = async () => {
+      if (!user) return;
 
-    if (savedSession) {
-      const session = JSON.parse(savedSession);
-      session.startTime = new Date(session.startTime);
-      if (session.endTime) session.endTime = new Date(session.endTime);
-      setCurrentSession(session);
-    }
+      const { data: sessionRows, error } = await supabase
+        .from("climbing_sessions")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("date", { ascending: false });
 
-    if (savedClimbs) {
-      const parsedClimbs = JSON.parse(savedClimbs);
-      parsedClimbs.forEach((climb: LocalClimb) => {
-        climb.timestamp = new Date(climb.timestamp);
-      });
-      setClimbs(parsedClimbs);
-    }
+      if (error || !sessionRows) return;
 
-    if (savedSessions) {
-      const parsedSessions = JSON.parse(savedSessions);
-      parsedSessions.forEach((session: Session) => {
-        session.startTime = new Date(session.startTime);
-        if (session.endTime) session.endTime = new Date(session.endTime);
-        session.climbs.forEach((climb: LocalClimb) => {
-          climb.timestamp = new Date(climb.timestamp);
+      const sessionIds = sessionRows.map((s) => s.id);
+
+      const climbsMap: Record<string, LocalClimb[]> = {};
+
+      if (sessionIds.length > 0) {
+        const { data: entries } = await supabase
+          .from("climb_session_entries")
+          .select("session_id, climbs(*)")
+          .in("session_id", sessionIds);
+
+        entries?.forEach((entry) => {
+          const c = entry.climbs;
+          const local: LocalClimb = {
+            id: c.id,
+            name: c.name,
+            grade: c.grade,
+            tickType: c.send_type as LocalClimb["tickType"],
+            attempts: c.attempts || undefined,
+            timestamp: new Date(c.date),
+            sessionId: entry.session_id,
+            height: c.elevation_gain || undefined,
+            timeOnWall: c.duration || undefined,
+            notes: c.notes || undefined,
+            physicalSkills: (c.physical_skills || undefined) as
+              | string[]
+              | undefined,
+            technicalSkills: (c.technical_skills || undefined) as
+              | string[]
+              | undefined,
+          };
+          if (!climbsMap[entry.session_id]) climbsMap[entry.session_id] = [];
+          climbsMap[entry.session_id].push(local);
         });
+      }
+
+      const loadedSessions = sessionRows.map((row) => {
+        const start = new Date(row.date);
+        const end = new Date(start.getTime() + row.duration * 60000);
+        return {
+          id: row.id,
+          location: row.location,
+          climbingType: row.default_climb_type as Session["climbingType"],
+          gradeSystem: row.grade_system || undefined,
+          notes: row.notes || undefined,
+          startTime: start,
+          endTime: end,
+          climbs: climbsMap[row.id] || [],
+          isActive: false,
+          breaks: 0,
+          totalBreakTime: 0,
+        } as Session;
       });
-      setSessions(parsedSessions);
-    }
-  }, []);
+
+      setSessions(loadedSessions);
+    };
+
+    loadSessions();
+  }, [user]);
 
   // Real-time timer for active session
   useEffect(() => {
@@ -56,17 +97,6 @@ export const useSessionManagement = () => {
     }
     return () => clearInterval(interval);
   }, [currentSession]);
-
-  useEffect(() => {
-    // Save to localStorage whenever state changes
-    if (currentSession) {
-      localStorage.setItem("currentSession", JSON.stringify(currentSession));
-    } else {
-      localStorage.removeItem("currentSession");
-    }
-    localStorage.setItem("climbs", JSON.stringify(climbs));
-    localStorage.setItem("sessions", JSON.stringify(sessions));
-  }, [currentSession, climbs, sessions]);
 
   const startSession = (
     sessionData: Omit<
@@ -134,14 +164,66 @@ export const useSessionManagement = () => {
     });
   };
 
-  const endSession = () => {
-    if (!currentSession) return;
+  const endSession = async () => {
+    if (!currentSession || !user) return;
+
     const updatedSession: Session = {
       ...currentSession,
       endTime: new Date(),
       isActive: false,
     };
+
+    const { data: sessionRow } = await supabase
+      .from("climbing_sessions")
+      .insert({
+        date: updatedSession.startTime.toISOString(),
+        duration: Math.floor(
+          (updatedSession.endTime.getTime() -
+            updatedSession.startTime.getTime()) /
+            60000,
+        ),
+        location: updatedSession.location,
+        default_climb_type: updatedSession.climbingType,
+        grade_system: updatedSession.gradeSystem || null,
+        notes: updatedSession.notes || null,
+        user_id: user.id,
+      })
+      .select()
+      .single();
+
+    if (sessionRow) {
+      for (const climb of updatedSession.climbs) {
+        const { data: climbRow } = await supabase
+          .from("climbs")
+          .insert({
+            name: climb.name,
+            grade: climb.grade,
+            type: updatedSession.climbingType,
+            send_type: climb.tickType,
+            attempts: climb.attempts ?? 1,
+            date: climb.timestamp.toISOString(),
+            location: climb.location ?? updatedSession.location,
+            duration: climb.timeOnWall ?? null,
+            elevation_gain: climb.height ?? null,
+            notes: climb.notes ?? null,
+            physical_skills: climb.physicalSkills ?? null,
+            technical_skills: climb.technicalSkills ?? null,
+            user_id: user.id,
+          })
+          .select()
+          .single();
+
+        if (climbRow) {
+          await supabase.from("climb_session_entries").insert({
+            session_id: sessionRow.id,
+            climb_id: climbRow.id,
+          });
+        }
+      }
+    }
+
     setSessions((prev) => [updatedSession, ...prev]);
+    setClimbs([]);
     setCurrentSession(null);
 
     toast({
