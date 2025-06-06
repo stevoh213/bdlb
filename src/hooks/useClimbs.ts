@@ -102,8 +102,8 @@ export const useClimbs = () => {
     climbs,
     isLoading,
     error,
-    addClimb: addClimbMutation.mutate,
-    updateClimb: updateClimbMutation.mutate,
+    addClimb: addClimbMutation.mutateAsync,
+    updateClimb: updateClimbMutation.mutateAsync,
     isAddingClimb: addClimbMutation.isPending,
     isUpdatingClimb: updateClimbMutation.isPending,
   };

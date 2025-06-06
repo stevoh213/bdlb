@@ -80,7 +80,7 @@ export const useClimbingSessions = () => {
     sessions,
     isLoading,
     error,
-    addSession: addSessionMutation.mutate,
+    addSession: addSessionMutation.mutateAsync,
     isAddingSession: addSessionMutation.isPending,
   };
 };
