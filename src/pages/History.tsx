@@ -41,7 +41,7 @@ const History = () => {
         if (session.aiAnalysis?.generatedAt) {
           session.aiAnalysis.generatedAt = new Date(session.aiAnalysis.generatedAt);
         }
-        session.climbs.forEach((climb: any) => {
+        session.climbs.forEach((climb: LocalClimb) => {
           climb.timestamp = new Date(climb.timestamp);
         });
       });
