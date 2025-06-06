@@ -89,17 +89,24 @@ export class AIAnalysisService {
         ? efforts.reduce((a, b) => a + b, 0) / efforts.length
         : 0;
 
+    const gradeSystemLine = session.gradeSystem
+      ? `- Grade system: ${session.gradeSystem}`
+      : "";
+    const notesLine = session.notes ? `- Notes: ${session.notes}` : "";
+
     return `Analyze this climbing session and provide specific feedback based on the actual performance data.
 
 SESSION DATA:
 - Location: ${session.location}
 - Type: ${session.climbingType}
-- Duration: ${duration} minutes
+${gradeSystemLine ? `${gradeSystemLine}\n` : ""}${notesLine ? `${notesLine}\n` : ""}- Duration: ${duration} minutes
 - Total climbs: ${session.climbs.length}
 - Sends: ${sends}
 - Failed attempts: ${attempts}
 - Flashes: ${flashes}
 - Onsights: ${onsights}
+- Breaks: ${session.breaks}
+- Total break time: ${session.totalBreakTime} minutes
 - Average effort: ${avgEffort.toFixed(1)}/10
 - Grades: ${grades.join(", ")}
 
@@ -107,7 +114,12 @@ CLIMBS DETAILS:
 ${session.climbs
   .map(
     (climb) =>
-      `- ${climb.name} (${climb.grade}): ${climb.tickType}${climb.effort ? `, effort ${climb.effort}/10` : ""}${climb.notes ? `, notes: ${climb.notes}` : ""}`,
+      `- ${climb.name} (${climb.grade}): ${climb.tickType}` +
+      (climb.attempts !== undefined ? `, attempts ${climb.attempts}` : "") +
+      (climb.effort !== undefined ? `, effort ${climb.effort}/10` : "") +
+      (climb.height !== undefined ? `, height ${climb.height}m` : "") +
+      (climb.timeOnWall !== undefined ? `, time on wall ${climb.timeOnWall}s` : "") +
+      (climb.notes ? `, notes: ${climb.notes}` : ""),
   )
   .join("\n")}
 
