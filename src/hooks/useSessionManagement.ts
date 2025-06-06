@@ -173,7 +173,7 @@ export const useSessionManagement = () => {
       isActive: false,
     };
 
-    const { data: sessionRow } = await supabase
+    const { data: sessionRow, error: sessionError } = await supabase
       .from("climbing_sessions")
       .insert({
         date: updatedSession.startTime.toISOString(),
@@ -191,34 +191,58 @@ export const useSessionManagement = () => {
       .select()
       .single();
 
-    if (sessionRow) {
-      for (const climb of updatedSession.climbs) {
-        const { data: climbRow } = await supabase
-          .from("climbs")
-          .insert({
-            name: climb.name,
-            grade: climb.grade,
-            type: updatedSession.climbingType,
-            send_type: climb.tickType,
-            attempts: climb.attempts ?? 1,
-            date: climb.timestamp.toISOString(),
-            location: climb.location ?? updatedSession.location,
-            duration: climb.timeOnWall ?? null,
-            elevation_gain: climb.height ?? null,
-            notes: climb.notes ?? null,
-            physical_skills: climb.physicalSkills ?? null,
-            technical_skills: climb.technicalSkills ?? null,
-            user_id: user.id,
-          })
-          .select()
-          .single();
+    if (sessionError || !sessionRow) {
+      toast({
+        title: "Error logging session",
+        description: sessionError?.message ?? "Unknown error",
+        variant: "destructive",
+      });
+      return;
+    }
 
-        if (climbRow) {
-          await supabase.from("climb_session_entries").insert({
-            session_id: sessionRow.id,
-            climb_id: climbRow.id,
-          });
-        }
+    for (const climb of updatedSession.climbs) {
+      const { data: climbRow, error: climbError } = await supabase
+        .from("climbs")
+        .insert({
+          name: climb.name,
+          grade: climb.grade,
+          type: updatedSession.climbingType,
+          send_type: climb.tickType,
+          attempts: climb.attempts ?? 1,
+          date: climb.timestamp.toISOString(),
+          location: climb.location ?? updatedSession.location,
+          duration: climb.timeOnWall ?? null,
+          elevation_gain: climb.height ?? null,
+          notes: climb.notes ?? null,
+          physical_skills: climb.physicalSkills ?? null,
+          technical_skills: climb.technicalSkills ?? null,
+          user_id: user.id,
+        })
+        .select()
+        .single();
+
+      if (climbError || !climbRow) {
+        toast({
+          title: "Error logging climb",
+          description: climbError?.message ?? "Unknown error",
+          variant: "destructive",
+        });
+        continue;
+      }
+
+      const { error: entryError } = await supabase
+        .from("climb_session_entries")
+        .insert({
+          session_id: sessionRow.id,
+          climb_id: climbRow.id,
+        });
+
+      if (entryError) {
+        toast({
+          title: "Error linking climb",
+          description: entryError.message,
+          variant: "destructive",
+        });
       }
     }
 
