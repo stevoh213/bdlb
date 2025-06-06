@@ -1,29 +1,28 @@
-
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
-import { Mountain } from 'lucide-react';
+import React, { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { Mountain } from "lucide-react";
 
 const LoginForm = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const { signIn } = useAuth();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const { error } = await signIn(email, password);
-    
+
     if (error) {
       toast({
         title: "Login Failed",
         description: error.message,
-        variant: "destructive"
+        variant: "destructive",
       });
     } else {
       toast({
@@ -39,9 +38,13 @@ const LoginForm = () => {
         <CardHeader className="text-center">
           <div className="flex items-center justify-center gap-2 mb-2">
             <Mountain className="h-8 w-8 text-amber-600" />
-            <CardTitle className="text-2xl font-bold text-stone-800">ClimbLog</CardTitle>
+            <CardTitle className="text-2xl font-bold text-stone-800">
+              ClimbLog
+            </CardTitle>
           </div>
-          <p className="text-stone-600">Sign in to track your climbing progress</p>
+          <p className="text-stone-600">
+            Sign in to track your climbing progress
+          </p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -67,7 +70,10 @@ const LoginForm = () => {
                 required
               />
             </div>
-            <Button type="submit" className="w-full bg-amber-600 hover:bg-amber-700">
+            <Button
+              type="submit"
+              className="w-full bg-amber-600 hover:bg-amber-700"
+            >
               Sign In
             </Button>
           </form>

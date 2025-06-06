@@ -1,7 +1,6 @@
-
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { AlertCircle } from 'lucide-react';
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { AlertCircle } from "lucide-react";
 
 interface AnalysisErrorProps {
   error: string;
@@ -17,7 +16,7 @@ const AnalysisError = ({ error, onShowSettings }: AnalysisErrorProps) => {
           <span className="font-semibold">Analysis Error</span>
         </div>
         <p className="text-red-600 mb-4">{error}</p>
-        <Button 
+        <Button
           onClick={onShowSettings}
           className="bg-red-600 hover:bg-red-700 text-white"
         >

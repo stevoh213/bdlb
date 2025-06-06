@@ -2,8 +2,8 @@ export interface Climb {
   id: string;
   name: string;
   grade: string;
-  type: 'sport' | 'trad' | 'boulder' | 'top rope' | 'alpine';
-  send_type: 'send' | 'attempt' | 'flash' | 'onsight' | 'project';
+  type: "sport" | "trad" | "boulder" | "top rope" | "alpine";
+  send_type: "send" | "attempt" | "flash" | "onsight" | "project";
   date: string;
   location: string;
   attempts: number;
@@ -28,8 +28,8 @@ export interface ClimbingSession {
   date: string;
   duration: number;
   location: string;
-  location_type?: 'indoor' | 'outdoor';
-  default_climb_type?: 'sport' | 'trad' | 'boulder' | 'top rope' | 'alpine';
+  location_type?: "indoor" | "outdoor";
+  default_climb_type?: "sport" | "trad" | "boulder" | "top rope" | "alpine";
   grade_system?: string;
   notes?: string;
   user_id: string;
@@ -41,7 +41,7 @@ export interface ClimbingSession {
 export interface Session {
   id: string;
   location: string;
-  climbingType: 'sport' | 'trad' | 'boulder' | 'top rope' | 'alpine';
+  climbingType: "sport" | "trad" | "boulder" | "top rope" | "alpine";
   gradeSystem?: string;
   notes?: string;
   startTime: Date;
@@ -65,7 +65,7 @@ export interface LocalClimb {
   id: string;
   name: string;
   grade: string;
-  tickType: 'send' | 'attempt' | 'flash' | 'onsight';
+  tickType: "send" | "attempt" | "flash" | "onsight";
   attempts?: number;
   timestamp: Date;
   sessionId?: string;
@@ -76,4 +76,3 @@ export interface LocalClimb {
   physicalSkills?: string[];
   technicalSkills?: string[];
 }
-

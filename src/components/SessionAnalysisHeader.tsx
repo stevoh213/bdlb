@@ -1,6 +1,5 @@
-
-import { Button } from '@/components/ui/button';
-import { Brain, X, RefreshCcw } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Brain, X, RefreshCcw } from "lucide-react";
 
 interface SessionAnalysisHeaderProps {
   onClose: () => void;
@@ -10,12 +9,12 @@ interface SessionAnalysisHeaderProps {
   loading: boolean;
 }
 
-const SessionAnalysisHeader = ({ 
-  onClose, 
-  onRegenerate, 
-  onShowSettings, 
-  hasAnalysis, 
-  loading 
+const SessionAnalysisHeader = ({
+  onClose,
+  onRegenerate,
+  onShowSettings,
+  hasAnalysis,
+  loading,
 }: SessionAnalysisHeaderProps) => {
   return (
     <div className="flex items-center justify-between">
@@ -25,8 +24,8 @@ const SessionAnalysisHeader = ({
       </h2>
       <div className="flex items-center gap-2">
         {hasAnalysis && (
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size="sm"
             onClick={onRegenerate}
             disabled={loading}
@@ -35,11 +34,7 @@ const SessionAnalysisHeader = ({
             Regenerate
           </Button>
         )}
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={onShowSettings}
-        >
+        <Button variant="outline" size="sm" onClick={onShowSettings}>
           Settings
         </Button>
         <Button variant="ghost" size="icon" onClick={onClose}>

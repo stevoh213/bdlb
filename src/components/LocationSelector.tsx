@@ -1,10 +1,20 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -15,7 +25,12 @@ interface LocationSelectorProps {
   className?: string;
 }
 
-const LocationSelector = ({ value, onChange, placeholder = "Select or enter location...", className }: LocationSelectorProps) => {
+const LocationSelector = ({
+  value,
+  onChange,
+  placeholder = "Select or enter location...",
+  className,
+}: LocationSelectorProps) => {
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [showCustomInput, setShowCustomInput] = useState(false);
@@ -24,7 +39,7 @@ const LocationSelector = ({ value, onChange, placeholder = "Select or enter loca
 
   // Load saved locations from localStorage on component mount
   useEffect(() => {
-    const saved = localStorage.getItem('climbingLocations');
+    const saved = localStorage.getItem("climbingLocations");
     if (saved) {
       setSavedLocations(JSON.parse(saved));
     }
@@ -33,10 +48,12 @@ const LocationSelector = ({ value, onChange, placeholder = "Select or enter loca
   // Save locations to localStorage whenever the list changes
   const saveLocation = (location: string) => {
     if (!location.trim()) return;
-    
-    const updatedLocations = [...new Set([...savedLocations, location.trim()])].sort();
+
+    const updatedLocations = [
+      ...new Set([...savedLocations, location.trim()]),
+    ].sort();
     setSavedLocations(updatedLocations);
-    localStorage.setItem('climbingLocations', JSON.stringify(updatedLocations));
+    localStorage.setItem("climbingLocations", JSON.stringify(updatedLocations));
   };
 
   const handleSelectLocation = (selectedLocation: string) => {
@@ -57,13 +74,15 @@ const LocationSelector = ({ value, onChange, placeholder = "Select or enter loca
     }
   };
 
-  const filteredLocations = savedLocations.filter(location =>
-    location.toLowerCase().includes(searchValue.toLowerCase())
+  const filteredLocations = savedLocations.filter((location) =>
+    location.toLowerCase().includes(searchValue.toLowerCase()),
   );
 
-  const showAddOption = searchValue && !filteredLocations.some(loc => 
-    loc.toLowerCase() === searchValue.toLowerCase()
-  );
+  const showAddOption =
+    searchValue &&
+    !filteredLocations.some(
+      (loc) => loc.toLowerCase() === searchValue.toLowerCase(),
+    );
 
   return (
     <div className={className}>
@@ -82,8 +101,8 @@ const LocationSelector = ({ value, onChange, placeholder = "Select or enter loca
         </PopoverTrigger>
         <PopoverContent className="w-full p-0" align="start">
           <Command>
-            <CommandInput 
-              placeholder="Search locations..." 
+            <CommandInput
+              placeholder="Search locations..."
               value={searchValue}
               onValueChange={setSearchValue}
             />
@@ -117,7 +136,7 @@ const LocationSelector = ({ value, onChange, placeholder = "Select or enter loca
                     <Check
                       className={cn(
                         "mr-2 h-4 w-4",
-                        value === location ? "opacity-100" : "opacity-0"
+                        value === location ? "opacity-100" : "opacity-0",
                       )}
                     />
                     {location}
@@ -158,7 +177,7 @@ const LocationSelector = ({ value, onChange, placeholder = "Select or enter loca
               placeholder="e.g. Red Rocks, Joshua Tree"
               className="flex-1"
               onKeyDown={(e) => {
-                if (e.key === 'Enter') {
+                if (e.key === "Enter") {
                   handleAddCustomLocation();
                 }
               }}

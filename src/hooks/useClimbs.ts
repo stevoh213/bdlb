@@ -1,25 +1,28 @@
-
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
-import { Climb } from '@/types/climbing';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { Climb } from "@/types/climbing";
 
 export const useClimbs = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: climbs = [], isLoading, error } = useQuery({
-    queryKey: ['climbs', user?.id],
+  const {
+    data: climbs = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["climbs", user?.id],
     queryFn: async () => {
       if (!user) return [];
-      
+
       const { data, error } = await supabase
-        .from('climbs')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('date', { ascending: false });
+        .from("climbs")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("date", { ascending: false });
 
       if (error) throw error;
       return data as Climb[];
@@ -28,11 +31,13 @@ export const useClimbs = () => {
   });
 
   const addClimbMutation = useMutation({
-    mutationFn: async (climbData: Omit<Climb, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
-      if (!user) throw new Error('User not authenticated');
+    mutationFn: async (
+      climbData: Omit<Climb, "id" | "user_id" | "created_at" | "updated_at">,
+    ) => {
+      if (!user) throw new Error("User not authenticated");
 
       const { data, error } = await supabase
-        .from('climbs')
+        .from("climbs")
         .insert({ ...climbData, user_id: user.id })
         .select()
         .single();
@@ -41,7 +46,7 @@ export const useClimbs = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['climbs'] });
+      queryClient.invalidateQueries({ queryKey: ["climbs"] });
       toast({
         title: "Climb logged!",
         description: "Your climb has been successfully recorded.",
@@ -57,14 +62,20 @@ export const useClimbs = () => {
   });
 
   const updateClimbMutation = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Climb> }) => {
-      if (!user) throw new Error('User not authenticated');
+    mutationFn: async ({
+      id,
+      updates,
+    }: {
+      id: string;
+      updates: Partial<Climb>;
+    }) => {
+      if (!user) throw new Error("User not authenticated");
 
       const { data, error } = await supabase
-        .from('climbs')
+        .from("climbs")
         .update(updates)
-        .eq('id', id)
-        .eq('user_id', user.id)
+        .eq("id", id)
+        .eq("user_id", user.id)
         .select()
         .single();
 
@@ -72,7 +83,7 @@ export const useClimbs = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['climbs'] });
+      queryClient.invalidateQueries({ queryKey: ["climbs"] });
       toast({
         title: "Climb updated!",
         description: "Your climb has been successfully updated.",

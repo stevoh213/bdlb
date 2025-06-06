@@ -1,11 +1,24 @@
-
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Brain, X, CheckCircle, AlertCircle, TrendingUp, Target, ChevronRight } from 'lucide-react';
-import { Session } from '@/types/climbing';
-import AnalysisCard from './AnalysisCard';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
+  Brain,
+  X,
+  CheckCircle,
+  AlertCircle,
+  TrendingUp,
+  Target,
+  ChevronRight,
+} from "lucide-react";
+import { Session } from "@/types/climbing";
+import AnalysisCard from "./AnalysisCard";
 
 interface AIAnalysisDrawerProps {
   session: Session;
@@ -23,9 +36,7 @@ const AIAnalysisDrawer = ({ session, children }: AIAnalysisDrawerProps) => {
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        {children}
-      </SheetTrigger>
+      <SheetTrigger asChild>{children}</SheetTrigger>
       <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
         <SheetHeader className="pb-6">
           <SheetTitle className="flex items-center gap-2 text-blue-700">
@@ -33,7 +44,8 @@ const AIAnalysisDrawer = ({ session, children }: AIAnalysisDrawerProps) => {
             AI Session Analysis
           </SheetTitle>
           <div className="text-sm text-stone-500">
-            Generated on {aiAnalysis.generatedAt.toLocaleDateString()} at {aiAnalysis.generatedAt.toLocaleTimeString()}
+            Generated on {aiAnalysis.generatedAt.toLocaleDateString()} at{" "}
+            {aiAnalysis.generatedAt.toLocaleTimeString()}
           </div>
         </SheetHeader>
 
@@ -98,7 +110,9 @@ const AIAnalysisDrawer = ({ session, children }: AIAnalysisDrawerProps) => {
                 {aiAnalysis.recommendations.map((recommendation, index) => (
                   <li key={index} className="flex items-start gap-2">
                     <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-blue-600 text-sm font-semibold">{index + 1}</span>
+                      <span className="text-blue-600 text-sm font-semibold">
+                        {index + 1}
+                      </span>
                     </div>
                     <span className="text-stone-700">{recommendation}</span>
                   </li>

@@ -1,8 +1,13 @@
-
-import { CheckCircle, AlertCircle, TrendingUp, Brain, Target } from 'lucide-react';
-import { AnalysisResult } from '@/services/aiAnalysis';
-import { Session } from '@/types/climbing';
-import AnalysisCard from './AnalysisCard';
+import {
+  CheckCircle,
+  AlertCircle,
+  TrendingUp,
+  Brain,
+  Target,
+} from "lucide-react";
+import { AnalysisResult } from "@/services/aiAnalysis";
+import { Session } from "@/types/climbing";
+import AnalysisCard from "./AnalysisCard";
 
 interface AnalysisContentProps {
   analysis: AnalysisResult;
@@ -14,10 +19,11 @@ const AnalysisContent = ({ analysis, session }: AnalysisContentProps) => {
     <div className="space-y-4">
       {session.aiAnalysis && (
         <div className="text-sm text-stone-500 text-center">
-          Generated on {session.aiAnalysis.generatedAt.toLocaleDateString()} at {session.aiAnalysis.generatedAt.toLocaleTimeString()}
+          Generated on {session.aiAnalysis.generatedAt.toLocaleDateString()} at{" "}
+          {session.aiAnalysis.generatedAt.toLocaleTimeString()}
         </div>
       )}
-      
+
       {/* Summary */}
       <AnalysisCard
         title="Session Summary"
@@ -78,7 +84,9 @@ const AnalysisContent = ({ analysis, session }: AnalysisContentProps) => {
             {analysis.recommendations.map((recommendation, index) => (
               <li key={index} className="flex items-start gap-2">
                 <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-blue-600 text-sm font-semibold">{index + 1}</span>
+                  <span className="text-blue-600 text-sm font-semibold">
+                    {index + 1}
+                  </span>
                 </div>
                 <span className="text-stone-700">{recommendation}</span>
               </li>

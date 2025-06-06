@@ -1,9 +1,11 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { physicalSkills as defaultPhysicalSkills, technicalSkills as defaultTechnicalSkills } from "@/utils/skills";
+import {
+  physicalSkills as defaultPhysicalSkills,
+  technicalSkills as defaultTechnicalSkills,
+} from "@/utils/skills";
 
 interface SkillsSelectorProps {
   selectedPhysicalSkills: string[];
@@ -12,23 +14,27 @@ interface SkillsSelectorProps {
   onTechnicalSkillsChange: (skills: string[]) => void;
 }
 
-const SkillsSelector = ({ 
-  selectedPhysicalSkills, 
-  selectedTechnicalSkills, 
-  onPhysicalSkillsChange, 
-  onTechnicalSkillsChange 
+const SkillsSelector = ({
+  selectedPhysicalSkills,
+  selectedTechnicalSkills,
+  onPhysicalSkillsChange,
+  onTechnicalSkillsChange,
 }: SkillsSelectorProps) => {
-  const [physicalSkills, setPhysicalSkills] = useState<string[]>(defaultPhysicalSkills);
-  const [technicalSkills, setTechnicalSkills] = useState<string[]>(defaultTechnicalSkills);
+  const [physicalSkills, setPhysicalSkills] = useState<string[]>(
+    defaultPhysicalSkills,
+  );
+  const [technicalSkills, setTechnicalSkills] = useState<string[]>(
+    defaultTechnicalSkills,
+  );
 
   // Load custom skills from localStorage
   useEffect(() => {
-    const customPhysicalSkills = localStorage.getItem('customPhysicalSkills');
+    const customPhysicalSkills = localStorage.getItem("customPhysicalSkills");
     if (customPhysicalSkills) {
       setPhysicalSkills(JSON.parse(customPhysicalSkills));
     }
 
-    const customTechnicalSkills = localStorage.getItem('customTechnicalSkills');
+    const customTechnicalSkills = localStorage.getItem("customTechnicalSkills");
     if (customTechnicalSkills) {
       setTechnicalSkills(JSON.parse(customTechnicalSkills));
     }
@@ -36,14 +42,14 @@ const SkillsSelector = ({
 
   const togglePhysicalSkill = (skill: string) => {
     const newSkills = selectedPhysicalSkills.includes(skill)
-      ? selectedPhysicalSkills.filter(s => s !== skill)
+      ? selectedPhysicalSkills.filter((s) => s !== skill)
       : [...selectedPhysicalSkills, skill];
     onPhysicalSkillsChange(newSkills);
   };
 
   const toggleTechnicalSkill = (skill: string) => {
     const newSkills = selectedTechnicalSkills.includes(skill)
-      ? selectedTechnicalSkills.filter(s => s !== skill)
+      ? selectedTechnicalSkills.filter((s) => s !== skill)
       : [...selectedTechnicalSkills, skill];
     onTechnicalSkillsChange(newSkills);
   };
@@ -52,7 +58,9 @@ const SkillsSelector = ({
     <div className="space-y-4">
       <Card className="border-stone-200">
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm text-stone-700">Physical Skills</CardTitle>
+          <CardTitle className="text-sm text-stone-700">
+            Physical Skills
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
@@ -76,7 +84,9 @@ const SkillsSelector = ({
 
       <Card className="border-stone-200">
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm text-stone-700">Technical Skills</CardTitle>
+          <CardTitle className="text-sm text-stone-700">
+            Technical Skills
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">

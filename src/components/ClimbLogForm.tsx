@@ -1,9 +1,14 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,7 +21,7 @@ interface ClimbLogFormProps {
   onSubmit: (climb: {
     name: string;
     grade: string;
-    tickType: 'send' | 'attempt' | 'flash' | 'onsight';
+    tickType: "send" | "attempt" | "flash" | "onsight";
     attempts?: number;
     height?: number;
     timeOnWall?: number;
@@ -31,11 +36,18 @@ interface ClimbLogFormProps {
   sessionLocation?: string;
 }
 
-const ClimbLogForm = ({ onSubmit, onCancel, gradeSystem = 'yds', sessionLocation }: ClimbLogFormProps) => {
+const ClimbLogForm = ({
+  onSubmit,
+  onCancel,
+  gradeSystem = "yds",
+  sessionLocation,
+}: ClimbLogFormProps) => {
   const [name, setName] = useState("");
   const [grade, setGrade] = useState("");
   const [location, setLocation] = useState(sessionLocation || "");
-  const [tickType, setTickType] = useState<'send' | 'attempt' | 'flash' | 'onsight'>('send');
+  const [tickType, setTickType] = useState<
+    "send" | "attempt" | "flash" | "onsight"
+  >("send");
   const [attempts, setAttempts] = useState(1);
   const [height, setHeight] = useState<number | undefined>();
   const [timeOnWall, setTimeOnWall] = useState<number | undefined>();
@@ -54,20 +66,20 @@ const ClimbLogForm = ({ onSubmit, onCancel, gradeSystem = 'yds', sessionLocation
       grade,
       location: location || undefined,
       tickType,
-      attempts: tickType === 'attempt' ? attempts : undefined,
+      attempts: tickType === "attempt" ? attempts : undefined,
       height,
       timeOnWall,
       effort: effort[0],
       notes: notes || undefined,
       physicalSkills: physicalSkills.length > 0 ? physicalSkills : undefined,
-      technicalSkills: technicalSkills.length > 0 ? technicalSkills : undefined
+      technicalSkills: technicalSkills.length > 0 ? technicalSkills : undefined,
     });
 
     // Reset form
     setName("");
     setGrade("");
     setLocation(sessionLocation || "");
-    setTickType('send');
+    setTickType("send");
     setAttempts(1);
     setHeight(undefined);
     setTimeOnWall(undefined);
@@ -80,9 +92,9 @@ const ClimbLogForm = ({ onSubmit, onCancel, gradeSystem = 'yds', sessionLocation
 
   const tickTypeColors = {
     send: "bg-green-100 text-green-800 border-green-200",
-    attempt: "bg-orange-100 text-orange-800 border-orange-200", 
+    attempt: "bg-orange-100 text-orange-800 border-orange-200",
     flash: "bg-blue-100 text-blue-800 border-blue-200",
-    onsight: "bg-purple-100 text-purple-800 border-purple-200"
+    onsight: "bg-purple-100 text-purple-800 border-purple-200",
   };
 
   const availableGrades = getGradesForSystem(gradeSystem);
@@ -92,7 +104,9 @@ const ClimbLogForm = ({ onSubmit, onCancel, gradeSystem = 'yds', sessionLocation
       {/* Essential Fields */}
       <div className="space-y-3">
         <div>
-          <Label htmlFor="name" className="text-stone-700 font-medium">Route Name *</Label>
+          <Label htmlFor="name" className="text-stone-700 font-medium">
+            Route Name *
+          </Label>
           <Input
             id="name"
             value={name}
@@ -104,14 +118,18 @@ const ClimbLogForm = ({ onSubmit, onCancel, gradeSystem = 'yds', sessionLocation
         </div>
 
         <div>
-          <Label htmlFor="grade" className="text-stone-700 font-medium">Grade *</Label>
+          <Label htmlFor="grade" className="text-stone-700 font-medium">
+            Grade *
+          </Label>
           <Select value={grade} onValueChange={setGrade} required>
             <SelectTrigger className="h-12 text-lg border-stone-300 focus:border-emerald-500">
               <SelectValue placeholder="Select grade" />
             </SelectTrigger>
             <SelectContent className="bg-white">
               {availableGrades.map((g) => (
-                <SelectItem key={g} value={g}>{g}</SelectItem>
+                <SelectItem key={g} value={g}>
+                  {g}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -120,16 +138,18 @@ const ClimbLogForm = ({ onSubmit, onCancel, gradeSystem = 'yds', sessionLocation
         <div>
           <Label className="text-stone-700 font-medium">Tick Type *</Label>
           <div className="grid grid-cols-2 gap-2 mt-2">
-            {(['send', 'attempt', 'flash', 'onsight'] as const).map((type) => (
+            {(["send", "attempt", "flash", "onsight"] as const).map((type) => (
               <Badge
                 key={type}
                 variant="outline"
                 className={`h-12 flex items-center justify-center cursor-pointer transition-all capitalize ${
-                  tickType === type ? tickTypeColors[type] : "border-stone-300 text-stone-600 hover:bg-stone-50"
+                  tickType === type
+                    ? tickTypeColors[type]
+                    : "border-stone-300 text-stone-600 hover:bg-stone-50"
                 }`}
                 onClick={() => {
                   setTickType(type);
-                  if (type !== 'attempt') {
+                  if (type !== "attempt") {
                     setAttempts(1);
                   }
                 }}
@@ -141,16 +161,24 @@ const ClimbLogForm = ({ onSubmit, onCancel, gradeSystem = 'yds', sessionLocation
         </div>
 
         {/* Attempts field - only show for attempt tick type */}
-        {tickType === 'attempt' && (
+        {tickType === "attempt" && (
           <div>
-            <Label htmlFor="attempts" className="text-stone-700 font-medium">Number of Attempts *</Label>
-            <Select value={attempts.toString()} onValueChange={(value) => setAttempts(Number(value))} required>
+            <Label htmlFor="attempts" className="text-stone-700 font-medium">
+              Number of Attempts *
+            </Label>
+            <Select
+              value={attempts.toString()}
+              onValueChange={(value) => setAttempts(Number(value))}
+              required
+            >
               <SelectTrigger className="h-12 text-lg border-stone-300 focus:border-emerald-500">
                 <SelectValue placeholder="Select attempts" />
               </SelectTrigger>
               <SelectContent className="bg-white">
                 {[1, 2, 3, 4, 5].map((num) => (
-                  <SelectItem key={num} value={num.toString()}>{num} attempt{num !== 1 ? 's' : ''}</SelectItem>
+                  <SelectItem key={num} value={num.toString()}>
+                    {num} attempt{num !== 1 ? "s" : ""}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -175,29 +203,45 @@ const ClimbLogForm = ({ onSubmit, onCancel, gradeSystem = 'yds', sessionLocation
             <LocationSelector
               value={location}
               onChange={setLocation}
-              placeholder={sessionLocation ? `Using session location: ${sessionLocation}` : "Enter specific location (optional)"}
+              placeholder={
+                sessionLocation
+                  ? `Using session location: ${sessionLocation}`
+                  : "Enter specific location (optional)"
+              }
               className="mb-4"
             />
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="height" className="text-stone-700">Height (ft)</Label>
+                <Label htmlFor="height" className="text-stone-700">
+                  Height (ft)
+                </Label>
                 <Input
                   id="height"
                   type="number"
                   value={height || ""}
-                  onChange={(e) => setHeight(e.target.value ? Number(e.target.value) : undefined)}
+                  onChange={(e) =>
+                    setHeight(
+                      e.target.value ? Number(e.target.value) : undefined,
+                    )
+                  }
                   placeholder="0"
                   className="border-stone-300"
                 />
               </div>
               <div>
-                <Label htmlFor="timeOnWall" className="text-stone-700">Time (min)</Label>
+                <Label htmlFor="timeOnWall" className="text-stone-700">
+                  Time (min)
+                </Label>
                 <Input
                   id="timeOnWall"
                   type="number"
                   value={timeOnWall || ""}
-                  onChange={(e) => setTimeOnWall(e.target.value ? Number(e.target.value) : undefined)}
+                  onChange={(e) =>
+                    setTimeOnWall(
+                      e.target.value ? Number(e.target.value) : undefined,
+                    )
+                  }
                   placeholder="0"
                   className="border-stone-300"
                 />
@@ -205,7 +249,9 @@ const ClimbLogForm = ({ onSubmit, onCancel, gradeSystem = 'yds', sessionLocation
             </div>
 
             <div>
-              <Label className="text-stone-700">Perceived Effort: {effort[0]}/10</Label>
+              <Label className="text-stone-700">
+                Perceived Effort: {effort[0]}/10
+              </Label>
               <div className="mt-2 px-2">
                 <Slider
                   value={effort}
@@ -226,7 +272,9 @@ const ClimbLogForm = ({ onSubmit, onCancel, gradeSystem = 'yds', sessionLocation
             />
 
             <div>
-              <Label htmlFor="notes" className="text-stone-700">Notes</Label>
+              <Label htmlFor="notes" className="text-stone-700">
+                Notes
+              </Label>
               <Textarea
                 id="notes"
                 value={notes}

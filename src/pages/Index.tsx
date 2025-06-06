@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useSessionManagement } from "@/hooks/useSessionManagement";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,7 +10,7 @@ import EditClimbDialog from "@/components/EditClimbDialog";
 const Index = () => {
   const [editingClimb, setEditingClimb] = useState<LocalClimb | null>(null);
   const { user } = useAuth();
-  
+
   const {
     currentSession,
     sessions,
@@ -21,7 +20,7 @@ const Index = () => {
     resumeSession,
     endSession,
     addClimb,
-    updateClimb
+    updateClimb,
   } = useSessionManagement();
 
   return (
@@ -49,11 +48,11 @@ const Index = () => {
 
         {/* Edit Climb Dialog */}
         {editingClimb && (
-          <EditClimbDialog 
-            climb={editingClimb} 
-            open={!!editingClimb} 
-            onOpenChange={open => !open && setEditingClimb(null)} 
-            onSave={updateClimb} 
+          <EditClimbDialog
+            climb={editingClimb}
+            open={!!editingClimb}
+            onOpenChange={(open) => !open && setEditingClimb(null)}
+            onSave={updateClimb}
           />
         )}
       </div>

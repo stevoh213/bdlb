@@ -1,7 +1,6 @@
-
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Session, User, AuthError } from '@supabase/supabase-js';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Session, User, AuthError } from "@supabase/supabase-js";
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -9,11 +8,11 @@ interface AuthContextType {
   session: Session | null;
   signUp: (
     email: string,
-    password: string
+    password: string,
   ) => Promise<{ error: AuthError | null }>;
   signIn: (
     email: string,
-    password: string
+    password: string,
   ) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
   loading: boolean;
@@ -25,12 +24,14 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -52,13 +53,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(false);
 
       // Create profile when user signs up - use correct event name
-      if (event === 'SIGNED_IN' && session?.user && !session.user.email_confirmed_at) {
+      if (
+        event === "SIGNED_IN" &&
+        session?.user &&
+        !session.user.email_confirmed_at
+      ) {
         const { error } = await supabase
-          .from('profiles')
+          .from("profiles")
           .insert([{ id: session.user.id }]);
-        
+
         if (error) {
-          console.error('Error creating profile:', error);
+          console.error("Error creating profile:", error);
         }
       }
     });
@@ -87,15 +92,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider 
-      value={{ 
-        isAuthenticated: !!session, 
-        user, 
-        session, 
-        signUp, 
-        signIn, 
-        signOut, 
-        loading 
+    <AuthContext.Provider
+      value={{
+        isAuthenticated: !!session,
+        user,
+        session,
+        signUp,
+        signIn,
+        signOut,
+        loading,
       }}
     >
       {children}
