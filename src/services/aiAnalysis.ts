@@ -1,5 +1,5 @@
-import { Session } from "@/types/climbing";
 import { OPENROUTER_CONFIG } from "@/config/openrouter";
+import { Session } from "@/types/climbing";
 
 export interface AnalysisResult {
   summary: string;
@@ -94,8 +94,12 @@ export class AIAnalysisService {
       : "";
     const notesLine = session.notes ? `- Notes: ${session.notes}` : "";
     const breaksLine =
-      session.breaks || session.totalBreakTime
+      session.breaks && session.totalBreakTime
         ? `- Breaks taken: ${session.breaks} (total ${session.totalBreakTime} minutes)`
+        : session.breaks
+        ? `- Breaks taken: ${session.breaks}`
+        : session.totalBreakTime
+        ? `- Total break time: ${session.totalBreakTime} minutes`
         : "";
 
     const climbDetails = session.climbs
