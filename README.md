@@ -9,8 +9,11 @@
 The application requires the following environment variables:
 
 - `OPENROUTER_API_KEY` – API key used to access the OpenRouter service.
-- `SUPABASE_URL` – URL of your Supabase project.
-- `SUPABASE_PUBLISHABLE_KEY` – Supabase publishable API key.
+- `VITE_SUPABASE_URL` – URL of your Supabase project.
+- `VITE_SUPABASE_ANON_KEY` – Supabase anon key.
+
+The variables `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` were used in
+earlier versions and are now replaced by the `VITE_`-prefixed variants.
 
 ## How can I edit this code?
 
@@ -49,11 +52,13 @@ npm run dev
 Create a `.env` file in the project root with the following values:
 
 ```sh
-SUPABASE_URL=<your-supabase-url>
-SUPABASE_PUBLISHABLE_KEY=<your-supabase-publishable-key>
+VITE_SUPABASE_URL=<your-supabase-url>
+VITE_SUPABASE_ANON_KEY=<your-supabase-anon-key>
 ```
 
-These variables configure the Supabase client used by the app.
+These variables configure the Supabase client used by the app. Earlier
+documentation referenced `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`,
+which have been renamed to the `VITE_`-prefixed variables above.
 
 **Edit a file directly in GitHub**
 
