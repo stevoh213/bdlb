@@ -71,3 +71,7 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+
+## Environment variables
+
+The app reads a default OpenRouter API key from the `OPENROUTER_API_KEY` environment variable. If this variable is not set, a demo key bundled with the source will be used.
