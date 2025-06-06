@@ -36,6 +36,17 @@ npm i
 npm run dev
 ```
 
+### Environment variables
+
+Create a `.env` file in the project root with the following values:
+
+```sh
+SUPABASE_URL=<your-supabase-url>
+SUPABASE_PUBLISHABLE_KEY=<your-supabase-publishable-key>
+```
+
+These variables configure the Supabase client used by the app.
+
 **Edit a file directly in GitHub**
 
 - Navigate to the desired file(s).
