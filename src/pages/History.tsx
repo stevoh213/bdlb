@@ -24,10 +24,11 @@ import EditSessionDialog from "@/components/EditSessionDialog";
 import DeleteConfirmDialog from "@/components/DeleteConfirmDialog";
 import SessionAnalysis from "@/components/SessionAnalysis";
 import AIAnalysisDrawer from "@/components/AIAnalysisDrawer";
-import { Session, LocalClimb } from "@/types/climbing";
+import { Session, LocalClimb, AIAnalysis } from "@/types/climbing";
 import { exportToCSV } from "@/utils/csvExport";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const History = () => {
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -62,6 +63,39 @@ const History = () => {
       });
       setSessions(parsedSessions);
 
+      const loadAnalyses = async () => {
+        if (!user) return;
+        const ids = parsedSessions.map((s: Session) => s.id);
+        if (ids.length === 0) return;
+        const { data, error } = await supabase
+          .from("session_analyses")
+          .select("*")
+          .in("session_id", ids)
+          .eq("user_id", user.id);
+        if (!error && data) {
+          const map = new Map(
+            data.map((row) => [
+              row.session_id,
+              {
+                summary: row.summary,
+                strengths: row.strengths || [],
+                areasForImprovement: row.areas_for_improvement || [],
+                recommendations: row.recommendations || [],
+                progressInsights: row.progress_insights || "",
+                generatedAt: new Date(row.created_at),
+              } as AIAnalysis,
+            ]),
+          );
+          setSessions((prev) =>
+            prev.map((s) =>
+              map.has(s.id) ? { ...s, aiAnalysis: map.get(s.id)! } : s,
+            ),
+          );
+        }
+      };
+
+      loadAnalyses();
+
       // Check if we should auto-select a session from navigation state
       const { selectedSessionId } = location.state || {};
       if (selectedSessionId) {
@@ -73,7 +107,7 @@ const History = () => {
         }
       }
     }
-  }, [location.state]);
+  }, [location.state, user]);
 
   const resumeEndedSession = (sessionId: string) => {
     const sessionToResume = sessions.find(
@@ -290,9 +324,9 @@ const History = () => {
     setDeleteConfirm(null);
   };
 
-  const handleAnalysisSaved = (
+  const handleAnalysisSaved = async (
     sessionId: string,
-    analysis: Session["aiAnalysis"],
+    analysis: AIAnalysis,
   ) => {
     const updatedSessions = sessions.map((session) =>
       session.id === sessionId
@@ -304,6 +338,22 @@ const History = () => {
     );
     setSessions(updatedSessions);
     localStorage.setItem("sessions", JSON.stringify(updatedSessions));
+
+    if (user) {
+      await supabase.from("session_analyses").upsert(
+        {
+          session_id: sessionId,
+          user_id: user.id,
+          summary: analysis.summary,
+          strengths: analysis.strengths,
+          areas_for_improvement: analysis.areasForImprovement,
+          recommendations: analysis.recommendations,
+          progress_insights: analysis.progressInsights,
+          created_at: analysis.generatedAt.toISOString(),
+        },
+        { onConflict: "session_id" },
+      );
+    }
 
     // Update selectedSession if it's the one being analyzed
     if (selectedSession?.id === sessionId) {

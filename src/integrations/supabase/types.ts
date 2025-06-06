@@ -159,6 +159,42 @@ export type Database = {
         };
         Relationships: [];
       };
+      session_analyses: {
+        Row: {
+          created_at: string;
+          id: string;
+          session_id: string;
+          summary: string;
+          strengths: string[] | null;
+          areas_for_improvement: string[] | null;
+          recommendations: string[] | null;
+          progress_insights: string | null;
+          user_id: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          session_id: string;
+          summary: string;
+          strengths?: string[] | null;
+          areas_for_improvement?: string[] | null;
+          recommendations?: string[] | null;
+          progress_insights?: string | null;
+          user_id?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          session_id?: string;
+          summary?: string;
+          strengths?: string[] | null;
+          areas_for_improvement?: string[] | null;
+          recommendations?: string[] | null;
+          progress_insights?: string | null;
+          user_id?: string | null;
+        };
+        Relationships: [];
+      };
       max_onsight_grades: {
         Row: {
           created_at: string;

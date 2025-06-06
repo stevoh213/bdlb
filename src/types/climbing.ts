@@ -50,14 +50,16 @@ export interface Session {
   isActive: boolean;
   breaks: number;
   totalBreakTime: number;
-  aiAnalysis?: {
-    summary: string;
-    strengths: string[];
-    areasForImprovement: string[];
-    recommendations: string[];
-    progressInsights: string;
-    generatedAt: Date;
-  };
+  aiAnalysis?: AIAnalysis;
+}
+
+export interface AIAnalysis {
+  summary: string;
+  strengths: string[];
+  areasForImprovement: string[];
+  recommendations: string[];
+  progressInsights: string;
+  generatedAt: Date;
 }
 
 // Local climb interface for the frontend

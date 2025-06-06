@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Session } from "@/types/climbing";
+import { Session, AIAnalysis } from "@/types/climbing";
 import { AIAnalysisService, AnalysisResult } from "@/services/aiAnalysis";
 import AISettingsForm from "./AISettingsForm";
 import SessionAnalysisHeader from "./SessionAnalysisHeader";
@@ -13,10 +13,7 @@ import { OPENROUTER_CONFIG } from "@/config/openrouter";
 interface SessionAnalysisProps {
   session: Session;
   onClose: () => void;
-  onAnalysisSaved?: (
-    sessionId: string,
-    analysis: Session["aiAnalysis"],
-  ) => void;
+  onAnalysisSaved?: (sessionId: string, analysis: AIAnalysis) => void;
   autoStart?: boolean;
 }
 
