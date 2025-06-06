@@ -93,6 +93,31 @@ export class AIAnalysisService {
       ? `- Grade system: ${session.gradeSystem}`
       : "";
     const notesLine = session.notes ? `- Notes: ${session.notes}` : "";
+    const breaksLine =
+      session.breaks || session.totalBreakTime
+        ? `- Breaks taken: ${session.breaks} (total ${session.totalBreakTime} minutes)`
+        : "";
+
+    const climbDetails = session.climbs
+      .map((climb) => {
+        const parts = [
+          `- ${climb.name} (${climb.grade}): ${climb.tickType}`,
+          climb.effort !== undefined ? `effort ${climb.effort}/10` : undefined,
+          climb.height !== undefined ? `height ${climb.height}m` : undefined,
+          climb.timeOnWall !== undefined
+            ? `time on wall ${climb.timeOnWall}s`
+            : undefined,
+          climb.physicalSkills && climb.physicalSkills.length > 0
+            ? `physical skills: ${climb.physicalSkills.join(", ")}`
+            : undefined,
+          climb.technicalSkills && climb.technicalSkills.length > 0
+            ? `technical skills: ${climb.technicalSkills.join(", ")}`
+            : undefined,
+          climb.notes ? `notes: ${climb.notes}` : undefined,
+        ].filter(Boolean);
+        return parts.join(", ");
+      })
+      .join("\n");
 
     return `Analyze this climbing session and provide specific feedback based on the actual performance data.
 
@@ -109,6 +134,9 @@ ${gradeSystemLine ? `${gradeSystemLine}\n` : ""}${notesLine ? `${notesLine}\n` :
 - Total break time: ${session.totalBreakTime} minutes
 - Average effort: ${avgEffort.toFixed(1)}/10
 - Grades: ${grades.join(", ")}
+${gradeSystemLine ? `\n${gradeSystemLine}` : ""}
+${notesLine ? `\n${notesLine}` : ""}
+${breaksLine ? `\n${breaksLine}` : ""}
 
 CLIMBS DETAILS:
 ${session.climbs
@@ -122,6 +150,7 @@ ${session.climbs
       (climb.notes ? `, notes: ${climb.notes}` : ""),
   )
   .join("\n")}
+${climbDetails}
 
 Please provide analysis in exactly this format:
 
