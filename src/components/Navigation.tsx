@@ -1,9 +1,13 @@
-
-import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useAuth } from '@/contexts/AuthContext';
-import { Mountain, History, LogOut, User, Menu, X, Settings } from 'lucide-react';
+import { History, LogOut, Menu, Mountain, Settings, User, X } from 'lucide-react';
+import { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 
 const Navigation = () => {
   const { signOut, user } = useAuth();
@@ -68,6 +72,21 @@ const Navigation = () => {
                   <User className="h-4 w-4" />
                   <span className="hidden lg:inline">{user?.email}</span>
                 </div>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => signOut()}
+                      className="text-gray-500 hover:text-red-600"
+                    >
+                      <LogOut className="h-5 w-5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Sign Out</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
             </div>
 
