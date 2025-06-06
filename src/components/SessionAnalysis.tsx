@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Session } from '@/types/climbing';
 import { AIAnalysisService, AnalysisResult } from '@/services/aiAnalysis';
 import AISettingsForm from './AISettingsForm';
@@ -25,36 +25,11 @@ const SessionAnalysis = ({ session, onClose, onAnalysisSaved, autoStart = false 
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    // If session already has saved analysis, use it
-    if (session.aiAnalysis) {
-      setAnalysis({
-        summary: session.aiAnalysis.summary,
-        strengths: session.aiAnalysis.strengths,
-        areasForImprovement: session.aiAnalysis.areasForImprovement,
-        recommendations: session.aiAnalysis.recommendations,
-        progressInsights: session.aiAnalysis.progressInsights
-      });
-      return;
-    }
-
-    // Only auto-start if explicitly requested and API key is available
-    if (autoStart) {
-      const savedApiKey = localStorage.getItem('openrouter_api_key') || OPENROUTER_CONFIG.defaultApiKey;
-      const savedModel = localStorage.getItem('openrouter_model') || OPENROUTER_CONFIG.defaultModel;
-      
-      if (savedApiKey) {
-        performAnalysis(savedApiKey, savedModel);
-      } else {
-        setShowSettings(true);
-      }
-    }
-  }, [autoStart]);
-
-  const performAnalysis = async (apiKey: string, model?: string) => {
-    setLoading(true);
-    setError(null);
-    setShowSettings(false);
+  const performAnalysis = useCallback(
+    async (apiKey: string, model?: string) => {
+      setLoading(true);
+      setError(null);
+      setShowSettings(false);
 
     try {
       const analysisService = new AIAnalysisService(apiKey, model || OPENROUTER_CONFIG.defaultModel);
@@ -87,7 +62,37 @@ const SessionAnalysis = ({ session, onClose, onAnalysisSaved, autoStart = false 
     } finally {
       setLoading(false);
     }
-  };
+    },
+    [onAnalysisSaved, session, toast]
+  );
+
+  useEffect(() => {
+    // If session already has saved analysis, use it
+    if (session.aiAnalysis) {
+      setAnalysis({
+        summary: session.aiAnalysis.summary,
+        strengths: session.aiAnalysis.strengths,
+        areasForImprovement: session.aiAnalysis.areasForImprovement,
+        recommendations: session.aiAnalysis.recommendations,
+        progressInsights: session.aiAnalysis.progressInsights,
+      });
+      return;
+    }
+
+    // Only auto-start if explicitly requested and API key is available
+    if (autoStart) {
+      const savedApiKey =
+        localStorage.getItem('openrouter_api_key') || OPENROUTER_CONFIG.defaultApiKey;
+      const savedModel =
+        localStorage.getItem('openrouter_model') || OPENROUTER_CONFIG.defaultModel;
+
+      if (savedApiKey) {
+        performAnalysis(savedApiKey, savedModel);
+      } else {
+        setShowSettings(true);
+      }
+    }
+  }, [autoStart, performAnalysis, session.aiAnalysis]);
 
   const handleSettingsSave = (apiKey: string, model: string) => {
     performAnalysis(apiKey, model);

@@ -1,4 +1,6 @@
 
+const envApiKey = process.env.OPENROUTER_API_KEY;
+
 export const OPENROUTER_CONFIG = {
   baseURL: 'https://openrouter.ai/api/v1',
   defaultModel: 'microsoft/phi-4-reasoning-plus:free',

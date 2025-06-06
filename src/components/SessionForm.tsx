@@ -70,7 +70,7 @@ const SessionForm = ({ onSubmit, onCancel }: SessionFormProps) => {
           id="notes"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          placeholder="Weather, conditions, goals..."
+          placeholder="Weather, conditions..."
           className="border-stone-300 resize-none"
           rows={3}
         />
