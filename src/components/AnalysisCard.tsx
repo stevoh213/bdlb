@@ -1,6 +1,5 @@
-
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { LucideIcon } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { LucideIcon } from "lucide-react";
 
 interface AnalysisCardProps {
   title: string;
@@ -10,7 +9,13 @@ interface AnalysisCardProps {
   children: React.ReactNode;
 }
 
-const AnalysisCard = ({ title, icon: Icon, iconColor, borderColor, children }: AnalysisCardProps) => {
+const AnalysisCard = ({
+  title,
+  icon: Icon,
+  iconColor,
+  borderColor,
+  children,
+}: AnalysisCardProps) => {
   return (
     <Card className={`${borderColor} shadow-lg`}>
       <CardHeader className="pb-3">
@@ -19,9 +24,7 @@ const AnalysisCard = ({ title, icon: Icon, iconColor, borderColor, children }: A
           {title}
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        {children}
-      </CardContent>
+      <CardContent>{children}</CardContent>
     </Card>
   );
 };

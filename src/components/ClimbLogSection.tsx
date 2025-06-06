@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,14 +8,22 @@ import ClimbList from "./ClimbList";
 
 interface ClimbLogSectionProps {
   currentSession: Session | null;
-  onAddClimb: (climb: Omit<LocalClimb, 'id' | 'timestamp' | 'sessionId'>) => void;
+  onAddClimb: (
+    climb: Omit<LocalClimb, "id" | "timestamp" | "sessionId">,
+  ) => void;
   onEditClimb: (climb: LocalClimb) => void;
 }
 
-const ClimbLogSection = ({ currentSession, onAddClimb, onEditClimb }: ClimbLogSectionProps) => {
+const ClimbLogSection = ({
+  currentSession,
+  onAddClimb,
+  onEditClimb,
+}: ClimbLogSectionProps) => {
   const [showClimbForm, setShowClimbForm] = useState(false);
 
-  const handleAddClimb = (climb: Omit<LocalClimb, 'id' | 'timestamp' | 'sessionId'>) => {
+  const handleAddClimb = (
+    climb: Omit<LocalClimb, "id" | "timestamp" | "sessionId">,
+  ) => {
     onAddClimb(climb);
     setShowClimbForm(false);
   };
@@ -35,14 +42,17 @@ const ClimbLogSection = ({ currentSession, onAddClimb, onEditClimb }: ClimbLogSe
         </CardHeader>
         <CardContent>
           {showClimbForm ? (
-            <ClimbLogForm 
-              onSubmit={handleAddClimb} 
-              onCancel={() => setShowClimbForm(false)} 
+            <ClimbLogForm
+              onSubmit={handleAddClimb}
+              onCancel={() => setShowClimbForm(false)}
               gradeSystem={currentSession.gradeSystem}
               sessionLocation={currentSession.location}
             />
           ) : (
-            <Button onClick={() => setShowClimbForm(true)} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white h-12">
+            <Button
+              onClick={() => setShowClimbForm(true)}
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white h-12"
+            >
               <Plus className="h-5 w-5 mr-2" />
               Add Climb
             </Button>
@@ -57,7 +67,11 @@ const ClimbLogSection = ({ currentSession, onAddClimb, onEditClimb }: ClimbLogSe
             <CardTitle>Session Climbs</CardTitle>
           </CardHeader>
           <CardContent>
-            <ClimbList climbs={currentSession.climbs.slice(0, 5)} onEdit={onEditClimb} showEditButton={true} />
+            <ClimbList
+              climbs={currentSession.climbs.slice(0, 5)}
+              onEdit={onEditClimb}
+              showEditButton={true}
+            />
           </CardContent>
         </Card>
       )}

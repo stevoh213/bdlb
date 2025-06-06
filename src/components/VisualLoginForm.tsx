@@ -1,17 +1,16 @@
-
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
-import { Mountain, X } from 'lucide-react';
+import React, { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { Mountain, X } from "lucide-react";
 
 const VisualLoginForm = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showLoginForm, setShowLoginForm] = useState(false);
   const { signIn, signUp } = useAuth();
@@ -22,7 +21,7 @@ const VisualLoginForm = () => {
     setIsLoading(true);
 
     const { error } = await signIn(email, password);
-    
+
     if (error) {
       toast({
         title: "Error signing in",
@@ -35,7 +34,7 @@ const VisualLoginForm = () => {
         description: "You have successfully signed in.",
       });
     }
-    
+
     setIsLoading(false);
   };
 
@@ -44,7 +43,7 @@ const VisualLoginForm = () => {
     setIsLoading(true);
 
     const { error } = await signUp(email, password);
-    
+
     if (error) {
       toast({
         title: "Error creating account",
@@ -57,7 +56,7 @@ const VisualLoginForm = () => {
         description: "Please check your email to verify your account.",
       });
     }
-    
+
     setIsLoading(false);
   };
 
@@ -70,22 +69,22 @@ const VisualLoginForm = () => {
   return (
     <div className="min-h-screen relative overflow-hidden">
       {/* Background Image with Extended Coverage */}
-      <div 
+      <div
         className="absolute bg-cover bg-center bg-no-repeat"
         style={{
           backgroundImage: `url('https://images.unsplash.com/photo-1426604966848-d7adac402bff?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=5616&q=80')`,
-          top: '-50vh',
-          left: '-10vw',
-          right: '-10vw',
-          bottom: '-50vh',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center center'
+          top: "-50vh",
+          left: "-10vw",
+          right: "-10vw",
+          bottom: "-50vh",
+          backgroundSize: "cover",
+          backgroundPosition: "center center",
         }}
       />
-      
+
       {/* Dark Overlay */}
       <div className="absolute inset-0 bg-black/30" />
-      
+
       {/* Main Content */}
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-center text-white px-4">
         {/* Branding */}
@@ -96,9 +95,9 @@ const VisualLoginForm = () => {
           <h1 className="text-8xl font-bold tracking-wide mb-2">BDLB</h1>
           <p className="text-xl text-white/90">Track your climbing progress</p>
         </div>
-        
+
         {/* Login Button */}
-        <Button 
+        <Button
           onClick={() => setShowLoginForm(true)}
           className="bg-white text-black hover:bg-white/90 px-12 py-4 text-lg font-semibold rounded-full shadow-lg transition-all duration-300 hover:scale-105"
         >
@@ -108,7 +107,7 @@ const VisualLoginForm = () => {
 
       {/* Login Form Overlay */}
       {showLoginForm && (
-        <div 
+        <div
           className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center transition-all duration-300"
           onClick={handleOverlayClick}
         >
@@ -128,7 +127,9 @@ const VisualLoginForm = () => {
             <CardHeader className="text-center pb-4">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <Mountain className="h-8 w-8 text-amber-600" />
-                <CardTitle className="text-2xl font-bold text-stone-800">BDLB</CardTitle>
+                <CardTitle className="text-2xl font-bold text-stone-800">
+                  BDLB
+                </CardTitle>
               </div>
               <p className="text-stone-600">Welcome back</p>
             </CardHeader>
@@ -139,7 +140,7 @@ const VisualLoginForm = () => {
                   <TabsTrigger value="signin">Sign In</TabsTrigger>
                   <TabsTrigger value="signup">Sign Up</TabsTrigger>
                 </TabsList>
-                
+
                 <TabsContent value="signin">
                   <form onSubmit={handleSignIn} className="space-y-4">
                     <div className="space-y-2">
@@ -166,16 +167,16 @@ const VisualLoginForm = () => {
                         className="h-12"
                       />
                     </div>
-                    <Button 
-                      type="submit" 
-                      className="w-full h-12 bg-amber-600 hover:bg-amber-700 text-white font-semibold" 
+                    <Button
+                      type="submit"
+                      className="w-full h-12 bg-amber-600 hover:bg-amber-700 text-white font-semibold"
                       disabled={isLoading}
                     >
-                      {isLoading ? 'Signing in...' : 'Sign In'}
+                      {isLoading ? "Signing in..." : "Sign In"}
                     </Button>
                   </form>
                 </TabsContent>
-                
+
                 <TabsContent value="signup">
                   <form onSubmit={handleSignUp} className="space-y-4">
                     <div className="space-y-2">
@@ -203,12 +204,12 @@ const VisualLoginForm = () => {
                         className="h-12"
                       />
                     </div>
-                    <Button 
-                      type="submit" 
-                      className="w-full h-12 bg-amber-600 hover:bg-amber-700 text-white font-semibold" 
+                    <Button
+                      type="submit"
+                      className="w-full h-12 bg-amber-600 hover:bg-amber-700 text-white font-semibold"
                       disabled={isLoading}
                     >
-                      {isLoading ? 'Creating account...' : 'Sign Up'}
+                      {isLoading ? "Creating account..." : "Sign Up"}
                     </Button>
                   </form>
                 </TabsContent>

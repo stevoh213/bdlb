@@ -1,21 +1,39 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Session } from "@/types/climbing";
 import { getGradeSystemForClimbType, gradeSystems } from "@/utils/gradeSystem";
 import LocationSelector from "./LocationSelector";
 
 interface SessionFormProps {
-  onSubmit: (session: Omit<Session, 'id' | 'startTime' | 'endTime' | 'climbs' | 'isActive' | 'breaks' | 'totalBreakTime'>) => void;
+  onSubmit: (
+    session: Omit<
+      Session,
+      | "id"
+      | "startTime"
+      | "endTime"
+      | "climbs"
+      | "isActive"
+      | "breaks"
+      | "totalBreakTime"
+    >,
+  ) => void;
   onCancel: () => void;
 }
 
 const SessionForm = ({ onSubmit, onCancel }: SessionFormProps) => {
   const [location, setLocation] = useState("");
-  const [climbingType, setClimbingType] = useState<'sport' | 'trad' | 'boulder' | 'top rope' | 'alpine'>('sport');
+  const [climbingType, setClimbingType] = useState<
+    "sport" | "trad" | "boulder" | "top rope" | "alpine"
+  >("sport");
   const [notes, setNotes] = useState("");
 
   const gradeSystem = getGradeSystemForClimbType(climbingType);
@@ -28,12 +46,12 @@ const SessionForm = ({ onSubmit, onCancel }: SessionFormProps) => {
       location,
       climbingType,
       gradeSystem,
-      notes: notes || undefined
+      notes: notes || undefined,
     });
 
     // Reset form
     setLocation("");
-    setClimbingType('sport');
+    setClimbingType("sport");
     setNotes("");
   };
 
@@ -46,8 +64,16 @@ const SessionForm = ({ onSubmit, onCancel }: SessionFormProps) => {
       />
 
       <div>
-        <Label htmlFor="climbingType" className="text-stone-700 font-medium">Climbing Type *</Label>
-        <Select value={climbingType} onValueChange={(value: 'sport' | 'trad' | 'boulder' | 'top rope' | 'alpine') => setClimbingType(value)} required>
+        <Label htmlFor="climbingType" className="text-stone-700 font-medium">
+          Climbing Type *
+        </Label>
+        <Select
+          value={climbingType}
+          onValueChange={(
+            value: "sport" | "trad" | "boulder" | "top rope" | "alpine",
+          ) => setClimbingType(value)}
+          required
+        >
           <SelectTrigger className="h-12 text-lg border-stone-300 focus:border-amber-500">
             <SelectValue placeholder="Select climbing type" />
           </SelectTrigger>
@@ -65,7 +91,9 @@ const SessionForm = ({ onSubmit, onCancel }: SessionFormProps) => {
       </div>
 
       <div>
-        <Label htmlFor="notes" className="text-stone-700">Session Notes</Label>
+        <Label htmlFor="notes" className="text-stone-700">
+          Session Notes
+        </Label>
         <Textarea
           id="notes"
           value={notes}

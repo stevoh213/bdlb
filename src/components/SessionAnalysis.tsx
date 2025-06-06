@@ -1,24 +1,31 @@
-
-import { useState, useEffect, useCallback } from 'react';
-import { Session } from '@/types/climbing';
-import { AIAnalysisService, AnalysisResult } from '@/services/aiAnalysis';
-import AISettingsForm from './AISettingsForm';
-import SessionAnalysisHeader from './SessionAnalysisHeader';
-import AnalysisPrompt from './AnalysisPrompt';
-import AnalysisLoading from './AnalysisLoading';
-import AnalysisError from './AnalysisError';
-import AnalysisContent from './AnalysisContent';
-import { useToast } from '@/hooks/use-toast';
-import { OPENROUTER_CONFIG } from '@/config/openrouter';
+import { useState, useEffect, useCallback } from "react";
+import { Session } from "@/types/climbing";
+import { AIAnalysisService, AnalysisResult } from "@/services/aiAnalysis";
+import AISettingsForm from "./AISettingsForm";
+import SessionAnalysisHeader from "./SessionAnalysisHeader";
+import AnalysisPrompt from "./AnalysisPrompt";
+import AnalysisLoading from "./AnalysisLoading";
+import AnalysisError from "./AnalysisError";
+import AnalysisContent from "./AnalysisContent";
+import { useToast } from "@/hooks/use-toast";
+import { OPENROUTER_CONFIG } from "@/config/openrouter";
 
 interface SessionAnalysisProps {
   session: Session;
   onClose: () => void;
-  onAnalysisSaved?: (sessionId: string, analysis: Session['aiAnalysis']) => void;
+  onAnalysisSaved?: (
+    sessionId: string,
+    analysis: Session["aiAnalysis"],
+  ) => void;
   autoStart?: boolean;
 }
 
-const SessionAnalysis = ({ session, onClose, onAnalysisSaved, autoStart = false }: SessionAnalysisProps) => {
+const SessionAnalysis = ({
+  session,
+  onClose,
+  onAnalysisSaved,
+  autoStart = false,
+}: SessionAnalysisProps) => {
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -31,39 +38,43 @@ const SessionAnalysis = ({ session, onClose, onAnalysisSaved, autoStart = false 
       setError(null);
       setShowSettings(false);
 
-    try {
-      const analysisService = new AIAnalysisService(apiKey, model || OPENROUTER_CONFIG.defaultModel);
-      const result = await analysisService.analyzeSession(session);
-      setAnalysis(result);
-      
-      // Save analysis to session
-      const analysisData = {
-        ...result,
-        generatedAt: new Date()
-      };
-      
-      if (onAnalysisSaved) {
-        onAnalysisSaved(session.id, analysisData);
+      try {
+        const analysisService = new AIAnalysisService(
+          apiKey,
+          model || OPENROUTER_CONFIG.defaultModel,
+        );
+        const result = await analysisService.analyzeSession(session);
+        setAnalysis(result);
+
+        // Save analysis to session
+        const analysisData = {
+          ...result,
+          generatedAt: new Date(),
+        };
+
+        if (onAnalysisSaved) {
+          onAnalysisSaved(session.id, analysisData);
+        }
+
+        toast({
+          title: "Analysis Complete",
+          description: "Your session has been analyzed successfully!",
+        });
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Analysis failed";
+        setError(errorMessage);
+
+        toast({
+          title: "Analysis Failed",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
       }
-      
-      toast({
-        title: "Analysis Complete",
-        description: "Your session has been analyzed successfully!",
-      });
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Analysis failed';
-      setError(errorMessage);
-      
-      toast({
-        title: "Analysis Failed",
-        description: errorMessage,
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
     },
-    [onAnalysisSaved, session, toast]
+    [onAnalysisSaved, session, toast],
   );
 
   useEffect(() => {
@@ -82,9 +93,11 @@ const SessionAnalysis = ({ session, onClose, onAnalysisSaved, autoStart = false 
     // Only auto-start if explicitly requested and API key is available
     if (autoStart) {
       const savedApiKey =
-        localStorage.getItem('openrouter_api_key') || OPENROUTER_CONFIG.defaultApiKey;
+        localStorage.getItem("openrouter_api_key") ||
+        OPENROUTER_CONFIG.defaultApiKey;
       const savedModel =
-        localStorage.getItem('openrouter_model') || OPENROUTER_CONFIG.defaultModel;
+        localStorage.getItem("openrouter_model") ||
+        OPENROUTER_CONFIG.defaultModel;
 
       if (savedApiKey) {
         performAnalysis(savedApiKey, savedModel);
@@ -99,9 +112,13 @@ const SessionAnalysis = ({ session, onClose, onAnalysisSaved, autoStart = false 
   };
 
   const handleStartAnalysis = () => {
-    const savedApiKey = localStorage.getItem('openrouter_api_key') || OPENROUTER_CONFIG.defaultApiKey;
-    const savedModel = localStorage.getItem('openrouter_model') || OPENROUTER_CONFIG.defaultModel;
-    
+    const savedApiKey =
+      localStorage.getItem("openrouter_api_key") ||
+      OPENROUTER_CONFIG.defaultApiKey;
+    const savedModel =
+      localStorage.getItem("openrouter_model") ||
+      OPENROUTER_CONFIG.defaultModel;
+
     if (savedApiKey) {
       performAnalysis(savedApiKey, savedModel);
     } else {
@@ -110,9 +127,13 @@ const SessionAnalysis = ({ session, onClose, onAnalysisSaved, autoStart = false 
   };
 
   const handleRegenerate = () => {
-    const savedApiKey = localStorage.getItem('openrouter_api_key') || OPENROUTER_CONFIG.defaultApiKey;
-    const savedModel = localStorage.getItem('openrouter_model') || OPENROUTER_CONFIG.defaultModel;
-    
+    const savedApiKey =
+      localStorage.getItem("openrouter_api_key") ||
+      OPENROUTER_CONFIG.defaultApiKey;
+    const savedModel =
+      localStorage.getItem("openrouter_model") ||
+      OPENROUTER_CONFIG.defaultModel;
+
     if (savedApiKey) {
       performAnalysis(savedApiKey, savedModel);
     } else {
@@ -130,10 +151,7 @@ const SessionAnalysis = ({ session, onClose, onAnalysisSaved, autoStart = false 
           hasAnalysis={!!analysis}
           loading={loading}
         />
-        <AISettingsForm 
-          onSave={handleSettingsSave}
-          onCancel={onClose}
-        />
+        <AISettingsForm onSave={handleSettingsSave} onCancel={onClose} />
       </div>
     );
   }
@@ -155,15 +173,13 @@ const SessionAnalysis = ({ session, onClose, onAnalysisSaved, autoStart = false 
       {loading && <AnalysisLoading />}
 
       {error && (
-        <AnalysisError 
-          error={error} 
-          onShowSettings={() => setShowSettings(true)} 
+        <AnalysisError
+          error={error}
+          onShowSettings={() => setShowSettings(true)}
         />
       )}
 
-      {analysis && (
-        <AnalysisContent analysis={analysis} session={session} />
-      )}
+      {analysis && <AnalysisContent analysis={analysis} session={session} />}
     </div>
   );
 };
