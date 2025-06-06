@@ -4,7 +4,7 @@ const envApiKey = process.env.OPENROUTER_API_KEY;
 export const OPENROUTER_CONFIG = {
   baseURL: 'https://openrouter.ai/api/v1',
   defaultModel: 'microsoft/phi-4-reasoning-plus:free',
-  defaultApiKey: envApiKey ?? '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',
+  defaultApiKey: process.env.OPENROUTER_API_KEY,
   availableModels: [
     { id: 'microsoft/phi-4-reasoning-plus:free', name: 'Microsoft Phi-4 Reasoning Plus', description: 'Free reasoning model' },
     { id: 'openai/gpt-4o-mini', name: 'GPT-4O Mini', description: 'Fast and affordable' },

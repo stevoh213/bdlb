@@ -4,6 +4,14 @@
 
 **URL**: https://lovable.dev/projects/0af8f34b-d47b-44e7-abe0-186aed146707
 
+## Environment Variables
+
+The application requires the following environment variables:
+
+- `OPENROUTER_API_KEY` – API key used to access the OpenRouter service.
+- `SUPABASE_URL` – URL of your Supabase project.
+- `SUPABASE_PUBLISHABLE_KEY` – Supabase publishable API key.
+
 ## How can I edit this code?
 
 There are several ways of editing your application.
