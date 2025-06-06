@@ -124,12 +124,14 @@ export class AIAnalysisService {
 SESSION DATA:
 - Location: ${session.location}
 - Type: ${session.climbingType}
-- Duration: ${duration} minutes
+${gradeSystemLine ? `${gradeSystemLine}\n` : ""}${notesLine ? `${notesLine}\n` : ""}- Duration: ${duration} minutes
 - Total climbs: ${session.climbs.length}
 - Sends: ${sends}
 - Failed attempts: ${attempts}
 - Flashes: ${flashes}
 - Onsights: ${onsights}
+- Breaks: ${session.breaks}
+- Total break time: ${session.totalBreakTime} minutes
 - Average effort: ${avgEffort.toFixed(1)}/10
 - Grades: ${grades.join(", ")}
 ${gradeSystemLine ? `\n${gradeSystemLine}` : ""}
@@ -137,6 +139,17 @@ ${notesLine ? `\n${notesLine}` : ""}
 ${breaksLine ? `\n${breaksLine}` : ""}
 
 CLIMBS DETAILS:
+${session.climbs
+  .map(
+    (climb) =>
+      `- ${climb.name} (${climb.grade}): ${climb.tickType}` +
+      (climb.attempts !== undefined ? `, attempts ${climb.attempts}` : "") +
+      (climb.effort !== undefined ? `, effort ${climb.effort}/10` : "") +
+      (climb.height !== undefined ? `, height ${climb.height}m` : "") +
+      (climb.timeOnWall !== undefined ? `, time on wall ${climb.timeOnWall}s` : "") +
+      (climb.notes ? `, notes: ${climb.notes}` : ""),
+  )
+  .join("\n")}
 ${climbDetails}
 
 Please provide analysis in exactly this format:

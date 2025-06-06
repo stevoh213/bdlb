@@ -1,4 +1,7 @@
-const envApiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
+const envApiKey =
+  (typeof import.meta !== "undefined" &&
+    (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_OPENROUTER_API_KEY) ||
+  process.env.VITE_OPENROUTER_API_KEY;
 
 export const OPENROUTER_CONFIG = {
   baseURL: "https://openrouter.ai/api/v1",
