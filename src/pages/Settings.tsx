@@ -18,6 +18,7 @@ import {
   technicalSkills as defaultTechnicalSkills,
 } from "@/utils/skills";
 import { toast } from "@/hooks/use-toast";
+import { Session } from "@/types/climbing";
 
 const Settings = () => {
   const [preferredRouteGradeSystem, setPreferredRouteGradeSystem] =
@@ -149,17 +150,40 @@ const Settings = () => {
   };
 
   const editLocation = (index: number, newValue: string) => {
+    const oldValue = savedLocations[index];
+    const trimmed = newValue.trim();
+
     const updatedLocations = [...savedLocations];
-    updatedLocations[index] = newValue.trim();
-    setSavedLocations(updatedLocations.sort());
-    localStorage.setItem(
-      "climbingLocations",
-      JSON.stringify(updatedLocations.sort()),
-    );
+    updatedLocations[index] = trimmed;
+    const sortedLocations = updatedLocations.sort();
+    setSavedLocations(sortedLocations);
+    localStorage.setItem("climbingLocations", JSON.stringify(sortedLocations));
+
+    // Update existing sessions and current session using this location
+    const sessions = localStorage.getItem("sessions");
+    if (sessions) {
+      const parsed: Session[] = JSON.parse(sessions);
+      const updatedSessions = parsed.map((session) =>
+        session.location === oldValue
+          ? { ...session, location: trimmed }
+          : session,
+      );
+      localStorage.setItem("sessions", JSON.stringify(updatedSessions));
+    }
+
+    const currentSession = localStorage.getItem("currentSession");
+    if (currentSession) {
+      const parsed: Session = JSON.parse(currentSession);
+      if (parsed.location === oldValue) {
+        parsed.location = trimmed;
+        localStorage.setItem("currentSession", JSON.stringify(parsed));
+      }
+    }
+
     setEditingLocation(null);
     toast({
       title: "Location updated",
-      description: `Location has been updated to "${newValue.trim()}"`,
+      description: `Location has been updated to "${trimmed}"`,
     });
   };
 
