@@ -77,25 +77,3 @@ export interface LocalClimb {
   technicalSkills?: string[];
 }
 
-export interface Goal {
-  id: string;
-  user_id: string;
-  title: string;
-  description?: string;
-  type: string;
-  status: 'active' | 'completed' | 'paused';
-  priority: 'low' | 'medium' | 'high';
-  difficulty: 'easy' | 'moderate' | 'hard';
-  target_value?: number;
-  current_value?: number;
-  target_date?: string;
-  completed_at?: string;
-  created_at: string;
-  updated_at: string;
-  notes?: string;
-  tags?: string[];
-  unit?: string;
-  target_grade?: string;
-  target_climb_type?: string;
-  target_location?: string;
-}
